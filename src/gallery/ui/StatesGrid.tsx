@@ -9,7 +9,7 @@ export const REQUIRED_STATES = [
 
 export type StateLabel = typeof REQUIRED_STATES[number]
 
-export function State({ label, children }: { label: StateLabel; children: React.ReactNode }) {
+export function State({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className={styles.stateCell}>
       <span className={styles.stateLabel}>{label}</span>

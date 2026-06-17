@@ -19,32 +19,23 @@ function StatesDemo() {
   const noop = () => {}
   return (
     <StatesGrid>
-      <State label="default">
+      <State label="Default (C)">
         <PanKnob pan={0} onChange={noop} />
       </State>
-      <State label="hover">
+      <State label="L40">
         <PanKnob pan={-0.4} onChange={noop} />
       </State>
-      <State label="focus">
+      <State label="R75">
         <PanKnob pan={0.75} onChange={noop} />
       </State>
-      <State label="active">
+      <State label="sm size">
         <PanKnob pan={0.3} onChange={noop} size="sm" />
       </State>
-      <State label="disabled">
+      <State label="Custom color">
+        <PanKnob pan={0} onChange={noop} color="var(--accent-green)" />
+      </State>
+      <State label="Disabled">
         <PanKnob pan={0.3} onChange={noop} disabled />
-      </State>
-      <State label="selected">
-        <PanKnob pan={-0.5} onChange={noop} />
-      </State>
-      <State label="error">
-        <PanKnob pan={0.6} onChange={noop} color="var(--accent-red)" />
-      </State>
-      <State label="empty">
-        <PanKnob pan={0} onChange={noop} />
-      </State>
-      <State label="loading">
-        <PanKnob pan={0.2} onChange={noop} />
       </State>
     </StatesGrid>
   )
