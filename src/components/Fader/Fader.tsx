@@ -1,7 +1,7 @@
 // src/components/Fader/Fader.tsx
 import { useEffect, useRef, useState } from 'react'
 import { useSpring } from '../../motion/spring'
-import { clamp, linearScale, quantizeValue } from './faderScales'
+import { clamp, linearScale } from './faderScales'
 import type { FaderScale } from './faderScales'
 import styles from './Fader.module.css'
 
@@ -42,11 +42,9 @@ export function Fader({
   onChange,
   min = 0,
   max = 1,
-  step,
   orientation = 'vertical',
   scale,
   detent,
-  resetValue,
   size = 'md',
   disabled = false,
   color,
@@ -66,15 +64,13 @@ export function Fader({
   useEffect(() => { scaleRef.current = effectiveScale })
 
   // ── Drag state ────────────────────────────────────────────────────────────
-  const [dragging, setDragging] = useState(false)
   const rootRef  = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const capRef   = useRef<HTMLDivElement>(null)
-  const dragStart = useRef({ pointerAxis: 0, position: 0, travelLength: 0, shift: false })
 
   // ── Spring for reset / detent snap ───────────────────────────────────────
   const [resetting, setResetting] = useState(false)
-  const [resetSeed, setResetSeed] = useState(() => {
+  const [resetSeed] = useState(() => {
     const pct = effectiveScale.toPosition(value, min, max) * 100
     return { from: pct, target: pct, key: 0 }
   })
@@ -105,28 +101,6 @@ export function Fader({
     ? clamp(effectiveScale.toPosition(detent.value, min, max), 0, 1)
     : 0
 
-  // ── Reset (shared by keyboard + double-click + detent snap) ───────────────
-  function triggerReset(targetValue = resetValue ?? min) {
-    if (disabled) return
-    const currentPct = resetting
-      ? springPct
-      : effectiveScale.toPosition(valueRef.current, min, max) * 100
-    onChange(targetValue)
-    setResetSeed(prev => ({
-      from: currentPct,
-      target: effectiveScale.toPosition(targetValue, min, max) * 100,
-      key: prev.key + 1,
-    }))
-    setResetting(true)
-  }
-
-  // Forward-declare stubs consumed by Tasks 3–4; void-read silences noUnusedLocals.
-  void (step as unknown)
-  void (quantizeValue as unknown)
-  void (setDragging as unknown)
-  void (dragStart as unknown)
-  void (triggerReset as unknown)
-
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
@@ -134,7 +108,6 @@ export function Fader({
       className={`${styles.root}${disabled ? ` ${styles.disabled}` : ''}`}
       data-orientation={orientation}
       data-size={isPreset ? effectiveSize : 'custom'}
-      data-dragging={dragging || undefined}
       role="slider"
       aria-valuemin={min}
       aria-valuemax={max}
