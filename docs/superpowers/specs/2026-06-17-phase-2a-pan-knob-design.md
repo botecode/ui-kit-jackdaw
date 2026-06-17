@@ -135,19 +135,26 @@ sweep). Check `e.shiftKey` on each pointermove.
 ### 4.2 Scroll wheel (native listener, not React `onWheel`)
 
 React attaches `onWheel` as a passive listener — `preventDefault()` silently does nothing. Attach a
-native listener via `useEffect`:
+native listener via `useEffect` **once** (`[]` deps). Read current `pan` and `onChange` through refs
+inside the handler — never close over them directly (re-attaching on every `pan` change drops events
+mid-stream and churns the event system on every scroll tick).
 
 ```ts
+const panRef = useRef(pan)
+const onChangeRef = useRef(onChange)
+useEffect(() => { panRef.current = pan })          // sync ref every render (no deps needed)
+useEffect(() => { onChangeRef.current = onChange })
+
 useEffect(() => {
   const el = svgRef.current!
   const onWheel = (e: WheelEvent) => {
     e.preventDefault()
     const delta = Math.max(-0.08, Math.min(0.08, -e.deltaY * 0.0015))
-    onChange(clamp(pan + delta, -1, 1))
+    onChangeRef.current(Math.max(-1, Math.min(1, panRef.current + delta)))
   }
   el.addEventListener('wheel', onWheel, { passive: false })
   return () => el.removeEventListener('wheel', onWheel)
-}, [pan, onChange])   // re-attach when pan or onChange changes
+}, [])   // attach once — values come from refs, not the closure
 ```
 
 Scale by actual `deltaY` (not `Math.sign`) to handle trackpad streams correctly. Cap at ±0.08 per event.
@@ -199,26 +206,70 @@ and external `pan` prop changes always snap the visual directly — no spring la
 
 **`prefers-reduced-motion`:** snap visual to `resetValue * 135` instantly. No animation.
 
-**Implementation sketch:**
+#### Required `useSpring` extension: seeded start position
+
+The existing `useSpring(target)` maintains internal `{ pos, vel }` state that persists across renders.
+Without seeding, the spring's `pos` is stale (wherever it last settled) when a reset fires — so the
+knob snaps to near-zero and "settles" over nothing instead of gliding from the current drag position to
+the reset target.
+
+Extend `useSpring` to accept `from` and `key` in config:
 
 ```ts
-const [springTarget, setSpringTarget] = useState(() => pan * 135)
-const [resetting, setResetting] = useState(false)
-const springAngle = useSpring(springTarget, { stiffness: 200, damping: 30 })
+// Extended signature (src/motion/spring.ts)
+interface Config {
+  stiffness?: number
+  damping?: number
+  from?: number   // when provided, seeds state.current = { pos: from, vel: 0 }
+  key?: number    // increment to force re-seed even when 'from' value is unchanged
+}
+```
 
-// Display angle: spring during reset, direct otherwise
+In the hook's `useEffect`, before starting the RAF loop:
+```ts
+if (config?.from !== undefined) {
+  state.current = { pos: config.from, vel: 0 }
+}
+```
+
+Both `config.from` and `config.key` must be in the effect dependency array so a change triggers
+the re-seed. This is a shared primitive — **Fader's reset-to-unity will use the exact same extension.**
+
+**Implementation sketch (PanKnob):**
+
+```ts
+const [resetting, setResetting] = useState(false)
+// resetSeed tracks the start position and a key to force re-seeding on repeated resets
+const [resetSeed, setResetSeed] = useState<{ from: number; key: number; target: number }>({
+  from: pan * 135, key: 0, target: pan * 135,
+})
+
+const springAngle = useSpring(resetSeed.target, {
+  stiffness: 200,
+  damping: 30,
+  from: resetSeed.from,
+  key: resetSeed.key,
+})
+
+// Display angle: spring only during active reset, direct otherwise
 const displayAngle = resetting ? springAngle : pan * 135
 
 // Detect spring settling to end reset mode
 useEffect(() => {
-  if (resetting && Math.abs(springAngle - springTarget) < 0.1) {
+  if (resetting && Math.abs(springAngle - resetSeed.target) < 0.5) {
     setResetting(false)
   }
-}, [resetting, springAngle, springTarget])
+}, [resetting, springAngle, resetSeed.target])
 
 function handleReset() {
-  onChange(resetValue ?? 0)
-  setSpringTarget((resetValue ?? 0) * 135)
+  const currentAngle = pan * 135        // capture where we actually are right now
+  const targetAngle = (resetValue ?? 0) * 135
+  onChange(resetValue ?? 0)             // commit immediately
+  setResetSeed(prev => ({
+    from: currentAngle,
+    key: prev.key + 1,                  // force re-seed even if from value is the same
+    target: targetAngle,
+  }))
   setResetting(true)
 }
 ```
@@ -370,6 +421,19 @@ describe('accessibility', () => {
   it('aria-valuetext is "Center" at pan=0')
   it('aria-valuetext is "Left 20" at pan=-0.2')
   it('aria-disabled when disabled prop set')
+})
+
+describe('reset gesture', () => {
+  it('double-click calls onChange(0) with default resetValue')
+  it('double-click calls onChange(resetValue) with custom resetValue prop')
+  it('Backspace calls onChange(resetValue)')
+  it('Delete calls onChange(resetValue)')
+  it('0 key calls onChange(resetValue)')
+})
+
+describe('prefers-reduced-motion', () => {
+  // mock window.matchMedia to return matches: true, then verify reset snaps
+  it('reset snaps immediately to resetValue without animation under reduced-motion')
 })
 ```
 
