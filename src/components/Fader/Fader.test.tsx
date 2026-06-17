@@ -211,3 +211,85 @@ describe('Fader accessibility', () => {
     expect(getByRole('slider').getAttribute('tabindex')).toBe('-1')
   })
 })
+
+// ─── Keyboard ─────────────────────────────────────────────────────────────────
+
+import { fireEvent } from '@testing-library/react'
+
+describe('Fader keyboard (min=0 max=1)', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  function slider(value: number) {
+    return render(<Fader value={value} onChange={noop} />).getByRole('slider')
+  }
+
+  it('ArrowUp increases by 2%',         () => {
+    fireEvent.keyDown(slider(0.5), { key: 'ArrowUp' })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.52, 5))
+  })
+  it('ArrowDown decreases by 2%',       () => {
+    fireEvent.keyDown(slider(0.5), { key: 'ArrowDown' })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.48, 5))
+  })
+  it('ArrowRight increases',            () => {
+    fireEvent.keyDown(slider(0.5), { key: 'ArrowRight' })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.52, 5))
+  })
+  it('ArrowLeft decreases',             () => {
+    fireEvent.keyDown(slider(0.5), { key: 'ArrowLeft' })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.48, 5))
+  })
+  it('Shift+ArrowUp fine step (0.4%)', () => {
+    fireEvent.keyDown(slider(0.5), { key: 'ArrowUp', shiftKey: true })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.504, 5))
+  })
+  it('Shift+ArrowDown fine step',      () => {
+    fireEvent.keyDown(slider(0.5), { key: 'ArrowDown', shiftKey: true })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.496, 5))
+  })
+  it('PageUp +10%',  () => {
+    fireEvent.keyDown(slider(0.5), { key: 'PageUp' })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.6, 5))
+  })
+  it('PageDown -10%', () => {
+    fireEvent.keyDown(slider(0.5), { key: 'PageDown' })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.4, 5))
+  })
+  it('Home → min',   () => {
+    fireEvent.keyDown(slider(0.5), { key: 'Home' })
+    expect(noop).toHaveBeenCalledWith(0)
+  })
+  it('End → max',    () => {
+    fireEvent.keyDown(slider(0.5), { key: 'End' })
+    expect(noop).toHaveBeenCalledWith(1)
+  })
+  it('ArrowUp at max does not exceed max', () => {
+    fireEvent.keyDown(slider(1), { key: 'ArrowUp' })
+    expect(noop.mock.calls[0][0]).toBeLessThanOrEqual(1)
+  })
+  it('ArrowDown at min does not go below min', () => {
+    fireEvent.keyDown(slider(0), { key: 'ArrowDown' })
+    expect(noop.mock.calls[0][0]).toBeGreaterThanOrEqual(0)
+  })
+  it('step prop quantizes keyboard increments', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} step={0.1} />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'ArrowUp' })
+    expect(noop).toHaveBeenCalledWith(expect.closeTo(0.6, 5))
+  })
+  it('Backspace calls onChange(resetValue)', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} resetValue={0.25} />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'Backspace' })
+    expect(noop).toHaveBeenCalledWith(0.25)
+  })
+  it('Delete calls onChange(resetValue)', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} resetValue={0.25} />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'Delete' })
+    expect(noop).toHaveBeenCalledWith(0.25)
+  })
+  it('disabled ignores keyboard', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} disabled />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'ArrowUp' })
+    expect(noop).not.toHaveBeenCalled()
+  })
+})

@@ -1,7 +1,7 @@
 // src/components/Fader/Fader.tsx
 import { useEffect, useRef, useState } from 'react'
 import { useSpring } from '../../motion/spring'
-import { clamp, linearScale } from './faderScales'
+import { clamp, linearScale, quantizeValue } from './faderScales'
 import type { FaderScale } from './faderScales'
 import styles from './Fader.module.css'
 
@@ -42,9 +42,11 @@ export function Fader({
   onChange,
   min = 0,
   max = 1,
+  step,
   orientation = 'vertical',
   scale,
   detent,
+  resetValue,
   size = 'md',
   disabled = false,
   color,
@@ -70,7 +72,7 @@ export function Fader({
 
   // ── Spring for reset / detent snap ───────────────────────────────────────
   const [resetting, setResetting] = useState(false)
-  const [resetSeed] = useState(() => {
+  const [resetSeed, setResetSeed] = useState(() => {
     const pct = effectiveScale.toPosition(value, min, max) * 100
     return { from: pct, target: pct, key: 0 }
   })
@@ -92,6 +94,16 @@ export function Fader({
     ? clamp(springPct / 100, 0, 1)
     : clamp(effectiveScale.toPosition(value, min, max), 0, 1)
 
+  // ── Reset ─────────────────────────────────────────────────────────────────
+  function triggerReset() {
+    const targetValue = resetValue ?? min
+    const currentPct  = effectiveScale.toPosition(valueRef.current, min, max) * 100
+    const targetPct   = effectiveScale.toPosition(targetValue, min, max) * 100
+    setResetSeed(prev => ({ from: currentPct, target: targetPct, key: prev.key + 1 }))
+    setResetting(true)
+    onChangeRef.current(targetValue)
+  }
+
   // ── Derived values ────────────────────────────────────────────────────────
   const capLength = CAP_LENGTHS[effectiveSize]
   const capWidth  = CAP_WIDTHS[effectiveSize]
@@ -100,6 +112,53 @@ export function Fader({
   const detentPosition = detent
     ? clamp(effectiveScale.toPosition(detent.value, min, max), 0, 1)
     : 0
+
+  // ── Keyboard ─────────────────────────────────────────────────────────────
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (disabled) return
+    const rangeSize = max - min
+    const normalStep = step ?? rangeSize * 0.02
+    const fineStep   = step ? step / 5 : rangeSize * 0.004
+    const coarseStep = rangeSize * 0.1
+
+    const increment = e.shiftKey ? fineStep : normalStep
+    let next: number | null = null
+
+    switch (e.key) {
+      case 'ArrowUp':
+      case 'ArrowRight': next = clamp(valueRef.current + increment, min, max); break
+      case 'ArrowDown':
+      case 'ArrowLeft':  next = clamp(valueRef.current - increment, min, max); break
+      case 'PageUp':     next = clamp(valueRef.current + coarseStep, min, max); break
+      case 'PageDown':   next = clamp(valueRef.current - coarseStep, min, max); break
+      case 'Home':       next = min; break
+      case 'End':        next = max; break
+      case 'Backspace':
+      case 'Delete':     e.preventDefault(); triggerReset(); return
+      default: return
+    }
+    e.preventDefault()
+    if (next !== null) {
+      onChangeRef.current(quantizeValue(next, step, min, max))
+    }
+  }
+
+  // ── Wheel (non-passive, attached once) ────────────────────────────────────
+  // value and onChange are read from refs inside the listener — NOT in deps —
+  // so the listener is only recreated when structural props (disabled/min/max/step) change.
+  useEffect(() => {
+    const el = rootRef.current!
+    const onWheel = (e: WheelEvent) => {
+      if (disabled) return
+      e.preventDefault()
+      const rangeSize = max - min
+      const delta = -e.deltaY * 0.002 * rangeSize
+      const next = clamp(valueRef.current + delta, min, max)
+      onChangeRef.current(quantizeValue(next, step, min, max))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [disabled, min, max, step])
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -117,6 +176,7 @@ export function Fader({
       aria-disabled={disabled || undefined}
       tabIndex={disabled ? -1 : 0}
       style={!isPreset ? { '--fader-length': size } as React.CSSProperties : undefined}
+      onKeyDown={handleKeyDown}
     >
       <div ref={trackRef} className={styles.track} data-testid="fader-track">
         {detent && (
