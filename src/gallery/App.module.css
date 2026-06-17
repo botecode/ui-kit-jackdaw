@@ -1,0 +1,14 @@
+/* src/gallery/App.module.css */
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ThemeProvider divs are the grid items. If height/overflow don't flow through,
+   add display: contents to the ThemeProvider wrapper div. */
+.layout > div {
+  height: 100%;
+  overflow: hidden;
+}
