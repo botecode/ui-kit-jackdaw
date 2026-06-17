@@ -35,6 +35,54 @@ describe('formatAriaValueText', () => {
   it('0.35 → "Right 35"',  () => expect(formatAriaValueText(0.35)).toBe('Right 35'))
 })
 
+describe('PanKnob rendering', () => {
+  const noop = vi.fn()
+
+  it('renders an SVG element', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    expect(container.querySelector('svg')).not.toBeNull()
+  })
+
+  it('rotating group has correct transform at pan=0', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    const body = container.querySelector('[data-testid="knob-body"]')
+    expect(body?.getAttribute('style')).toContain('rotate(0deg)')
+  })
+
+  it('rotating group has correct transform at pan=1', () => {
+    const { container } = render(<PanKnob pan={1} onChange={noop} />)
+    const body = container.querySelector('[data-testid="knob-body"]')
+    expect(body?.getAttribute('style')).toContain('rotate(135deg)')
+  })
+
+  it('rotating group has correct transform at pan=-0.5', () => {
+    const { container } = render(<PanKnob pan={-0.5} onChange={noop} />)
+    const body = container.querySelector('[data-testid="knob-body"]')
+    expect(body?.getAttribute('style')).toContain('rotate(-67.5deg)')
+  })
+
+  it('data-size="md" by default', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    expect(container.querySelector('svg')?.getAttribute('data-size')).toBe('md')
+  })
+
+  it('data-size="sm" when size prop is sm', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} size="sm" />)
+    expect(container.querySelector('svg')?.getAttribute('data-size')).toBe('sm')
+  })
+
+  it('renders 13 tick mark lines', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    const ticks = container.querySelectorAll('[data-testid="tick"]')
+    expect(ticks.length).toBe(13)
+  })
+
+  it('readout span is in the DOM', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    expect(container.querySelector('[data-testid="readout"]')).not.toBeNull()
+  })
+})
+
 describe('PanKnob accessibility', () => {
   const noop = vi.fn()
 

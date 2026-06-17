@@ -1,0 +1,55 @@
+/* src/components/PanKnob/PanKnob.module.css */
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-dragging] {
+  cursor: grabbing;
+}
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.knob {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  outline: none;
+  touch-action: none;
+}
+
+.knob[data-size="sm"] {
+  width: 32px;
+  height: 32px;
+}
+
+/* Circular focus ring — keyboard-initiated focus only */
+.knob:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.readout {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1;
+  height: 1em;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.root:hover .readout,
+.root[data-dragging] .readout {
+  opacity: 1;
+}
