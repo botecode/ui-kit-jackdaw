@@ -5,6 +5,7 @@ import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { PanKnob } from './PanKnob'
+import { Fader } from '../Fader'
 
 export const meta: DemoMeta = {
   name: 'PanKnob',
@@ -81,15 +82,18 @@ function PlaygroundDemo() {
             }}
           >
             pan: {pan.toFixed(2)}
-            <input
-              type="range"
-              min={-1}
-              max={1}
-              step={0.01}
-              value={pan}
-              onChange={(e) => setPan(Number(e.target.value))}
-              style={{ display: 'block', width: '140px' }}
-            />
+            <div style={{ marginTop: 'var(--space-1)' }}>
+              <Fader
+                value={pan}
+                onChange={setPan}
+                min={-1}
+                max={1}
+                step={0.01}
+                orientation="horizontal"
+                detent={{ value: 0 }}
+                aria-label="Pan"
+              />
+            </div>
           </label>
           <label
             style={{
@@ -140,16 +144,18 @@ function PlaygroundDemo() {
               color: 'var(--text-muted)',
             }}
           >
-            resetValue: {resetValue}
-            <input
-              type="range"
-              min={-1}
-              max={1}
-              step={0.01}
-              value={resetValue}
-              onChange={(e) => setResetValue(Number(e.target.value))}
-              style={{ display: 'block', width: '140px' }}
-            />
+            resetValue: {resetValue.toFixed(2)}
+            <div style={{ marginTop: 'var(--space-1)' }}>
+              <Fader
+                value={resetValue}
+                onChange={setResetValue}
+                min={-1}
+                max={1}
+                step={0.01}
+                orientation="horizontal"
+                aria-label="Reset value"
+              />
+            </div>
           </label>
         </div>
       </div>
