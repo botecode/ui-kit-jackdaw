@@ -293,3 +293,90 @@ describe('Fader keyboard (min=0 max=1)', () => {
     expect(noop).not.toHaveBeenCalled()
   })
 })
+
+// ─── Pointer drag ─────────────────────────────────────────────────────────────
+
+describe('Fader pointer drag', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  it('sets data-dragging on pointerDown', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    const root  = container.firstChild as HTMLElement
+    const track = container.querySelector('[data-testid="fader-track"]')!
+    fireEvent.pointerDown(track, { clientX: 0, clientY: 0 })
+    expect(root.dataset.dragging).toBeDefined()
+  })
+
+  it('clears data-dragging on pointerUp', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    const root  = container.firstChild as HTMLElement
+    const track = container.querySelector('[data-testid="fader-track"]')!
+    fireEvent.pointerDown(track, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(track)
+    expect(root.dataset.dragging).toBeUndefined()
+  })
+
+  it('disabled fader ignores pointerDown', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} disabled />)
+    const root  = container.firstChild as HTMLElement
+    const track = container.querySelector('[data-testid="fader-track"]')!
+    fireEvent.pointerDown(track, { clientX: 0, clientY: 0 })
+    expect(root.dataset.dragging).toBeUndefined()
+  })
+})
+
+// ─── Reset gesture ────────────────────────────────────────────────────────────
+
+describe('Fader reset gesture', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  it('double-click calls onChange(resetValue)', () => {
+    const { container } = render(<Fader value={0.75} onChange={noop} resetValue={0.5} />)
+    fireEvent.doubleClick(container.firstChild!)
+    expect(noop).toHaveBeenCalledWith(0.5)
+  })
+
+  it('double-click with no resetValue calls onChange(min)', () => {
+    const { container } = render(<Fader value={0.75} onChange={noop} />)
+    fireEvent.doubleClick(container.firstChild!)
+    expect(noop).toHaveBeenCalledWith(0)
+  })
+
+  it('Backspace calls onChange(resetValue)', () => {
+    const { getByRole } = render(<Fader value={0.75} onChange={noop} resetValue={0.5} />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'Backspace' })
+    expect(noop).toHaveBeenCalledWith(0.5)
+  })
+
+  it('disabled ignores double-click reset', () => {
+    const { container } = render(<Fader value={0.75} onChange={noop} disabled resetValue={0} />)
+    fireEvent.doubleClick(container.firstChild!)
+    expect(noop).not.toHaveBeenCalled()
+  })
+})
+
+// ─── Detent tick ──────────────────────────────────────────────────────────────
+
+describe('Fader detent', () => {
+  it('renders detent tick with correct data-testid', () => {
+    const noop = vi.fn()
+    const { container } = render(
+      <Fader value={0} onChange={noop} min={-1} max={1} detent={{ value: 0 }} />,
+    )
+    expect(container.querySelector('[data-testid="fader-detent"]')).not.toBeNull()
+  })
+})
+
+// ─── Reduced-motion ───────────────────────────────────────────────────────────
+
+describe('Fader reduced-motion', () => {
+  it('reset calls onChange(resetValue) immediately', () => {
+    mockMatchMedia(true)
+    const noop = vi.fn()
+    const { container } = render(<Fader value={0.75} onChange={noop} resetValue={0.5} />)
+    fireEvent.doubleClick(container.firstChild!)
+    expect(noop).toHaveBeenCalledWith(0.5)
+  })
+})

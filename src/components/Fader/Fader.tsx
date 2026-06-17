@@ -69,6 +69,8 @@ export function Fader({
   const rootRef  = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const capRef   = useRef<HTMLDivElement>(null)
+  const [dragging, setDragging] = useState(false)
+  const dragStart = useRef({ pointerAxis: 0, position: 0, travelLength: 0, shift: false })
 
   // ── Spring for reset / detent snap ───────────────────────────────────────
   const [resetting, setResetting] = useState(false)
@@ -95,13 +97,13 @@ export function Fader({
     : clamp(effectiveScale.toPosition(value, min, max), 0, 1)
 
   // ── Reset ─────────────────────────────────────────────────────────────────
-  function triggerReset() {
-    const targetValue = resetValue ?? min
-    const currentPct  = effectiveScale.toPosition(valueRef.current, min, max) * 100
-    const targetPct   = effectiveScale.toPosition(targetValue, min, max) * 100
-    setResetSeed(prev => ({ from: currentPct, target: targetPct, key: prev.key + 1 }))
+  function triggerReset(targetValue?: number) {
+    const resolvedTarget = targetValue ?? resetValue ?? min
+    const fromPct   = resetting ? springPct : effectiveScale.toPosition(valueRef.current, min, max) * 100
+    const targetPct = effectiveScale.toPosition(resolvedTarget, min, max) * 100
+    setResetSeed(prev => ({ from: fromPct, target: targetPct, key: prev.key + 1 }))
     setResetting(true)
-    onChangeRef.current(targetValue)
+    onChangeRef.current(resolvedTarget)
   }
 
   // ── Derived values ────────────────────────────────────────────────────────
@@ -143,6 +145,86 @@ export function Fader({
     }
   }
 
+  // ── Pointer drag ─────────────────────────────────────────────────────────
+
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (disabled) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    setResetting(false)
+
+    const trackEl = trackRef.current!
+    const rect = trackEl.getBoundingClientRect()
+    const capLen = CAP_LENGTHS[effectiveSize]
+    const travelLength = Math.max(
+      (orientation === 'vertical' ? rect.height : rect.width) - capLen,
+      1,
+    )
+
+    // If click lands outside the cap, jump to the click position first
+    const capEl = capRef.current!
+    const capRect = capEl.getBoundingClientRect()
+    const HIT_PAD = 6
+    const onCap = (
+      e.clientX >= capRect.left - HIT_PAD && e.clientX <= capRect.right  + HIT_PAD &&
+      e.clientY >= capRect.top  - HIT_PAD && e.clientY <= capRect.bottom + HIT_PAD
+    )
+
+    let startValue = valueRef.current
+    if (!onCap) {
+      const capHalf = capLen / 2
+      const rawPos = orientation === 'vertical'
+        ? 1 - (e.clientY - rect.top  - capHalf) / travelLength
+        : (e.clientX  - rect.left - capHalf) / travelLength
+      const jumped = clamp(
+        scaleRef.current.toValue(clamp(rawPos, 0, 1), min, max),
+        min, max,
+      )
+      startValue = quantizeValue(jumped, step, min, max)
+      onChangeRef.current(startValue)
+    }
+
+    dragStart.current = {
+      pointerAxis: orientation === 'vertical' ? e.clientY : e.clientX,
+      position: scaleRef.current.toPosition(startValue, min, max),
+      travelLength,
+      shift: e.shiftKey,
+    }
+    setDragging(true)
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragging) return
+    const axis = orientation === 'vertical' ? e.clientY : e.clientX
+    const delta = axis - dragStart.current.pointerAxis
+    const sensitivity = dragStart.current.shift ? 0.2 : 1.0
+    const direction = orientation === 'vertical' ? -1 : 1
+    const newPos = clamp(
+      dragStart.current.position + direction * delta / dragStart.current.travelLength * sensitivity,
+      0, 1,
+    )
+    const rawValue = clamp(scaleRef.current.toValue(newPos, min, max), min, max)
+    onChangeRef.current(quantizeValue(rawValue, step, min, max))
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    setDragging(false)
+
+    // Detent snap on release (Shift bypasses)
+    if (!e.shiftKey && detent) {
+      const currentPos = scaleRef.current.toPosition(valueRef.current, min, max)
+      const detentPos  = scaleRef.current.toPosition(detent.value, min, max)
+      const snapRadius = (detent.strength ?? 1) * 0.05
+      if (Math.abs(currentPos - detentPos) <= snapRadius) {
+        triggerReset(detent.value)
+      }
+    }
+  }
+
+  function handleDoubleClick() {
+    if (disabled) return
+    triggerReset()
+  }
+
   // ── Wheel (non-passive, attached once) ────────────────────────────────────
   // value and onChange are read from refs inside the listener — NOT in deps —
   // so the listener is only recreated when structural props (disabled/min/max/step) change.
@@ -167,6 +249,7 @@ export function Fader({
       className={`${styles.root}${disabled ? ` ${styles.disabled}` : ''}`}
       data-orientation={orientation}
       data-size={isPreset ? effectiveSize : 'custom'}
+      data-dragging={dragging || undefined}
       role="slider"
       aria-valuemin={min}
       aria-valuemax={max}
@@ -177,8 +260,17 @@ export function Fader({
       tabIndex={disabled ? -1 : 0}
       style={!isPreset ? { '--fader-length': size } as React.CSSProperties : undefined}
       onKeyDown={handleKeyDown}
+      onDoubleClick={handleDoubleClick}
     >
-      <div ref={trackRef} className={styles.track} data-testid="fader-track">
+      <div
+        ref={trackRef}
+        className={styles.track}
+        data-testid="fader-track"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
         {detent && (
           <div
             className={styles.detentTick}
