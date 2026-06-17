@@ -1,6 +1,19 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, fireEvent } from '@testing-library/react'
 import { PanKnob, panToAngle, formatReadout, formatAriaValueText, clamp } from './PanKnob'
+
+function mockMatchMedia(reducedMotion: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true, configurable: true,
+    value: (query: string) => ({
+      matches: reducedMotion && query === '(prefers-reduced-motion: reduce)',
+      media: query, onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }),
+  })
+}
 
 describe('clamp', () => {
   it('returns value within range', () => expect(clamp(0.5, -1, 1)).toBe(0.5))
@@ -136,5 +149,117 @@ describe('PanKnob accessibility', () => {
   it('tabIndex=-1 when disabled', () => {
     const { getByRole } = render(<PanKnob pan={0} onChange={noop} disabled />)
     expect(getByRole('slider').getAttribute('tabindex')).toBe('-1')
+  })
+})
+
+describe('PanKnob keyboard', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  function getSlider(pan: number) {
+    const { getByRole } = render(<PanKnob pan={pan} onChange={noop} />)
+    return getByRole('slider')
+  }
+
+  it('ArrowRight → +0.05', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'ArrowRight' })
+    expect(noop).toHaveBeenCalledWith(0.05)
+  })
+  it('ArrowLeft → -0.05', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'ArrowLeft' })
+    expect(noop).toHaveBeenCalledWith(-0.05)
+  })
+  it('ArrowUp → +0.05', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'ArrowUp' })
+    expect(noop).toHaveBeenCalledWith(0.05)
+  })
+  it('ArrowDown → -0.05', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'ArrowDown' })
+    expect(noop).toHaveBeenCalledWith(-0.05)
+  })
+  it('Shift+ArrowRight → +0.25', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'ArrowRight', shiftKey: true })
+    expect(noop).toHaveBeenCalledWith(0.25)
+  })
+  it('Shift+ArrowLeft → -0.25', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'ArrowLeft', shiftKey: true })
+    expect(noop).toHaveBeenCalledWith(-0.25)
+  })
+  it('PageUp → +0.25', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'PageUp' })
+    expect(noop).toHaveBeenCalledWith(0.25)
+  })
+  it('PageDown → -0.25', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'PageDown' })
+    expect(noop).toHaveBeenCalledWith(-0.25)
+  })
+  it('Home → -1', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'Home' })
+    expect(noop).toHaveBeenCalledWith(-1)
+  })
+  it('End → +1', () => {
+    fireEvent.keyDown(getSlider(0), { key: 'End' })
+    expect(noop).toHaveBeenCalledWith(1)
+  })
+  it('ArrowRight at pan=1 does not exceed 1', () => {
+    fireEvent.keyDown(getSlider(1), { key: 'ArrowRight' })
+    const called = noop.mock.calls[0]?.[0]
+    expect(called).toBeLessThanOrEqual(1)
+  })
+  it('ArrowLeft at pan=-1 does not go below -1', () => {
+    fireEvent.keyDown(getSlider(-1), { key: 'ArrowLeft' })
+    const called = noop.mock.calls[0]?.[0]
+    expect(called).toBeGreaterThanOrEqual(-1)
+  })
+})
+
+describe('PanKnob reset gesture', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  it('double-click calls onChange(0) with default resetValue', () => {
+    const { getByRole } = render(<PanKnob pan={0.5} onChange={noop} />)
+    fireEvent.doubleClick(getByRole('slider'))
+    expect(noop).toHaveBeenCalledWith(0)
+  })
+
+  it('double-click calls onChange(resetValue) with custom resetValue', () => {
+    const { getByRole } = render(<PanKnob pan={0.5} onChange={noop} resetValue={0.2} />)
+    fireEvent.doubleClick(getByRole('slider'))
+    expect(noop).toHaveBeenCalledWith(0.2)
+  })
+
+  it('Delete key calls onChange(0)', () => {
+    const { getByRole } = render(<PanKnob pan={0.5} onChange={noop} />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'Delete' })
+    expect(noop).toHaveBeenCalledWith(0)
+  })
+
+  it('Backspace key calls onChange(0)', () => {
+    const { getByRole } = render(<PanKnob pan={0.5} onChange={noop} />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'Backspace' })
+    expect(noop).toHaveBeenCalledWith(0)
+  })
+
+  it('0 key calls onChange(resetValue)', () => {
+    const { getByRole } = render(<PanKnob pan={0.5} onChange={noop} resetValue={-0.1} />)
+    fireEvent.keyDown(getByRole('slider'), { key: '0' })
+    expect(noop).toHaveBeenCalledWith(-0.1)
+  })
+
+  it('Delete with non-zero resetValue → onChange(resetValue)', () => {
+    const { getByRole } = render(<PanKnob pan={0.5} onChange={noop} resetValue={0.5} />)
+    fireEvent.keyDown(getByRole('slider'), { key: 'Delete' })
+    expect(noop).toHaveBeenCalledWith(0.5)
+  })
+})
+
+describe('PanKnob reduced-motion', () => {
+  it('reset calls onChange(resetValue) immediately under reduced-motion', () => {
+    mockMatchMedia(true)
+    const noop = vi.fn()
+    const { getByRole } = render(<PanKnob pan={0.5} onChange={noop} />)
+    fireEvent.doubleClick(getByRole('slider'))
+    expect(noop).toHaveBeenCalledWith(0)
   })
 })

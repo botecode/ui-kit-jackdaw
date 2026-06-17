@@ -93,18 +93,61 @@ export function PanKnob({
     return () => el.removeEventListener('wheel', onWheel)
   }, [disabled])
 
-  // Interaction handlers added in Task 4 — placeholders keep TypeScript happy
-  function handlePointerDown(_e: React.PointerEvent) {}
-  function handlePointerMove(_e: React.PointerEvent) {}
-  function handlePointerUp() {}
-  function handleDoubleClick() {}
-  function handleKeyDown(_e: React.KeyboardEvent) {}
+  function handleReset() {
+    if (disabled) return
+    onChange(resetValue)
+    setResetSeed(prev => ({
+      from: panToAngle(pan),
+      key: prev.key + 1,
+      target: panToAngle(resetValue),
+    }))
+    setResetting(true)
+  }
 
-  // Suppress unused variable warnings for Task 4 state
-  void setDragging
-  void dragStart
-  void setResetSeed
-  void resetValue
+  function handlePointerDown(e: React.PointerEvent) {
+    if (disabled) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragStart.current = { y: e.clientY, pan, shift: e.shiftKey }
+    setDragging(true)
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!dragging) return
+    const dy = e.clientY - dragStart.current.y
+    const sensitivity = dragStart.current.shift ? 0.0014 : 0.007
+    const next = clamp(dragStart.current.pan + dy * -sensitivity, -1, 1)
+    onChange(next)
+  }
+
+  function handlePointerUp() {
+    setDragging(false)
+  }
+
+  function handleDoubleClick() {
+    handleReset()
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (disabled) return
+    const step = e.shiftKey ? 0.25 : 0.05
+    let next: number | null = null
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowUp':   next = clamp(pan + step, -1, 1); break
+      case 'ArrowLeft':
+      case 'ArrowDown': next = clamp(pan - step, -1, 1); break
+      case 'PageUp':    next = clamp(pan + 0.25, -1, 1); break
+      case 'PageDown':  next = clamp(pan - 0.25, -1, 1); break
+      case 'Home':      next = -1; break
+      case 'End':       next = 1;  break
+      case 'Backspace':
+      case 'Delete':
+      case '0':         handleReset(); return
+      default: return
+    }
+    e.preventDefault()
+    if (next !== null) onChange(next)
+  }
 
   const knurlCount = size === 'sm' ? 16 : 24
   const capColor = color ?? 'var(--accent)'
