@@ -1,0 +1,223 @@
+/* src/components/Meter/Meter.module.css */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.root[data-orientation='horizontal'] {
+  align-items: center;
+}
+
+/* ─── Channel ──────────────────────────────────────────────────────────────── */
+
+.channel {
+  position: relative;   /* readout is absolute-positioned against this */
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+
+.channel[data-orientation='horizontal'] {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* ─── Well ─────────────────────────────────────────────────────────────────── */
+
+.well {
+  display: flex;
+  background: var(--stage);
+  border-radius: 4px;
+  padding: 2px;
+  gap: 2px;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+  flex-shrink: 0;
+}
+
+.channel[data-orientation='vertical'] .well {
+  flex-direction: column-reverse;
+}
+
+.channel[data-orientation='horizontal'] .well {
+  flex-direction: row;
+}
+
+/* Segment height (vertical) / width (horizontal) — same for mono and stereo */
+.channel[data-orientation='vertical'][data-size='sm'] .segment   { height: 3px; }
+.channel[data-orientation='vertical'][data-size='md'] .segment   { height: 5px; }
+.channel[data-orientation='vertical'][data-size='lg'] .segment   { height: 8px; }
+.channel[data-orientation='horizontal'][data-size='sm'] .segment { width: 3px;  }
+.channel[data-orientation='horizontal'][data-size='md'] .segment { width: 5px;  }
+.channel[data-orientation='horizontal'][data-size='lg'] .segment { width: 8px;  }
+
+/*
+  Well cross-axis width (vertical) / height (horizontal).
+  Mono uses a wider column so a single-channel track reads instantly
+  different from a two-column stereo pair — the swap from stereo→mono
+  will be visually obvious when the "quick to mono" action lands.
+*/
+
+/* Vertical mono — wider column */
+.root:not([data-stereo]) .channel[data-orientation='vertical'][data-size='sm'] .well { width: 18px; }
+.root:not([data-stereo]) .channel[data-orientation='vertical'][data-size='md'] .well { width: 24px; }
+.root:not([data-stereo]) .channel[data-orientation='vertical'][data-size='lg'] .well { width: 36px; }
+
+/* Vertical stereo — narrower adjacent columns */
+.root[data-stereo] .channel[data-orientation='vertical'][data-size='sm'] .well { width: 8px;  }
+.root[data-stereo] .channel[data-orientation='vertical'][data-size='md'] .well { width: 11px; }
+.root[data-stereo] .channel[data-orientation='vertical'][data-size='lg'] .well { width: 17px; }
+
+/* Horizontal mono — taller column */
+.root:not([data-stereo]) .channel[data-orientation='horizontal'][data-size='sm'] .well { height: 18px; }
+.root:not([data-stereo]) .channel[data-orientation='horizontal'][data-size='md'] .well { height: 24px; }
+.root:not([data-stereo]) .channel[data-orientation='horizontal'][data-size='lg'] .well { height: 36px; }
+
+/* Horizontal stereo — shorter adjacent rows */
+.root[data-stereo] .channel[data-orientation='horizontal'][data-size='sm'] .well { height: 8px;  }
+.root[data-stereo] .channel[data-orientation='horizontal'][data-size='md'] .well { height: 11px; }
+.root[data-stereo] .channel[data-orientation='horizontal'][data-size='lg'] .well { height: 17px; }
+
+/* Custom length — segments fill the specified dimension */
+.root:not([data-stereo]) .channel[data-orientation='vertical'][data-size='custom'] .well   { width: var(--meter-length, 24px); }
+.root[data-stereo] .channel[data-orientation='vertical'][data-size='custom'] .well         { width: var(--meter-length, 11px); }
+.root:not([data-stereo]) .channel[data-orientation='horizontal'][data-size='custom'] .well { height: var(--meter-length, 24px); }
+.root[data-stereo] .channel[data-orientation='horizontal'][data-size='custom'] .well       { height: var(--meter-length, 11px); }
+.channel[data-size='custom'] .segment { flex: 1; }
+
+/* ─── Density: fine ─────────────────────────────────────────────────────────── */
+/*
+  Half-height segments + tighter gap for a finer, more LED-dense read.
+  Pair with a higher segment count (e.g. segments={32}) to fill the same
+  well height as standard with 16 segments.
+*/
+.channel[data-density='fine'] .well { gap: 1px; }
+
+.channel[data-density='fine'][data-orientation='vertical'][data-size='sm']  .segment { height: 2px; }
+.channel[data-density='fine'][data-orientation='vertical'][data-size='md']  .segment { height: 2px; }
+.channel[data-density='fine'][data-orientation='vertical'][data-size='lg']  .segment { height: 4px; }
+
+.channel[data-density='fine'][data-orientation='horizontal'][data-size='sm'] .segment { width: 2px; }
+.channel[data-density='fine'][data-orientation='horizontal'][data-size='md'] .segment { width: 2px; }
+.channel[data-density='fine'][data-orientation='horizontal'][data-size='lg'] .segment { width: 4px; }
+
+/* Tighter corner radius on fine segments */
+.channel[data-density='fine'] .segment { border-radius: 1px; }
+
+/* ─── Segment ──────────────────────────────────────────────────────────────── */
+
+.segment {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 2px;
+  /* Decay (slow) — used when segment leaves lit state */
+  transition: box-shadow var(--dur-led-off, 220ms) var(--ease-out, ease-out);
+  overflow: visible;
+}
+
+.channel[data-orientation='vertical'] .segment   { width: 100%; }
+.channel[data-orientation='horizontal'] .segment { height: 100%; }
+
+/* Dim unlit tint — hue ghost at ~12% so you can "see" the dormant cell */
+.segment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--seg-body, transparent);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* Lit LED gradient — fade in/out via opacity */
+.segment::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      circle at 25% 20%,
+      rgba(255, 255, 255, 0.25) 0%,
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 45% 40%,
+      var(--seg-core, var(--seg-body)),
+      var(--seg-body) 55%,
+      var(--seg-deep, var(--seg-body)) 100%
+    );
+  opacity: 0;
+  pointer-events: none;
+  /* Decay (slow) — used when segment leaves lit state */
+  transition: opacity var(--dur-led-off, 220ms) var(--ease-out, ease-out);
+}
+
+/* Lit state — attack (fast) transition overrides decay */
+.segment[data-lit] {
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--seg-body, transparent) 45%, transparent);
+  /* Override transition-duration for fast attack */
+  transition-duration: var(--dur-led-on, 40ms);
+}
+
+.segment[data-lit]::after {
+  opacity: 1;
+  transition-duration: var(--dur-led-on, 40ms);
+}
+
+/* Peak hold marker — ghost segment above current level */
+.segment[data-peak]:not([data-lit])::before {
+  opacity: 0;
+}
+
+.segment[data-peak]:not([data-lit])::after {
+  opacity: 0.5;
+}
+
+/* ─── Readout ───────────────────────────────────────────────────────────────── */
+/*
+  position: absolute keeps the readout out of the layout flow so its text
+  content changes never shift the channel's width or height.
+*/
+
+.readout {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--stage-text, var(--text-dim));
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast, 80ms) var(--ease-out, ease-out);
+}
+
+/* Vertical: float below the well */
+.channel[data-orientation='vertical'] .readout {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: var(--space-1);
+}
+
+/* Horizontal: float to the right of the well */
+.channel[data-orientation='horizontal'] .readout {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  padding-left: var(--space-1);
+}
+
+.channel:hover .readout,
+.channel:focus-within .readout {
+  opacity: 1;
+}

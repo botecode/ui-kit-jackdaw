@@ -25,9 +25,57 @@ export interface ThemeTokens {
   "--accent-green-dim": string;
   "--rail-indicator": string;
   "--radius": string;
+
+  // ── Stage (dark recessed wells — meters, dot matrix, waveform lanes) ──
+  "--stage": string;
+  "--stage-2": string;
+  "--stage-text": string;
+
+  // ── Spectrum ramp (module color-coding: DRIVE/SWEETEN/FUZZ/HOWL/SWELL…) ──
+  "--chroma-red": string;
+  "--chroma-orange": string;
+  "--chroma-yellow": string;
+  "--chroma-green": string;
+  "--chroma-teal": string;
+  "--chroma-blue": string;
+  "--chroma-purple": string;
+
+  // ── LED palette — lit states (core → body → deep, each hue) ──
+  "--led-red-core": string;
+  "--led-red": string;
+  "--led-red-deep": string;
+  "--led-orange-core": string;
+  "--led-orange": string;
+  "--led-orange-deep": string;
+  "--led-yellow-core": string;
+  "--led-yellow": string;
+  "--led-yellow-deep": string;
+  "--led-green-core": string;
+  "--led-green": string;
+  "--led-green-deep": string;
+  "--led-cyan-core": string;
+  "--led-cyan": string;
+  "--led-cyan-deep": string;
+  "--led-purple-core": string;
+  "--led-purple": string;
+  "--led-purple-deep": string;
+
+  // ── Meter guardrail ──
+  "--meter-safe": string;
+  "--meter-hot": string;
+  "--meter-clip": string;
+
+  // ── Semantic ──
+  "--done": string;
+  "--danger": string;
+
+  // ── Texture (background-image value; set to `none` to disable) ──
+  "--texture-paper": string;
+  "--texture-stage": string;
 }
 
 export type ThemeId =
+  | "chroma"
   | "default" | "bowie" | "bubble-gum-pop" | "buckley" | "gil"
   | "golden-hour" | "ink" | "manuscript" | "nocturne" | "pine"
   | "reaper" | "songwriter" | "techno" | "tropicalia";

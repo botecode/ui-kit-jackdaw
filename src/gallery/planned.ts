@@ -4,8 +4,6 @@ import type { DemoMeta } from './registry'
 // Items planned but not yet built. Rendered as dimmed non-links in the sidebar.
 // Remove an item here when its .demo.tsx file lands — it will auto-appear via glob.
 export const PLANNED: Array<Pick<DemoMeta, 'name' | 'group' | 'route'>> = [
-  { name: 'Fader',                    group: 'Primitives',  route: '/fader' },
-  { name: 'Meter',                    group: 'Primitives',  route: '/meter' },
   { name: 'MuteSoloToggle',           group: 'Primitives',  route: '/mute-solo' },
   { name: 'ArmButton',                group: 'Primitives',  route: '/arm-button' },
   { name: 'TransportBar',             group: 'Primitives',  route: '/transport' },

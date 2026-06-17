@@ -10,7 +10,7 @@ import styles from './Stage.module.css'
 import { Tokens } from './pages/Tokens'
 import { DesignLanguage } from './pages/DesignLanguage'
 
-const COMPARE_THEMES: ThemeId[] = ['default', 'bowie', 'tropicalia', 'manuscript', 'ink']
+const COMPARE_THEMES: ThemeId[] = ['chroma', 'bowie', 'tropicalia', 'manuscript', 'ink']
 
 export function Stage() {
   const route = useHashRoute()

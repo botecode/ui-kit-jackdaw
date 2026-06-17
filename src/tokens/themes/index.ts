@@ -1,4 +1,5 @@
 import type { ThemeMeta } from '../types'
+import { chromaTheme } from './chroma'
 import { defaultTheme } from './default'
 import { bowieTheme } from './bowie'
 import { bubbleGumPopTheme } from './bubble-gum-pop'
@@ -15,12 +16,14 @@ import { technoTheme } from './techno'
 import { tropicaliaTheme } from './tropicalia'
 
 export {
+  chromaTheme,
   defaultTheme, bowieTheme, bubbleGumPopTheme, buckleyTheme, gilTheme,
   goldenHourTheme, inkTheme, manuscriptTheme, nocturneTheme, pineTheme,
   reaperTheme, songwriterTheme, technoTheme, tropicaliaTheme,
 }
 
 export const THEMES: ThemeMeta[] = [
+  { id: 'chroma',         name: 'Chroma',         tokens: chromaTheme },
   { id: 'default',        name: 'Default',        tokens: defaultTheme },
   { id: 'bowie',          name: 'Bowie',          tokens: bowieTheme },
   { id: 'bubble-gum-pop', name: 'Bubble Gum Pop', tokens: bubbleGumPopTheme },
