@@ -7,24 +7,39 @@ const reducedMotionMql = () =>
 interface Config {
   stiffness?: number
   damping?: number
+  // Seed: when `from` is provided and `key` changes (or `from` changes),
+  // the spring internal state is reset to { pos: from, vel: 0 } before
+  // animating toward `target`. Increment `key` to force re-seed even
+  // when `from` value is numerically unchanged (e.g. repeated resets
+  // from the same position).
+  from?: number
+  key?: number
 }
 
 // Critically-damped spring using symplectic (semi-implicit) Euler integration.
 // Default: stiffness 200, damping 30 → ζ ≈ 1.06 (just past critical: zero overshoot).
 // Heavier settle (resize divider): { stiffness: 120, damping: 22 } → ζ ≈ 1.0.
 //
-// UNIT CONTRACT: target must be in PIXELS. The settle epsilon (0.01) is calibrated
-// for pixel values and will cause ~1% early settle on a normalised 0–1 input.
-// If you need to spring a normalised value, scale to pixels first, then convert back.
+// UNIT CONTRACT: target must be in PIXELS (or degree-range values ~0–135).
+// The settle epsilon (0.01) is calibrated for those magnitudes and will
+// cause early settle on a normalised 0–1 input.
 //
-// Brand rule: weight ≠ bounce. Tune for firm, authoritative settle. Never increase
-// stiffness to the point of overshoot — that's the tell of a toy.
-export function useSpring(target: number, { stiffness = 200, damping = 30 }: Config = {}) {
+// Brand rule: weight ≠ bounce. Tune for firm, authoritative settle. Never
+// increase stiffness to the point of overshoot — that's the tell of a toy.
+export function useSpring(
+  target: number,
+  { stiffness = 200, damping = 30, from, key = 0 }: Config = {},
+) {
   const [value, setValue] = useState(target)
   const state = useRef({ pos: target, vel: 0 })
   const rafId = useRef(0)
 
   useEffect(() => {
+    // Seed internal position when caller provides a start point.
+    if (from !== undefined) {
+      state.current = { pos: from, vel: 0 }
+    }
+
     const mql = reducedMotionMql()
 
     if (mql.matches) {
@@ -37,11 +52,10 @@ export function useSpring(target: number, { stiffness = 200, damping = 30 }: Con
     let last = performance.now()
 
     const tick = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 1 / 30) // cap at 30fps minimum
+      const dt = Math.min((now - last) / 1000, 1 / 30)
       last = now
 
       // Symplectic Euler: update velocity first, then position with new velocity.
-      // More stable than explicit Euler — no energy gain on large dt.
       const force = stiffness * (target - state.current.pos) - damping * state.current.vel
       state.current.vel += force * dt
       state.current.pos += state.current.vel * dt
@@ -53,7 +67,7 @@ export function useSpring(target: number, { stiffness = 200, damping = 30 }: Con
       if (settled) {
         setValue(target)
         state.current = { pos: target, vel: 0 }
-        return // loop ends; no cancelAnimationFrame needed
+        return
       }
 
       setValue(state.current.pos)
@@ -75,7 +89,7 @@ export function useSpring(target: number, { stiffness = 200, damping = 30 }: Con
       cancelAnimationFrame(rafId.current)
       mql.removeEventListener('change', onMqlChange)
     }
-  }, [target, stiffness, damping])
+  }, [target, stiffness, damping, from, key])
 
   return value
 }

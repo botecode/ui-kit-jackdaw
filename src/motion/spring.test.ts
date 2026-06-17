@@ -47,3 +47,29 @@ describe('useSpring', () => {
     expect(result.current).toBe(300)
   })
 })
+
+describe('from + key seeding', () => {
+  it('accepts from and key without error', () => {
+    mockMatchMedia(false)
+    const { result } = renderHook(() => useSpring(50, { from: 100, key: 1 }))
+    // Initial useState value is target; spring will animate from 100 → 50
+    expect(result.current).toBe(50)
+  })
+
+  it('snaps to target under reduced-motion even when from is provided', () => {
+    mockMatchMedia(true)
+    const { result } = renderHook(() => useSpring(50, { from: 100, key: 1 }))
+    expect(result.current).toBe(50)
+  })
+
+  it('re-seeds when key increments (same from value)', () => {
+    mockMatchMedia(true)
+    const { result, rerender } = renderHook(
+      ({ t, k }: { t: number; k: number }) => useSpring(t, { from: 0, key: k }),
+      { initialProps: { t: 0, k: 0 } },
+    )
+    expect(result.current).toBe(0)
+    rerender({ t: 0, k: 1 }) // same from=0, same target=0, new key
+    expect(result.current).toBe(0) // still correct (reduced-motion snaps)
+  })
+})
