@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { clamp, linearScale, dbScale, quantizeValue } from './faderScales'
 
 // ─── clamp ───────────────────────────────────────────────────────────────────
@@ -78,4 +78,136 @@ describe('quantizeValue', () => {
   it('clamps to max',                  () => expect(quantizeValue(0.99, 0.1, 0, 1)).toBeCloseTo(1.0))
   it('clamps to min',                  () => expect(quantizeValue(0.001, 0.1, 0, 1)).toBeCloseTo(0.0))
   it('step=1 snaps 2.6 → 3 in dB range', () => expect(quantizeValue(2.6, 1, -60, 6)).toBeCloseTo(3))
+})
+
+// ─── Rendering + ARIA ──────────────────────────────────────────────────────
+
+import { render } from '@testing-library/react'
+import { Fader } from './Fader'
+
+function mockMatchMedia(reducedMotion: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true, configurable: true,
+    value: (query: string) => ({
+      matches: reducedMotion && query === '(prefers-reduced-motion: reduce)',
+      media: query, onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }),
+  })
+}
+
+describe('Fader rendering', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  it('renders a track and cap', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    expect(container.querySelector('[data-testid="fader-track"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="fader-cap"]')).not.toBeNull()
+  })
+
+  it('renders a readout element', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    expect(container.querySelector('[data-testid="fader-readout"]')).not.toBeNull()
+  })
+
+  it('data-orientation="vertical" by default', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    expect(container.firstChild).toHaveAttribute('data-orientation', 'vertical')
+  })
+
+  it('data-orientation="horizontal" when prop set', () => {
+    const { container } = render(
+      <Fader value={0.5} onChange={noop} orientation="horizontal" />,
+    )
+    expect(container.firstChild).toHaveAttribute('data-orientation', 'horizontal')
+  })
+
+  it('data-size="md" by default', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    expect(container.firstChild).toHaveAttribute('data-size', 'md')
+  })
+
+  it('data-size="sm" when size="sm"', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} size="sm" />)
+    expect(container.firstChild).toHaveAttribute('data-size', 'sm')
+  })
+
+  it('data-size="custom" for explicit CSS length', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} size="200px" />)
+    expect(container.firstChild).toHaveAttribute('data-size', 'custom')
+  })
+
+  it('renders detent tick when detent prop provided', () => {
+    const { container } = render(
+      <Fader value={0} onChange={noop} min={-1} max={1} detent={{ value: 0 }} />,
+    )
+    expect(container.querySelector('[data-testid="fader-detent"]')).not.toBeNull()
+  })
+
+  it('no detent tick without detent prop', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    expect(container.querySelector('[data-testid="fader-detent"]')).toBeNull()
+  })
+
+  it('format prop overrides readout text', () => {
+    const { container } = render(
+      <Fader value={0.5} onChange={noop} format={(v) => `${Math.round(v * 100)}%`} />,
+    )
+    expect(container.querySelector('[data-testid="fader-readout"]')?.textContent).toBe('50%')
+  })
+
+  it('linearScale defaultFormat shows 2dp', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    expect(container.querySelector('[data-testid="fader-readout"]')?.textContent).toBe('0.50')
+  })
+})
+
+describe('Fader accessibility', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  it('has role="slider"', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} />)
+    expect(getByRole('slider')).toBeDefined()
+  })
+
+  it('aria-valuemin and aria-valuemax reflect min/max props', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} min={0} max={1} />)
+    const el = getByRole('slider')
+    expect(el.getAttribute('aria-valuemin')).toBe('0')
+    expect(el.getAttribute('aria-valuemax')).toBe('1')
+  })
+
+  it('aria-valuenow reflects value prop', () => {
+    const { getByRole } = render(<Fader value={0.75} onChange={noop} />)
+    expect(getByRole('slider').getAttribute('aria-valuenow')).toBe('0.75')
+  })
+
+  it('aria-label defaults to "Fader"', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} />)
+    expect(getByRole('slider').getAttribute('aria-label')).toBe('Fader')
+  })
+
+  it('custom aria-label', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} aria-label="Volume" />)
+    expect(getByRole('slider').getAttribute('aria-label')).toBe('Volume')
+  })
+
+  it('aria-disabled when disabled', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} disabled />)
+    expect(getByRole('slider').getAttribute('aria-disabled')).toBe('true')
+  })
+
+  it('tabIndex=0 by default', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} />)
+    expect(getByRole('slider').getAttribute('tabindex')).toBe('0')
+  })
+
+  it('tabIndex=-1 when disabled', () => {
+    const { getByRole } = render(<Fader value={0.5} onChange={noop} disabled />)
+    expect(getByRole('slider').getAttribute('tabindex')).toBe('-1')
+  })
 })
