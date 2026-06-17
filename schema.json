@@ -1,0 +1,406 @@
+{
+  "version": "0.9",
+  "messages": {
+    "ping":           { "direction": "ui→engine", "payload": {} },
+    "pong":           { "direction": "engine→ui",  "payload": {} },
+    "transport.play": { "direction": "ui→engine", "payload": {} },
+    "transport.stop": {
+      "direction": "ui→engine",
+      "payload": { "discardRecording": "boolean?" },
+      "note": "Stop transport. discardRecording is OPTIONAL; absent/false keeps the in-progress take (current behavior), true stops and discards the in-progress recording."
+    },
+    "transport.seek": {
+      "direction": "ui→engine",
+      "payload": { "seconds": "number" },
+      "note": "Set the cursor / locate the playhead. seconds is the ABSOLUTE timeline position (in seconds) to move the playhead/cursor to. seconds MAY be beyond the current recorded content — the user can place the cursor in empty timeline, up to the timeline length. The engine must NOT clamp it to the content duration (it may clamp to [0, 3600] max). Play and Record start from this position."
+    },
+    "engine.frame": {
+      "direction": "engine→ui",
+      "payload": {
+        "playing":         "boolean",
+        "recording":       "boolean",
+        "seconds":         "number",
+        "durationSeconds": "number",
+        "meters": [{ "trackId": "string", "dBL": "number", "dBR": "number" }]
+      },
+      "note": "seconds is the SINGLE authoritative transport position the UI renders as the playhead/cursor line. Emitted ~30 Hz WHILE playing or recording (the moving indicator), AND emitted ONCE after any discrete position change (seek / locate) even when STOPPED, so the UI can render the cursor at the clicked position without playback. Terminal frame (playing: false, recording: false, meters: []) on stop reports the position where transport halted."
+    },
+    "inputs.list": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Request the engine to emit inputs.available with all enabled wave input devices."
+    },
+    "inputs.available": {
+      "direction": "engine→ui",
+      "payload": { "inputs": [{ "id": "string", "name": "string", "label": "string" }] },
+      "note": "Emitted in response to inputs.list and after inputs.setLabel. id = WaveInputDevice::getDeviceID(). label is empty string when not set."
+    },
+    "inputs.setLabel": {
+      "direction": "ui→engine",
+      "payload": { "id": "string", "label": "string" },
+      "note": "Engine persists the label keyed by device id in app-level prefs (never the song JSON), then re-emits inputs.available."
+    },
+    "track.setInput": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "inputId": "string" },
+      "note": "Associates a wave input device with a track. Must be called before track.arm."
+    },
+    "track.arm": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "armed": "boolean" },
+      "note": "Arms or disarms a track for recording. Routing the selected input happens on arm=true."
+    },
+    "transport.record": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Starts recording. If transport is stopped, also starts playback. Emits record.started."
+    },
+    "clip.delete": {
+      "direction": "ui→engine",
+      "payload": { "clipId": "string" },
+      "note": "Remove a clip from its track by stable clipId. After deletion the engine must re-emit the relevant track/clip state event so the UI observes the updated clip list."
+    },
+    "clip.move": {
+      "direction": "ui→engine",
+      "payload": { "clipId": "string", "start": "number", "trackId": "string?" },
+      "note": "Move a clip to a new timeline position by stable clipId. start is the new clip start in SECONDS, measured from the timeline origin; it must be >= 0 — both sides clamp negatives to 0. trackId is OPTIONAL: omit or pass an empty string to keep the clip on its current track; if present and different from the clip's current track, move the clip to that track (cross-track move). Snapping/grid is a UI concern and is NOT part of this contract. The engine responds with clip.moved carrying the authoritative position."
+    },
+    "record.started": {
+      "direction": "engine→ui",
+      "payload": {},
+      "note": "Emitted when recording actually begins (after pre-roll if any)."
+    },
+    "record.stopped": {
+      "direction": "engine→ui",
+      "payload": {},
+      "note": "Emitted after stop() commits recordings. Clip(s) will follow as clip.added events."
+    },
+    "clip.added": {
+      "direction": "engine→ui",
+      "payload": {
+        "trackId": "string",
+        "clip": { "clipId": "string", "start": "number", "length": "number", "label": "string", "peaks": ["number"] }
+      },
+      "note": "Emitted once per new clip after a recording is committed. clipId is the stable engine clip identity used by clip.delete. start/length in seconds. peaks: ~200 normalized amplitude values (0–1) for waveform display."
+    },
+    "clip.moved": {
+      "direction": "engine→ui",
+      "payload": { "trackId": "string", "clipId": "string", "start": "number" },
+      "note": "The AUTHORITATIVE clip position after a clip.move, emitted once per move. start is the clip's new start in SECONDS (clamped to >= 0). trackId is the clip's (possibly new) track — equal to the old track for a same-track move, or the destination track for a cross-track move. The UI reconciles its optimistic drag to this value. Clip position is PROJECT STATE (persisted in project.json, restored via clip.added on load); persistence is an engine concern, not part of this contract."
+    },
+    "take.save": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Triggers a Take snapshot + background render. Engine generates the takeId."
+    },
+    "take.saved": {
+      "direction": "engine→ui",
+      "payload": { "takeId": "string", "masterPath": "string" },
+      "note": "Emitted when the background render completes. masterPath is absolute."
+    },
+    "render.progress": {
+      "direction": "engine→ui",
+      "payload": { "takeId": "string", "pct": "number" },
+      "note": "Emitted ~30 Hz during background render. pct in [0, 1]."
+    },
+    "track.add": {
+      "direction": "ui→engine",
+      "payload": { "name": "string" },
+      "note": "Create a new empty AUDIO track. name is optional (empty string = engine picks a default). On success the engine re-emits tracks.list with the new track included. No separate response event — the caller observes the updated tracks.list."
+    },
+    "track.delete": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "withContents": "boolean?" },
+      "note": "Remove the track (by te::EditItemID) and all of its clips. For Folder tracks: withContents=false (or absent) removes the folder but PROMOTES its children to the folder's parent (or top level); withContents=true deletes the folder and everything inside. withContents is a no-op for normal audio tracks. After removal the engine re-emits tracks.list reflecting the updated track list. No new event — the caller observes the updated tracks.list. (Clip-level removal is the separate clip.delete command.)"
+    },
+    "track.clone": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string" },
+      "note": "Duplicate the track (by te::EditItemID) and insert the copy directly BELOW the source. The copy gets a NEW EditItemID and reproduces: name (e.g. '<name> copy'), input association, plugin chain (with state), mixer (mute/solo/volume), and clips (referencing the SAME audio assets — not re-recorded). No new event: after cloning the engine re-emits tracks.list PLUS the new track's per-track state via the EXISTING events — track.plugins, track.mixer, and one clip.added per copied clip."
+    },
+    "track.addFolder": {
+      "direction": "ui→engine",
+      "payload": { "name": "string", "childIds": ["string"] },
+      "note": "Create a new Folder track. name is REQUIRED (the UI always prompts before sending). childIds is OPTIONAL — when present, the engine moves those audio/folder tracks into the new folder in the given order (used for 'Add selected tracks to new folder'). On success the engine re-emits tracks.list."
+    },
+    "track.move": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "parentId": "string?", "index": "number" },
+      "note": "Reparent or reorder a track. parentId = id of the target Folder track to nest into; null/absent = move to top level. index is the 0-based position within the new parent (or top level). This is the single op behind drag-to-nest, drag-out, and plain reordering — arbitrary nesting depth is allowed. On success the engine re-emits tracks.list."
+    },
+    "track.rename": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "name": "string" },
+      "note": "Rename the track (by te::EditItemID). An empty or whitespace-only name is rejected by the engine — the track keeps its current name. After rename the engine re-emits tracks.list. No new event — the caller observes the updated tracks.list."
+    },
+    "tracks.list": {
+      "direction": "engine→ui",
+      "payload": { "tracks": [{ "id": "string", "name": "string", "kind": "string", "parentId": "string?" }] },
+      "note": "Emitted once after the Edit initialises, and re-emitted after track.add / track.addFolder / track.delete / track.clone / track.move / track.rename to reflect the updated track list. id = te::EditItemID — use this id as trackId in all bridge messages. No mock ids may cross the bridge. kind is 'audio' | 'folder'. parentId is the id of the containing Folder track, or null/absent for top-level tracks. Array is in render order, depth-first, so the UI can reconstruct the hierarchy from parentId + position."
+    },
+    "engine.notify": {
+      "direction": "engine→ui",
+      "payload": { "level": "string", "message": "string" },
+      "note": "User-facing notification. level is 'error' | 'info'. Replaces native JUCE alert dialogs."
+    },
+    "plugins.scan": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Request the engine to scan installed VST3 plugins. Emits plugins.available when done. Idempotent — returns cached results if already scanned; use plugins.rescan to force a fresh scan."
+    },
+    "plugins.available": {
+      "direction": "engine→ui",
+      "payload": {
+        "plugins": [{
+          "id": "string",
+          "name": "string",
+          "vendor": "string",
+          "category": "string",
+          "format": "string"
+        }]
+      },
+      "note": "Emitted in response to plugins.scan. id = PluginDescription::createIdentifierString(). format is 'VST3'. List is empty when no plugins are installed."
+    },
+    "track.addPlugin": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "pluginId": "string" },
+      "note": "Insert a plugin (by its id from plugins.available) into the named track's plugin chain. Emits track.chain on success."
+    },
+    "track.chain": {
+      "direction": "engine→ui",
+      "payload": {
+        "trackId": "string",
+        "plugins": [{ "id": "string", "name": "string" }]
+      },
+      "note": "Reports the current ordered plugin chain for a track. Emitted after track.addPlugin. Excludes the built-in volume/meter plugins."
+    },
+    "plugins.addFolder": {
+      "direction": "ui→engine",
+      "payload": { "path": "string" },
+      "note": "Add a VST3 search folder. Engine persists the folder list in app-level prefs (never the song JSON), then re-emits plugins.state."
+    },
+    "plugins.removeFolder": {
+      "direction": "ui→engine",
+      "payload": { "path": "string" },
+      "note": "Remove a VST3 search folder. Engine re-emits plugins.state after removal."
+    },
+    "plugins.rescan": {
+      "direction": "ui→engine",
+      "payload": { "mode": "string" },
+      "note": "Trigger a VST3 plugin scan. mode: 'incremental' = scan new/modified only; 'skipKnown' = scan but skip already-known; 'full' = clear cache and rescan everything. Emits plugins.scanProgress during and plugins.state on completion."
+    },
+    "plugins.cancelScan": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Cancel an in-progress scan. No-op if no scan is running. Engine re-emits plugins.state."
+    },
+    "plugins.state": {
+      "direction": "engine→ui",
+      "payload": {
+        "folders":  ["string"],
+        "plugins":  [{ "id": "string", "name": "string", "vendor": "string", "category": "string", "format": "string", "version": "string" }],
+        "scanning": "boolean",
+        "progress": { "current": "string", "done": "number", "total": "number" },
+        "failed":   [{ "path": "string", "reason": "string" }],
+        "invalid":  [{ "path": "string", "reason": "string" }]
+      },
+      "note": "Full snapshot of plugin browser state. Re-emitted whenever anything changes (folders added/removed, scan progress, results). progress is null when not scanning — the object shape above applies only when scanning=true. plugins.* state (folders + scanned list) is APP-LEVEL preference state (persists across songs, like input labels) — NOT song/Take JSON. Persistence is the engine's job. id is the VST3 identifier — the SAME id track.addPlugin uses, matched by identity. failed = crashed the subprocess (blacklisted). invalid = timed out during scan (likely showing a license/activation dialog); also blacklisted to avoid future freezes — user should activate the plugin in a standalone host then use plugins.rescan mode='full'."
+    },
+    "plugins.scanProgress": {
+      "direction": "engine→ui",
+      "payload": { "current": "string", "done": "number", "total": "number" },
+      "note": "Optional high-frequency progress event during a scan (~30 Hz). plugins.state carries the authoritative copy. current = path of plugin being scanned. done/total = count."
+    },
+    "project.setTempo": {
+      "direction": "ui→engine",
+      "payload": { "bpm": "number" },
+      "note": "Set the project-level tempo. bpm must be a positive finite number in [20, 300]; both sides should clamp/validate to that range. PROJECT-level only — per-section tempo is a future feature, do not add section fields here."
+    },
+    "project.setTimeSignature": {
+      "direction": "ui→engine",
+      "payload": { "numerator": "number", "denominator": "number" },
+      "note": "Set the project-level time signature. Default is 4/4. numerator ∈ [1, 32]. denominator must be a power of two ∈ {1, 2, 4, 8, 16, 32} (the note value that gets the beat). Invalid values are rejected/clamped by the engine — the TS type expresses two plain numbers. PROJECT-level only — no per-bar changes in v1."
+    },
+    "project.state": {
+      "direction": "engine→ui",
+      "payload": { "bpm": "number", "numerator": "number", "denominator": "number" },
+      "note": "Reports current project-level tempo and time signature. Emitted once on project load and re-emitted after project.setTempo or project.setTimeSignature. bpm is in [20, 300]. Default time signature is 4/4 (numerator=4, denominator=4). PROJECT-level only."
+    },
+
+    "project.new": {
+      "direction": "ui→engine",
+      "payload": { "name": "string", "parentPath": "string" },
+      "note": "Create a new project: the engine makes a 'Name.jackdaw/' folder (with project.json + assets/) under parentPath and opens it. On success the engine emits project.opened (then re-emits session state via the existing events). This is the project-FILE lifecycle, distinct from the project.setTempo / project.state tempo pair. Errors surface through engine.notify."
+    },
+    "project.open": {
+      "direction": "ui→engine",
+      "payload": { "path": "string" },
+      "note": "Open an existing '*.jackdaw' project folder at path. On success the engine emits project.opened (then re-emits session state via the existing events). Errors surface through engine.notify."
+    },
+    "project.save": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Write the current session to the open project's project.json and ensure referenced assets live under assets/. Emits project.saved on success; the UI clears its dirty flag. No Take / auto-render here — those are a future milestone. Errors surface through engine.notify."
+    },
+    "project.requestRecent": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Ask the engine to emit project.recent (the app-level most-recent-first project list for the welcome picker / menu)."
+    },
+    "project.opened": {
+      "direction": "engine→ui",
+      "payload": { "name": "string", "path": "string" },
+      "note": "A project is now attached and loaded; path is the absolute '*.jackdaw' folder. There is NO 'load everything' payload here — after this event the engine RE-EMITS session state through the EXISTING events: tracks.list, the tempo project.state, metronome.state, inputs.available, and one clip.added per restored clip."
+    },
+    "project.needsSelection": {
+      "direction": "engine→ui",
+      "payload": {},
+      "note": "No project is attached (launch auto-reopen found nothing usable). The UI must show the welcome picker (New / Open / Recent) and gate the DAW until project.opened. Emitted on launch when there is nothing to reopen."
+    },
+    "project.recent": {
+      "direction": "engine→ui",
+      "payload": { "projects": [{ "name": "string", "path": "string", "lastOpenedMs": "number" }] },
+      "note": "Most-recent-first list for the picker, emitted in response to project.requestRecent. This list is APP-LEVEL preference state (drives the picker + launch auto-reopen) — NOT song/project.json state. path is the absolute '*.jackdaw' folder; lastOpenedMs is epoch milliseconds."
+    },
+    "project.saved": {
+      "direction": "engine→ui",
+      "payload": { "path": "string" },
+      "note": "Save completed; path is the absolute '*.jackdaw' folder that was written. The UI clears its dirty flag. Emitted after project.save."
+    },
+
+    "plugin.add": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "identifier": "string", "index": "number" },
+      "note": "Insert a plugin into a track's chain. identifier is the VST3 catalog identity from plugins.available (same as plugin.scan uses). index is optional — omit or pass -1 to append to end. Engine assigns a new instanceId and emits track.plugins. Distinct from identifier: instanceId is per-instance (stable across the session), identifier is per-plugin-type."
+    },
+    "plugin.remove": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "instanceId": "string" },
+      "note": "Remove one plugin instance from a track's chain by its instanceId. Engine emits track.plugins after removal."
+    },
+    "plugin.reorder": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "instanceId": "string", "toIndex": "number" },
+      "note": "Move a plugin instance to a new position in the chain. Order is the audio signal path — this is audible. Engine emits track.plugins after reorder."
+    },
+    "plugin.copy": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "instanceId": "string" },
+      "note": "Serialize a plugin instance (identity + current parameter state) into an opaque token. Engine emits plugin.clipboard with the token and a display name. The UI stores the token to enable Paste. State must be preserved through the copy/paste round-trip."
+    },
+    "plugin.paste": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "token": "string", "index": "number" },
+      "note": "Rehydrate a plugin (identity + state) from an opaque token onto a track. token comes from plugin.clipboard — it is opaque to the UI. index is optional — omit or pass -1 to append to end. Engine assigns a new instanceId and emits track.plugins."
+    },
+    "plugin.openEditor": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "instanceId": "string" },
+      "note": "Open the plugin instance's NATIVE editor window (its VST3 UI), or focus it if already open. The editor is a native window OWNED BY THE ENGINE — it cannot render inside the WebView, so the UI only sends this intent. instanceId is the per-instance id from track.plugins (same as plugin.remove/reorder/copy). Engine emits plugin.editorState with open=true after opening."
+    },
+    "plugin.closeEditor": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "instanceId": "string" },
+      "note": "Close the plugin instance's native editor window. No-op if it is not open. instanceId is the per-instance id from track.plugins. Engine emits plugin.editorState with open=false after closing."
+    },
+
+    "track.plugins": {
+      "direction": "engine→ui",
+      "payload": {
+        "trackId": "string",
+        "plugins": [{ "instanceId": "string", "identifier": "string", "name": "string", "index": "number" }]
+      },
+      "note": "The ordered plugin chain for a track. Emitted on track select/load AND after every plugin.add / plugin.remove / plugin.reorder / plugin.paste mutation. instanceId is a stable per-instance id assigned by the engine. identifier is the VST3 catalog identity (same as plugin.scan uses). index is 0-based position in the signal path."
+    },
+    "plugin.clipboard": {
+      "direction": "engine→ui",
+      "payload": { "token": "string", "name": "string" },
+      "note": "Emitted after plugin.copy. token is an opaque payload (identity + state) for the UI to pass back in plugin.paste — the UI must not interpret it. name is a human-readable display label (e.g. plugin name) so the UI can show what is on the clipboard."
+    },
+    "plugin.editorState": {
+      "direction": "engine→ui",
+      "payload": { "trackId": "string", "instanceId": "string", "open": "boolean" },
+      "note": "Whether a plugin instance's native editor window is currently open. open is the AUTHORITATIVE state — the UI must reflect it (e.g. an 'editor open' indicator) rather than tracking open/close itself. Emitted after plugin.openEditor / plugin.closeEditor, AND when the user closes the native window directly (so open can go false without a UI command). instanceId is the per-instance id from track.plugins."
+    },
+
+    "metronome.set": {
+      "direction": "ui→engine",
+      "payload": {
+        "enabled": "boolean",
+        "accentDb": "number",
+        "beatDb": "number",
+        "duringPlayback": "boolean",
+        "duringRecording": "boolean",
+        "countInBeforePlayback": "boolean",
+        "countInBeforeRecording": "boolean"
+      },
+      "note": "Partial update — every field is OPTIONAL; only fields present in the message are applied. accentDb/beatDb are in dB in [-60, 6] (-60 = effectively silent, 0 = unity gain). Sensible defaults: accentDb = 0, beatDb = -6. Engine is the source of truth; re-emits metronome.state after any change."
+    },
+    "metronome.state": {
+      "direction": "engine→ui",
+      "payload": {
+        "enabled": "boolean",
+        "accentDb": "number",
+        "beatDb": "number",
+        "duringPlayback": "boolean",
+        "duringRecording": "boolean",
+        "countInBeforePlayback": "boolean",
+        "countInBeforeRecording": "boolean"
+      },
+      "note": "Full snapshot of metronome settings. All fields are required (non-optional). Emitted once on project load and re-emitted after every metronome.set. Engine is the source of truth. accentDb/beatDb are in dB in [-60, 6]."
+    },
+
+    "track.setMute": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "muted": "boolean" },
+      "note": "Mute or unmute one track. muted is an independent per-track flag — this does NOT touch solo. Engine is the source of truth; it re-emits track.mixer for the track after the change. Replaces the old console.log engine.toggleMute stub."
+    },
+    "track.setSolo": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "soloed": "boolean" },
+      "note": "Solo or un-solo one track. soloed is an independent per-track flag. The 'mute the others' behavior is the ENGINE's job and is NOT encoded here — this message only sets this track's solo flag. Engine re-emits track.mixer for affected tracks. Replaces the old console.log engine.toggleSolo stub."
+    },
+    "track.setVolume": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "db": "number" },
+      "note": "Set one track's fader volume. db is in dB in [-60, 6] (-60 = effectively silent, 0 = unity gain); both sides clamp to that range. Engine is the source of truth; it re-emits track.mixer after the change. Replaces the old local-only volume slider."
+    },
+    "track.setPan": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "pan": "number" },
+      "note": "Set one track's pan. pan is a float in [-1, 1] (-1 = hard left, 0 = center, +1 = hard right); both sides clamp to that range. Engine is the source of truth; it re-emits track.mixer after the change."
+    },
+    "track.mixer": {
+      "direction": "engine→ui",
+      "payload": { "trackId": "string", "muted": "boolean", "soloed": "boolean", "db": "number", "pan": "number" },
+      "note": "Authoritative per-track mixer state (mute / solo / volume / pan) for ONE track. Emitted after every track.setMute / track.setSolo / track.setVolume / track.setPan, AND once per track when tracks are (re)listed or a project loads — so the UI renders engine-reported values rather than holding its own source of truth. db is in dB in [-60, 6] (-60 = effectively silent, 0 = unity gain). pan is a float in [-1, 1] (-1 = hard left, 0 = center, +1 = hard right). Per-track mixer only — no buses/sends/master (out of scope)."
+    },
+
+    "track.send": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string" },
+      "note": "Package the track and start a peer-to-peer Croc send. v0 transports RAW AUDIO ONLY — the track's clips (WAV) + track name + clip start/length, bundled with a small manifest. The engine replies with share.code carrying the one-time Croc code phrase the sender hands to the receiver, then reports share.progress (direction 'send'). Plugin chain, mixer, and partial/region sends are NOT in scope — no fields for them. Errors also surface via engine.notify."
+    },
+    "track.receive": {
+      "direction": "ui→engine",
+      "payload": { "trackId": "string", "code": "string" },
+      "note": "Receive a Croc-sent track (code = the one-time phrase from the sender's share.code) and place its raw audio into the given FREE track. trackId is the empty target track to receive INTO. The engine reports share.progress (direction 'receive'); on phase 'done' it re-emits the target track's clips via the EXISTING events (tracks.list + one clip.added per placed clip) — there is no separate 'loaded' payload. Errors also surface via engine.notify."
+    },
+    "share.cancel": {
+      "direction": "ui→engine",
+      "payload": {},
+      "note": "Abort the in-flight share (the single active send OR receive). The engine kills the Croc transfer and frees itself for the next share. No-op if nothing is in progress. The engine does NOT emit a terminal share.progress for a user-initiated cancel — the UI dismisses its own dialog; cancel is the user telling the engine to stop waiting for a collaborator."
+    },
+    "share.code": {
+      "direction": "engine→ui",
+      "payload": { "code": "string" },
+      "note": "The one-time Croc code phrase generated for a track.send, for the sender to share with the receiver out-of-band. The receiver passes it back in track.receive."
+    },
+    "share.progress": {
+      "direction": "engine→ui",
+      "payload": { "direction": "string", "phase": "string", "pct": "number?" },
+      "note": "Progress for an in-flight share. direction = 'send' | 'receive'. phase = 'starting' | 'transferring' | 'done' | 'error'. pct is OPTIONAL (0–1) and only meaningful during 'transferring'. On receive 'done' the engine re-emits the target track's clips via the EXISTING events (tracks.list + one clip.added per placed clip) — there is no separate 'loaded' payload. On 'error' the user-facing detail also arrives via engine.notify."
+    }
+  },
+  "note": "Fire-and-forget events. For request/response queries use withNativeFunction/getNativeFunction — they return a JS Promise."
+}
