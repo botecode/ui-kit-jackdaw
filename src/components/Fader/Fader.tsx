@@ -25,6 +25,11 @@ export interface FaderProps {
   max?: number
   step?: number
   orientation?: 'vertical' | 'horizontal'
+  /**
+   * When using dbScale, pass matching min/max props to keep ARIA attributes and
+   * keyboard step math in sync with the scale's internal range.
+   * e.g. <Fader min={-60} max={6} scale={dbScale()} />
+   */
   scale?: FaderScale
   detent?: { value: number; strength?: number }
   resetValue?: number
@@ -103,7 +108,7 @@ export function Fader({
     const targetPct = effectiveScale.toPosition(resolvedTarget, min, max) * 100
     setResetSeed(prev => ({ from: fromPct, target: targetPct, key: prev.key + 1 }))
     setResetting(true)
-    onChangeRef.current(resolvedTarget)
+    onChangeRef.current(quantizeValue(resolvedTarget, step, min, max))
   }
 
   // ── Derived values ────────────────────────────────────────────────────────
@@ -207,6 +212,7 @@ export function Fader({
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragging) return
     setDragging(false)
 
     // Detent snap on release (Shift bypasses)
