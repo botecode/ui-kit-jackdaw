@@ -109,6 +109,7 @@ export function PanKnob({
     e.currentTarget.setPointerCapture(e.pointerId)
     dragStart.current = { y: e.clientY, pan, shift: e.shiftKey }
     setDragging(true)
+    setResetting(false)   // cancel spring if reset was in flight
   }
 
   function handlePointerMove(e: React.PointerEvent) {
@@ -173,6 +174,7 @@ export function PanKnob({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onDoubleClick={handleDoubleClick}
         onKeyDown={handleKeyDown}
       >

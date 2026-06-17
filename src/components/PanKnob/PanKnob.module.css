@@ -53,3 +53,8 @@
 .root[data-dragging] .readout {
   opacity: 1;
 }
+
+.root:hover .knob,
+.root[data-dragging] .knob {
+  filter: brightness(1.08);
+}
