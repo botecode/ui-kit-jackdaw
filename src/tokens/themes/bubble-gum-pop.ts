@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const bubbleGumPopTheme: ThemeTokens = {
+  "--bg": "#fdf0f8",
+  "--surface": "#fff8fc",
+  "--surface-2": "#fceaf5",
+  "--rail-bg": "#fbd6ef",
+  "--panel-bg": "#fff4fa",
+  "--arrange-bg": "#fef0fa",
+  "--strip-bg": "#fce4f0",
+  "--strip-mini-timeline": "#fdd7eb",
+  "--menu-bg": "#f9c8e8",
+  "--footer-bg": "#fbd1eb",
+  "--meter-track-bg": "#f7bce2",
+  "--border": "#f0aad8",
+  "--border-strong": "#e070b8",
+  "--text": "#3a0828",
+  "--text-muted": "#9e5580",
+  "--text-dim": "#c490b0",
+  "--accent": "#e84da0",
+  "--accent-contrast": "#fff",
+  "--accent-green": "#2ecc71",
+  "--accent-green-dim": "#a8f0cc",
+  "--rail-indicator": "#e84da0",
+  "--radius": "10px",
+}

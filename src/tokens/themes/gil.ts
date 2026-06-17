@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const gilTheme: ThemeTokens = {
+  "--bg": "#241813",
+  "--surface": "#2e1f17",
+  "--surface-2": "#3a2820",
+  "--rail-bg": "#20150f",
+  "--panel-bg": "#2e1f17",
+  "--arrange-bg": "#281a13",
+  "--strip-bg": "#1f140e",
+  "--strip-mini-timeline": "#2a1c14",
+  "--menu-bg": "#221610",
+  "--footer-bg": "#2c1e16",
+  "--meter-track-bg": "#38261c",
+  "--border": "#45301f",
+  "--border-strong": "#5e4230",
+  "--text": "#ecd9c4",
+  "--text-muted": "#b09478",
+  "--text-dim": "#7a6450",
+  "--accent": "#c75b39",
+  "--accent-contrast": "#ffffff",
+  "--accent-green": "#7d8a4f",
+  "--accent-green-dim": "#3e4528",
+  "--rail-indicator": "#c75b39",
+  "--radius": "5px",
+}

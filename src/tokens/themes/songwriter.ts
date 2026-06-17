@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const songwriterTheme: ThemeTokens = {
+  "--bg": "#1a1410",
+  "--surface": "#211c16",
+  "--surface-2": "#2e2620",
+  "--rail-bg": "#191510",
+  "--panel-bg": "#201b15",
+  "--arrange-bg": "#1d1812",
+  "--strip-bg": "#161210",
+  "--strip-mini-timeline": "#1a1510",
+  "--menu-bg": "#181410",
+  "--footer-bg": "#1c1812",
+  "--meter-track-bg": "#242018",
+  "--border": "#3a3020",
+  "--border-strong": "#5a4a30",
+  "--text": "#e8dfc8",
+  "--text-muted": "#9a8a6a",
+  "--text-dim": "#6a5a40",
+  "--accent": "#d48c3a",
+  "--accent-contrast": "#1a1410",
+  "--accent-green": "#5a9e6a",
+  "--accent-green-dim": "#2a3e2a",
+  "--rail-indicator": "#d48c3a",
+  "--radius": "4px",
+}

@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const nocturneTheme: ThemeTokens = {
+  "--bg": "#0a0e1a",
+  "--surface": "#0f1424",
+  "--surface-2": "#161d33",
+  "--rail-bg": "#080b15",
+  "--panel-bg": "#0f1424",
+  "--arrange-bg": "#0c1120",
+  "--strip-bg": "#080b15",
+  "--strip-mini-timeline": "#11172a",
+  "--menu-bg": "#0a0e1c",
+  "--footer-bg": "#11162a",
+  "--meter-track-bg": "#1a2238",
+  "--border": "#20284a",
+  "--border-strong": "#36437a",
+  "--text": "#cdd5ee",
+  "--text-muted": "#7e88b0",
+  "--text-dim": "#525a80",
+  "--accent": "#8a7dff",
+  "--accent-contrast": "#0a0e1a",
+  "--accent-green": "#4a9e8f",
+  "--accent-green-dim": "#244a44",
+  "--rail-indicator": "#8a7dff",
+  "--radius": "6px",
+}

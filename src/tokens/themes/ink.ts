@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const inkTheme: ThemeTokens = {
+  "--bg": "#0c0c0c",
+  "--surface": "#141414",
+  "--surface-2": "#1e1e1e",
+  "--rail-bg": "#0a0a0a",
+  "--panel-bg": "#141414",
+  "--arrange-bg": "#101010",
+  "--strip-bg": "#0a0a0a",
+  "--strip-mini-timeline": "#161616",
+  "--menu-bg": "#0c0c0c",
+  "--footer-bg": "#161616",
+  "--meter-track-bg": "#222222",
+  "--border": "#2a2a2a",
+  "--border-strong": "#555555",
+  "--text": "#fafafa",
+  "--text-muted": "#9a9a9a",
+  "--text-dim": "#5a5a5a",
+  "--accent": "#ff3b30",
+  "--accent-contrast": "#ffffff",
+  "--accent-green": "#9a9a9a",
+  "--accent-green-dim": "#3a3a3a",
+  "--rail-indicator": "#fafafa",
+  "--radius": "2px",
+}

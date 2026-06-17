@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const reaperTheme: ThemeTokens = {
+  "--bg": "#2b2b2b",
+  "--surface": "#333333",
+  "--surface-2": "#3c3c3c",
+  "--rail-bg": "#262626",
+  "--panel-bg": "#333333",
+  "--arrange-bg": "#2f2f2f",
+  "--strip-bg": "#272727",
+  "--strip-mini-timeline": "#2e2e2e",
+  "--menu-bg": "#2a2a2a",
+  "--footer-bg": "#383838",
+  "--meter-track-bg": "#3a3a3a",
+  "--border": "#454545",
+  "--border-strong": "#5c5c5c",
+  "--text": "#d0d0d0",
+  "--text-muted": "#909090",
+  "--text-dim": "#6a6a6a",
+  "--accent": "#e74c3c",
+  "--accent-contrast": "#ffffff",
+  "--accent-green": "#4caf50",
+  "--accent-green-dim": "#2e5532",
+  "--rail-indicator": "#d0d0d0",
+  "--radius": "3px",
+}

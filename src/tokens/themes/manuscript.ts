@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const manuscriptTheme: ThemeTokens = {
+  "--bg": "#f6f1e7",
+  "--surface": "#fffdf8",
+  "--surface-2": "#efe8d8",
+  "--rail-bg": "#ece4d3",
+  "--panel-bg": "#fffdf8",
+  "--arrange-bg": "#f3eddf",
+  "--strip-bg": "#efe7d6",
+  "--strip-mini-timeline": "#e9e0cd",
+  "--menu-bg": "#ece4d3",
+  "--footer-bg": "#efe8d8",
+  "--meter-track-bg": "#e4dac4",
+  "--border": "#ddd3bf",
+  "--border-strong": "#c2b598",
+  "--text": "#2b2620",
+  "--text-muted": "#6f6657",
+  "--text-dim": "#9a8f7a",
+  "--accent": "#356a8c",
+  "--accent-contrast": "#ffffff",
+  "--accent-green": "#4f7d52",
+  "--accent-green-dim": "#bcd4be",
+  "--rail-indicator": "#356a8c",
+  "--radius": "4px",
+}

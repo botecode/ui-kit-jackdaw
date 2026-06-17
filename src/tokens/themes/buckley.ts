@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const buckleyTheme: ThemeTokens = {
+  "--bg": "#0e1419",
+  "--surface": "#141c22",
+  "--surface-2": "#1c2730",
+  "--rail-bg": "#0c1116",
+  "--panel-bg": "#141c22",
+  "--arrange-bg": "#111921",
+  "--strip-bg": "#0c1116",
+  "--strip-mini-timeline": "#131b22",
+  "--menu-bg": "#0e141a",
+  "--footer-bg": "#16202a",
+  "--meter-track-bg": "#1e2a34",
+  "--border": "#25323c",
+  "--border-strong": "#3a4d5a",
+  "--text": "#d8e0e4",
+  "--text-muted": "#7d8f99",
+  "--text-dim": "#566570",
+  "--accent": "#7fa9c2",
+  "--accent-contrast": "#0e1419",
+  "--accent-green": "#5f8f86",
+  "--accent-green-dim": "#2c4742",
+  "--rail-indicator": "#7fa9c2",
+  "--radius": "6px",
+}

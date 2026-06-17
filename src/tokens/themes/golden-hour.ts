@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const goldenHourTheme: ThemeTokens = {
+  "--bg": "#1a1016",
+  "--surface": "#221520",
+  "--surface-2": "#2e1c2a",
+  "--rail-bg": "#160d12",
+  "--panel-bg": "#221520",
+  "--arrange-bg": "#1d1219",
+  "--strip-bg": "#150c11",
+  "--strip-mini-timeline": "#20141d",
+  "--menu-bg": "#180e14",
+  "--footer-bg": "#20141d",
+  "--meter-track-bg": "#2c1a28",
+  "--border": "#3a2434",
+  "--border-strong": "#5a3850",
+  "--text": "#f0dcc8",
+  "--text-muted": "#b08a9a",
+  "--text-dim": "#7a5868",
+  "--accent": "#ff8a3d",
+  "--accent-contrast": "#2a1012",
+  "--accent-green": "#d56a9c",
+  "--accent-green-dim": "#5a2e44",
+  "--rail-indicator": "#ff8a3d",
+  "--radius": "8px",
+}

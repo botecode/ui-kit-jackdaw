@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const technoTheme: ThemeTokens = {
+  "--bg": "#000000",
+  "--surface": "#050508",
+  "--surface-2": "#0d0d14",
+  "--rail-bg": "#03030a",
+  "--panel-bg": "#050508",
+  "--arrange-bg": "#070710",
+  "--strip-bg": "#030308",
+  "--strip-mini-timeline": "#08080f",
+  "--menu-bg": "#020205",
+  "--footer-bg": "#060610",
+  "--meter-track-bg": "#0c0c18",
+  "--border": "#1a1a2e",
+  "--border-strong": "#3333ff44",
+  "--text": "#c8c8ff",
+  "--text-muted": "#5555aa",
+  "--text-dim": "#333366",
+  "--accent": "#6666ff",
+  "--accent-contrast": "#fff",
+  "--accent-green": "#00ff88",
+  "--accent-green-dim": "#003322",
+  "--rail-indicator": "#6666ff",
+  "--radius": "2px",
+}

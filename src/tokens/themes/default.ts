@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const defaultTheme: ThemeTokens = {
+  "--bg": "#0a0a0a",
+  "--surface": "#101014",
+  "--surface-2": "#1e1e26",
+  "--rail-bg": "#0d0d10",
+  "--panel-bg": "#101014",
+  "--arrange-bg": "#16161a",
+  "--strip-bg": "#0c0c10",
+  "--strip-mini-timeline": "#13131a",
+  "--menu-bg": "#141416",
+  "--footer-bg": "#18181c",
+  "--meter-track-bg": "#1c1c22",
+  "--border": "#1e1e26",
+  "--border-strong": "#3a3a48",
+  "--text": "#e5e5e5",
+  "--text-muted": "#8080a0",
+  "--text-dim": "#52526a",
+  "--accent": "#E24B4A",
+  "--accent-contrast": "#fff",
+  "--accent-green": "#1D9E75",
+  "--accent-green-dim": "#274d38",
+  "--rail-indicator": "#e5e5e5",
+  "--radius": "6px",
+}

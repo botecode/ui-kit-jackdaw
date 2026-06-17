@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const tropicaliaTheme: ThemeTokens = {
+  "--bg": "#fdf6e3",
+  "--surface": "#fffdf6",
+  "--surface-2": "#fff3d6",
+  "--rail-bg": "#ffe9b8",
+  "--panel-bg": "#fffdf6",
+  "--arrange-bg": "#fef7e6",
+  "--strip-bg": "#fff0cf",
+  "--strip-mini-timeline": "#ffe8c0",
+  "--menu-bg": "#ffe3a8",
+  "--footer-bg": "#fff0cf",
+  "--meter-track-bg": "#ffe0b0",
+  "--border": "#f0d49a",
+  "--border-strong": "#e0a85a",
+  "--text": "#2a1a0a",
+  "--text-muted": "#7a5a30",
+  "--text-dim": "#a07a45",
+  "--accent": "#ff4d6d",
+  "--accent-contrast": "#2a1a0a",
+  "--accent-green": "#2bb673",
+  "--accent-green-dim": "#a8e6c4",
+  "--rail-indicator": "#ff4d6d",
+  "--radius": "12px",
+}

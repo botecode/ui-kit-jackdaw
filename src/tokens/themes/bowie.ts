@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const bowieTheme: ThemeTokens = {
+  "--bg": "#0b0b0f",
+  "--surface": "#141319",
+  "--surface-2": "#1f1d28",
+  "--rail-bg": "#090910",
+  "--panel-bg": "#141319",
+  "--arrange-bg": "#100f16",
+  "--strip-bg": "#0a0a10",
+  "--strip-mini-timeline": "#15141c",
+  "--menu-bg": "#0c0c12",
+  "--footer-bg": "#16151d",
+  "--meter-track-bg": "#1d1b27",
+  "--border": "#2a2838",
+  "--border-strong": "#3a4a7a",
+  "--text": "#f3e9d2",
+  "--text-muted": "#a89e8a",
+  "--text-dim": "#6c6678",
+  "--accent": "#ef2b3d",
+  "--accent-contrast": "#ffffff",
+  "--accent-green": "#2b6cff",
+  "--accent-green-dim": "#1a3360",
+  "--rail-indicator": "#ef2b3d",
+  "--radius": "4px",
+}

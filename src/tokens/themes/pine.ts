@@ -1,0 +1,26 @@
+import type { ThemeTokens } from '../types'
+
+export const pineTheme: ThemeTokens = {
+  "--bg": "#0d1612",
+  "--surface": "#122019",
+  "--surface-2": "#18291f",
+  "--rail-bg": "#0b130f",
+  "--panel-bg": "#122019",
+  "--arrange-bg": "#0f1a14",
+  "--strip-bg": "#0b130f",
+  "--strip-mini-timeline": "#111c16",
+  "--menu-bg": "#0c1410",
+  "--footer-bg": "#111c16",
+  "--meter-track-bg": "#1a2c20",
+  "--border": "#1f3327",
+  "--border-strong": "#355040",
+  "--text": "#d6e4d8",
+  "--text-muted": "#88a892",
+  "--text-dim": "#5a7564",
+  "--accent": "#e08a4a",
+  "--accent-contrast": "#11201a",
+  "--accent-green": "#4caf72",
+  "--accent-green-dim": "#234d33",
+  "--rail-indicator": "#e08a4a",
+  "--radius": "5px",
+}
