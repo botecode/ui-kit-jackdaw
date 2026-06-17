@@ -1,0 +1,106 @@
+/* src/tokens/global.css */
+
+/* ─── Self-hosted fonts (variable fonts need axis range or font-weight tokens no-op) ─ */
+@font-face {
+  font-family: "Cabinet Grotesk";
+  src: url("/fonts/CabinetGrotesk-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "General Sans";
+  src: url("/fonts/GeneralSans-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("/fonts/SpaceMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("/fonts/SpaceMono-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  /* ─── Type roles ─── */
+  --font-display: "Cabinet Grotesk", system-ui, sans-serif;
+  --font-ui:      "General Sans", system-ui, sans-serif;
+  --font-mono:    "Space Mono", ui-monospace, monospace;
+
+  /* ─── Type scale ─── */
+  --text-xs:      10px;
+  --text-sm:      11px;
+  --text-base:    13px;
+  --text-md:      15px;
+  --text-lg:      18px;
+  --text-display: 24px;
+
+  --leading-xs:      1.2;
+  --leading-sm:      1.3;
+  --leading-base:    1.5;
+  --leading-md:      1.4;
+  --leading-lg:      1.3;
+  --leading-display: 1.1;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-bold:   600;
+
+  /* ─── Spacing (4px grid) ─── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ─── Motion (decorative layer — zeroed by prefers-reduced-motion) ─── */
+  --dur-fast:    80ms;
+  --dur-base:    120ms;
+  --dur-slow:    200ms;
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Elevation ─── */
+  --shadow-sm: 0 1px 3px  hsl(0 0% 0% / 0.4);
+  --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.5);
+  --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.6);
+
+  /* ─── Track colour palette (cyclic spine assignment) ─── */
+  --track-color-1: #e8a87c;
+  --track-color-2: #7ec8a4;
+  --track-color-3: #7eb8d4;
+  --track-color-4: #c4a0e4;
+  --track-color-5: #e4c84a;
+  --track-color-6: #e47a7a;
+}
+
+/*
+  Per-theme structural overrides — cascade escape hatch.
+  RULE: data-theme overrides structural tokens ONLY (spacing, type, motion).
+  Colour and radius belong in the theme's ThemeTokens object, never here.
+  Inline style from ThemeProvider has highest specificity, so colour/radius
+  overrides via [data-theme] selectors are silently ignored — change them
+  in the theme object instead.
+
+  Examples (not yet active):
+    [data-theme="manuscript"] { --font-ui: "Lora", Georgia, serif; }
+    [data-theme="ink"]        { --font-ui: var(--font-mono); }
+*/
+
+/* Functional motion (playhead, meters) is kept. Decorative durations are zeroed. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast:  0ms;
+    --dur-base:  0ms;
+    --dur-slow:  0ms;
+  }
+}
