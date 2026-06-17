@@ -1,0 +1,43 @@
+/* src/gallery/ui/StatesGrid.module.css */
+.section {}
+
+.heading {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-4);
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.stateCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 100px;
+}
+
+.stateLabel {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.stateContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-height: 60px;
+}
