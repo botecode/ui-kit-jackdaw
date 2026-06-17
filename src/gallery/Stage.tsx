@@ -7,12 +7,11 @@ import { ThemeProvider } from '../theme/ThemeProvider'
 import type { ThemeId } from '../tokens/types'
 import styles from './Stage.module.css'
 
+import { Tokens } from './pages/Tokens'
+
 // Lazy imports to avoid circular dependency — pages import useTheme from ThemeProvider,
-// not from App. Tokens and DesignLanguage are imported after their tasks are done.
-// Stubs used until Tasks 10–11 complete.
-function TokensStub() {
-  return <div className={styles.stub}>Tokens page — Task 10</div>
-}
+// not from App. DesignLanguage is imported after Task 11 completes.
+// Stub used until Task 11 is done.
 function DesignLanguageStub() {
   return <div className={styles.stub}>Design Language page — Task 11</div>
 }
@@ -24,7 +23,7 @@ export function Stage() {
   const [compareMode, setCompareMode] = useState(false)
 
   const PAGE_MAP: Record<string, ComponentType> = {
-    '/tokens': TokensStub,
+    '/tokens': Tokens,
     '/design-language': DesignLanguageStub,
     ...DEMO_MAP,
   }

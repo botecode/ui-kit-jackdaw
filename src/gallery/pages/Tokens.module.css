@@ -1,0 +1,142 @@
+/* src/gallery/pages/Tokens.module.css */
+.page {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  min-height: 100%;
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+
+.section { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.sectionTitle {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-2);
+}
+
+.subTitle {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: var(--space-2);
+}
+
+/* Colour */
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.swatch { display: flex; gap: var(--space-3); align-items: flex-start; }
+
+.swatchChip { width: 40px; height: 40px; flex-shrink: 0; border: 1px solid var(--border); }
+
+.swatchInfo { display: flex; flex-direction: column; gap: 2px; }
+
+.swatchToken { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text); }
+
+.swatchLabel { font-family: var(--font-ui); font-size: var(--text-xs); color: var(--text-muted); }
+
+.swatchValue { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-dim); }
+
+.readabilityRow { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+
+.readabilitySample {
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Type scale */
+.typeRow { display: flex; gap: var(--space-6); align-items: baseline; padding: var(--space-2) 0; border-bottom: 1px solid var(--border); }
+
+.typeLabel { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-dim); min-width: 160px; flex-shrink: 0; }
+
+.typeSamples { display: flex; gap: var(--space-8); flex-wrap: wrap; }
+
+/* Spacing */
+.spacingScale { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.spacingRow { display: flex; align-items: center; gap: var(--space-4); }
+
+.spacingToken { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-dim); min-width: 80px; }
+
+.spacingBar { height: var(--space-4); background: var(--accent); border-radius: 2px; }
+
+/* Radius */
+.meta { font-family: var(--font-ui); font-size: var(--text-sm); color: var(--text-muted); }
+
+.code { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text); background: var(--surface-2); padding: 2px 6px; border-radius: 3px; }
+
+.radiusRow { display: flex; gap: var(--space-6); }
+
+.radiusBox { width: 80px; height: 80px; border: 1px solid var(--border); }
+
+/* Elevation */
+.elevationRow { display: flex; gap: var(--space-8); flex-wrap: wrap; }
+
+.elevationBox {
+  background: var(--surface);
+  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Motion */
+.reducedBadge {
+  display: inline-flex;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--accent);
+}
+
+.motionList { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.motionRow { display: flex; align-items: center; gap: var(--space-6); }
+
+.motionLabel { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-dim); min-width: 140px; }
+
+.motionDemo {
+  width: 48px;
+  height: 48px;
+  background: var(--accent);
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition-property: transform;
+  transition-timing-function: var(--ease-out);
+  transition-duration: var(--dur-base);
+}
+
+.motionDemo[data-active="true"] {
+  transform: translateX(80px);
+}
+
+/* Track palette */
+.trackRow { display: flex; gap: var(--space-4); }
+
+.trackSwatch { width: 48px; height: 48px; border-radius: var(--radius); border: 1px solid var(--border); }
