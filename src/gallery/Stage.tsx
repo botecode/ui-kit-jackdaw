@@ -8,13 +8,7 @@ import type { ThemeId } from '../tokens/types'
 import styles from './Stage.module.css'
 
 import { Tokens } from './pages/Tokens'
-
-// Lazy imports to avoid circular dependency — pages import useTheme from ThemeProvider,
-// not from App. DesignLanguage is imported after Task 11 completes.
-// Stub used until Task 11 is done.
-function DesignLanguageStub() {
-  return <div className={styles.stub}>Design Language page — Task 11</div>
-}
+import { DesignLanguage } from './pages/DesignLanguage'
 
 const COMPARE_THEMES: ThemeId[] = ['default', 'bowie', 'tropicalia', 'manuscript', 'ink']
 
@@ -24,7 +18,7 @@ export function Stage() {
 
   const PAGE_MAP: Record<string, ComponentType> = {
     '/tokens': Tokens,
-    '/design-language': DesignLanguageStub,
+    '/design-language': DesignLanguage,
     ...DEMO_MAP,
   }
 
