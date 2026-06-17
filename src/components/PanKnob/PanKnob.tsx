@@ -142,7 +142,7 @@ export function PanKnob({
       case 'End':       next = 1;  break
       case 'Backspace':
       case 'Delete':
-      case '0':         handleReset(); return
+      case '0':         e.preventDefault(); handleReset(); return
       default: return
     }
     e.preventDefault()
