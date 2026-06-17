@@ -37,12 +37,15 @@ export function ThemeProvider({ theme, children }: Props) {
   )
 }
 
+const VALID_IDS = new Set(THEMES.map(t => t.id))
+
 // Convenience wrapper that owns the theme state and provides context.
 // Use this at the App root. Use bare ThemeProvider for nested/compare usage.
 export function ThemeRoot({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeId>(
-    () => (localStorage.getItem('jd-gallery-theme') as ThemeId | null) ?? 'default'
-  )
+  const [theme, setTheme] = useState<ThemeId>(() => {
+    const stored = localStorage.getItem('jd-gallery-theme')
+    return (stored && VALID_IDS.has(stored as ThemeId)) ? stored as ThemeId : 'default'
+  })
   const ctx = useMemo<ThemeCtx>(() => ({
     theme,
     setTheme: (t) => {

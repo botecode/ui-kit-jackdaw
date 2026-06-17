@@ -19,7 +19,9 @@ export function Sidebar() {
 
   const liveByGroup = useMemo(() => {
     const map: Record<Group, DemoMeta[]> = { Foundations: [], Primitives: [], Composites: [] }
-    for (const d of DEMOS) map[d.meta.group].push(d.meta)
+    for (const d of DEMOS) {
+      if (d.meta.group in map) map[d.meta.group].push(d.meta)
+    }
     return map
   }, [])
 

@@ -13,7 +13,7 @@ export const technoTheme: ThemeTokens = {
   "--footer-bg": "#060610",
   "--meter-track-bg": "#0c0c18",
   "--border": "#1a1a2e",
-  "--border-strong": "#3333ff44",
+  "--border-strong": "#5555ee",
   "--text": "#c8c8ff",
   "--text-muted": "#5555aa",
   "--text-dim": "#333366",

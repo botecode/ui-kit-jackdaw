@@ -1,8 +1,8 @@
 // src/motion/spring.ts
 import { useEffect, useRef, useState } from 'react'
 
-const prefersReducedMotion = () =>
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const reducedMotionMql = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)')
 
 interface Config {
   stiffness?: number
@@ -25,7 +25,9 @@ export function useSpring(target: number, { stiffness = 200, damping = 30 }: Con
   const rafId = useRef(0)
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
+    const mql = reducedMotionMql()
+
+    if (mql.matches) {
       cancelAnimationFrame(rafId.current)
       setValue(target)
       state.current = { pos: target, vel: 0 }
@@ -59,7 +61,20 @@ export function useSpring(target: number, { stiffness = 200, damping = 30 }: Con
     }
 
     rafId.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId.current)
+
+    const onMqlChange = () => {
+      if (mql.matches) {
+        cancelAnimationFrame(rafId.current)
+        state.current = { pos: target, vel: 0 }
+        setValue(target)
+      }
+    }
+    mql.addEventListener('change', onMqlChange)
+
+    return () => {
+      cancelAnimationFrame(rafId.current)
+      mql.removeEventListener('change', onMqlChange)
+    }
   }, [target, stiffness, damping])
 
   return value
