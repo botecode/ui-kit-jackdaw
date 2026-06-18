@@ -4,6 +4,7 @@ import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { ArmButton } from './ArmButton'
+import { Checkbox } from '../Checkbox'
 
 export const meta: DemoMeta = {
   name: 'ArmButton',
@@ -80,25 +81,17 @@ function PlaygroundDemo() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <label style={labelStyle}>
-            <input type="checkbox" checked={armed} onChange={e => setArmed(e.target.checked)} />
-            armed
-          </label>
-          <label style={labelStyle}>
-            <input
-              type="checkbox"
-              checked={recording}
-              onChange={e => {
-                setRecording(e.target.checked)
-                if (e.target.checked) setArmed(true)
-              }}
-            />
-            recording
-          </label>
-          <label style={labelStyle}>
-            <input type="checkbox" checked={disabled} onChange={e => setDisabled(e.target.checked)} />
-            disabled
-          </label>
+          <Checkbox checked={armed} onChange={v => setArmed(v)} size="sm" label="armed" />
+          <Checkbox
+            checked={recording}
+            onChange={v => {
+              setRecording(v)
+              if (v) setArmed(true)
+            }}
+            size="sm"
+            label="recording"
+          />
+          <Checkbox checked={disabled} onChange={v => setDisabled(v)} size="sm" label="disabled" />
           <label style={labelStyle}>
             size
             <select

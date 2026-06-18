@@ -1,0 +1,160 @@
+/* src/components/Checkbox/Checkbox.module.css */
+
+/* ─── Root (the label wrapper) ─────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Hover ─────────────────────────────────────────────────────────────────── */
+
+.root:hover:not([data-disabled]) {
+  filter: brightness(1.08);
+}
+
+/* ─── Visually-hidden native input ──────────────────────────────────────────── */
+
+/*
+  Keep the input in the a11y tree (not display:none / visibility:hidden).
+  The label wrapper provides click target; :focus-visible transfers to .box via
+  the adjacent-sibling rule below.
+*/
+
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Box (the styled square) ───────────────────────────────────────────────── */
+
+.box {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 3px;
+  /* Off: recessed well — same recipe as mute chip / Fader channel */
+  background: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  /* Slow decay — incandescent off */
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow  var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Box sizes ─────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] .box { width: 16px; height: 16px; }
+.root[data-size="sm"] .box { width: 12px; height: 12px; border-radius: 2px; }
+
+/* ─── Glyph base (::after) ──────────────────────────────────────────────────── */
+
+.box::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  transition: opacity var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Checked: accent fill + LED bloom + check glyph ───────────────────────── */
+
+.input:checked + .box {
+  background: var(--accent);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  /* Fast attack — overrides decay from base .box rule */
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+}
+
+/* Checkmark: border-trick L rotated 45° */
+.input:checked + .box::after {
+  border-right: 2px solid var(--accent-contrast);
+  border-bottom: 2px solid var(--accent-contrast);
+  border-radius: 0 0 1px 0;
+  opacity: 1;
+}
+
+.root[data-size="md"] .input:checked + .box::after {
+  width: 4px;
+  height: 8px;
+  transform: translate(-50%, -62%) rotate(45deg);
+}
+
+.root[data-size="sm"] .input:checked + .box::after {
+  width: 3px;
+  height: 6px;
+  border-right-width: 1.5px;
+  border-bottom-width: 1.5px;
+  transform: translate(-50%, -62%) rotate(45deg);
+}
+
+/* ─── Indeterminate: same lit fill + dash ───────────────────────────────────── */
+
+.input:indeterminate + .box {
+  background: var(--accent);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+}
+
+.input:indeterminate + .box::after {
+  background: var(--accent-contrast);
+  border-radius: 1px;
+  opacity: 1;
+}
+
+.root[data-size="md"] .input:indeterminate + .box::after {
+  width: 8px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.root[data-size="sm"] .input:indeterminate + .box::after {
+  width: 6px;
+  height: 1.5px;
+  transform: translate(-50%, -50%);
+}
+
+/* ─── Focus ring on the box ─────────────────────────────────────────────────── */
+
+.input:focus-visible + .box {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Label text ─────────────────────────────────────────────────────────────── */
+
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1;
+}

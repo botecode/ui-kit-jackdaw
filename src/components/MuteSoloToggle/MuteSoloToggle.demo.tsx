@@ -4,6 +4,7 @@ import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { MuteSoloToggle } from './MuteSoloToggle'
+import { Checkbox } from '../Checkbox'
 
 export const meta: DemoMeta = {
   name: 'MuteSoloToggle',
@@ -81,22 +82,10 @@ function PlaygroundDemo() {
         />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <label style={labelStyle}>
-            <input type="checkbox" checked={muted} onChange={e => setMuted(e.target.checked)} />
-            muted
-          </label>
-          <label style={labelStyle}>
-            <input type="checkbox" checked={soloed} onChange={e => setSoloed(e.target.checked)} />
-            soloed
-          </label>
-          <label style={labelStyle}>
-            <input type="checkbox" checked={anySoloActive} onChange={e => setAnySoloActive(e.target.checked)} />
-            anySoloActive
-          </label>
-          <label style={labelStyle}>
-            <input type="checkbox" checked={disabled} onChange={e => setDisabled(e.target.checked)} />
-            disabled
-          </label>
+          <Checkbox checked={muted} onChange={v => setMuted(v)} size="sm" label="muted" />
+          <Checkbox checked={soloed} onChange={v => setSoloed(v)} size="sm" label="soloed" />
+          <Checkbox checked={anySoloActive} onChange={v => setAnySoloActive(v)} size="sm" label="anySoloActive" />
+          <Checkbox checked={disabled} onChange={v => setDisabled(v)} size="sm" label="disabled" />
           <label style={labelStyle}>
             orientation
             <select

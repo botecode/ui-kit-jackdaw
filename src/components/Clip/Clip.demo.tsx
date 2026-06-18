@@ -5,6 +5,7 @@ import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { Fader } from '../Fader'
+import { Checkbox } from '../Checkbox'
 import { Clip } from './Clip'
 import type { ClipProps } from './Clip'
 
@@ -150,15 +151,6 @@ const labelStyle: React.CSSProperties = {
   color: 'var(--text-muted)',
 }
 
-const checkLabelStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 'var(--space-2)',
-  fontFamily: 'var(--font-ui)',
-  fontSize: 'var(--text-sm)',
-  color: 'var(--text-muted)',
-  cursor: 'pointer',
-}
 
 function PlaygroundDemo() {
   const [clipWidth,    setClipWidth]    = useState(260)
@@ -240,10 +232,7 @@ function PlaygroundDemo() {
           {/* Toggles */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
             {toggles.map(([name, val, set]) => (
-              <label key={name} style={checkLabelStyle}>
-                <input type="checkbox" checked={val} onChange={e => set(e.target.checked)} />
-                {name}
-              </label>
+              <Checkbox key={name} checked={val} onChange={v => set(v)} size="sm" label={name} />
             ))}
           </div>
 
