@@ -85,7 +85,14 @@ function PlaygroundDemo() {
             armed
           </label>
           <label style={labelStyle}>
-            <input type="checkbox" checked={recording} onChange={e => setRecording(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={recording}
+              onChange={e => {
+                setRecording(e.target.checked)
+                if (e.target.checked) setArmed(true)
+              }}
+            />
             recording
           </label>
           <label style={labelStyle}>

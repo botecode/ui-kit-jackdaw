@@ -5,7 +5,6 @@ import type { DemoMeta } from './registry'
 // Remove an item here when its .demo.tsx file lands — it will auto-appear via glob.
 export const PLANNED: Array<Pick<DemoMeta, 'name' | 'group' | 'route'>> = [
   { name: 'MuteSoloToggle',           group: 'Primitives',  route: '/mute-solo' },
-  { name: 'ArmButton',                group: 'Primitives',  route: '/arm-button' },
   { name: 'TransportBar',             group: 'Primitives',  route: '/transport' },
   { name: 'TimelineRuler',            group: 'Primitives',  route: '/timeline-ruler' },
   { name: 'InputSelect',              group: 'Primitives',  route: '/input-select' },

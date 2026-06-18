@@ -75,7 +75,7 @@
   --_arm-glow-base custom property, so the transition into the pulse is seamless.
   Only box-shadow animates; background and transform are untouched (no reflow).
 */
-@keyframes arm-pulse {
+@keyframes arm-dot-pulse {
   0%, 100% {
     box-shadow:
       inset 0 1px 3px rgba(0, 0, 0, 0.5),
@@ -97,7 +97,7 @@
   A stray recording=true without armed=true renders no animation.
 */
 .root[data-armed][data-recording]::before {
-  animation: arm-pulse 2s ease-in-out infinite;
+  animation: arm-dot-pulse 2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
