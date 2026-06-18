@@ -8,6 +8,11 @@
   flex-direction: column;
 }
 
+/* Field variant fills its container so the trigger width is set by the parent, not the label */
+.root[data-variant="field"] {
+  width: 100%;
+}
+
 /* ─── Field trigger — recessed full-row control ────────────────────────────── */
 
 /*
@@ -85,8 +90,14 @@
 
 /* ─── Display label (selected value or placeholder) ────────────────────────── */
 
+/*
+  min-width: 0 allows the flex item to shrink below its text content width,
+  which is required for text-overflow: ellipsis to fire inside a flex container.
+*/
+
 .displayLabel {
   flex: 1;
+  min-width: 0;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -97,6 +108,15 @@
 
 .displayLabel[data-muted] {
   color: color-mix(in srgb, var(--stage-text) 50%, transparent);
+}
+
+/* Chip sits on --surface-2, not --stage — inherit the chip's own text color */
+.chip .displayLabel {
+  color: inherit;
+}
+
+.chip .displayLabel[data-muted] {
+  color: var(--text-dim);
 }
 
 /* ─── Dropdown caret ───────────────────────────────────────────────────────── */
@@ -113,6 +133,11 @@
   transform: rotate(180deg);
 }
 
+/* Chip caret inherits the chip's muted color, not the stage-text mix */
+.chip .caret {
+  color: var(--text-dim);
+}
+
 /* ─── Chip trigger — compact pill (FX chip sibling) ───────────────────────── */
 
 /*
@@ -125,6 +150,7 @@
   align-items: center;
   gap: var(--space-1);
   padding: 2px var(--space-2);
+  max-width: 13ch;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 999px;

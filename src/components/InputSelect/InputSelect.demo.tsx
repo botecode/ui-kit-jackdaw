@@ -5,6 +5,7 @@ import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { Toggle } from '../Toggle'
+import { Fader } from '../Fader'
 import { InputSelect } from './InputSelect'
 import type { InputSelectOption } from './InputSelect'
 
@@ -22,7 +23,7 @@ const BASIC_OPTIONS: InputSelectOption[] = [
   { id: 'in-4', label: 'Input 4' },
 ]
 
-const LONG_OPTIONS: InputSelectOption[] = Array.from({ length: 16 }, (_, i) => ({
+const LONG_OPTIONS: InputSelectOption[] = Array.from({ length: 20 }, (_, i) => ({
   id: `in-${i + 1}`,
   label: i === 0 ? 'Input 1 (Vocal mic)' : `Input ${i + 1}`,
 }))
@@ -196,15 +197,17 @@ function PlaygroundDemo() {
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
             options
-            <input
-              type="range"
-              min={1}
-              max={16}
+            <Fader
               value={optionCount}
-              onChange={e => setOptionCount(Number(e.target.value))}
-              style={{ width: 80 }}
+              onChange={v => setOptionCount(Math.round(v))}
+              min={1}
+              max={20}
+              step={1}
+              orientation="horizontal"
+              size="sm"
+              aria-label="Option count"
             />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{optionCount}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', minWidth: '2ch', textAlign: 'right' }}>{optionCount}</span>
           </div>
         </div>
       </div>

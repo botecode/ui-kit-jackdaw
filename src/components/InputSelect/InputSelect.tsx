@@ -116,6 +116,7 @@ export function InputSelect({
         aria-controls={open ? listboxId : undefined}
         aria-activedescendant={open && activeId ? `${listboxId}-${activeId}` : undefined}
         aria-label={ariaLabel}
+        title={selectedOption?.label}
         disabled={disabled}
         onClick={open ? closeMenu : openMenu}
         onKeyDown={handleKeyDown}
