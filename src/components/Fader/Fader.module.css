@@ -34,9 +34,12 @@
 
 .track {
   position: relative;
-  background: var(--surface-2);
+  background: var(--stage);
   border-radius: 3px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
   flex-shrink: 0;
 }
 
@@ -56,30 +59,6 @@
 .root[data-orientation='horizontal'][data-size='custom'] .track {
   height: 12px;
   width: var(--fader-length, 120px);
-}
-
-/* ─── Fill ───────────────────────────────────────────────────────────────── */
-
-.fill {
-  position: absolute;
-  background: var(--fader-accent, var(--accent));
-  opacity: 0.35;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.root[data-orientation='vertical'] .fill {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: calc(var(--pos, 0) * 100%);
-}
-
-.root[data-orientation='horizontal'] .fill {
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: calc(var(--pos, 0) * 100%);
 }
 
 /* ─── Detent tick ────────────────────────────────────────────────────────── */

@@ -285,13 +285,6 @@ export function Fader({
           />
         )}
         <div
-          className={styles.fill}
-          style={{
-            '--pos': displayPosition,
-            '--fader-accent': capColor,
-          } as React.CSSProperties}
-        />
-        <div
           ref={capRef}
           className={styles.cap}
           data-testid="fader-cap"
