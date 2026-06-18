@@ -1,0 +1,89 @@
+/* src/components/FxChip/FxChip.module.css */
+
+/* ─── Root (positioning context for the Popover) ────────────────────────────── */
+
+.root {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+/* ─── Chip trigger ───────────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-size="md"] .chip { min-height: 24px; }
+.root[data-size="sm"] .chip { min-height: 20px; }
+
+.chip:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-cyan) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Active: LED bloom (fast attack) ───────────────────────────────────────── */
+
+.root[data-state="active"] .chip {
+  border-color: color-mix(in srgb, var(--led-cyan) 60%, var(--border));
+  box-shadow:
+    0 0 0 1px var(--led-cyan),
+    0 0 8px 3px color-mix(in srgb, var(--led-cyan) 35%, transparent);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Open: accent border (overrides active bloom border) ───────────────────── */
+
+.root[data-open] .chip {
+  border-color: var(--accent);
+}
+
+/* ─── Bypassed: full-opacity recessed-off (no bloom, no opacity change) ─────── */
+
+.root[data-state="bypassed"] .chip {
+  box-shadow: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Label text ─────────────────────────────────────────────────────────────── */
+
+.label {
+  line-height: 1;
+}
+
+/* ─── Chain editor (Tasks 3–4 will add more) ────────────────────────────────── */
+
+.chainDialog {
+  min-width: 220px;
+  max-width: 300px;
+}
