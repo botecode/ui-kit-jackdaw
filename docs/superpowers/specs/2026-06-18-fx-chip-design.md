@@ -213,6 +213,8 @@ A local component in `FxChip.tsx`, not exported.
 
 `someBypassedPlugins` = `chainEnabled && plugins.some(p => !p.enabled)`.
 
+When `plugins.length === 0`, treat `masterState` as `"off"` regardless of `chainEnabled` — a lit cyan LED over "No effects yet" would read as something processing when nothing is. Guard: `masterState = plugins.length === 0 ? 'off' : chainEnabled ? (someBypassedPlugins ? 'partial' : 'active') : 'off'`.
+
 Visual states:
 
 | `data-state` | Appearance |
@@ -310,11 +312,12 @@ export interface FxChipProps {
   onAdd:          () => void
   size?:          'sm' | 'md'
   disabled?:      boolean
+  defaultOpen?:   boolean
   'aria-label'?:  string
 }
 ```
 
-Default `aria-label`: `'FX chain'`.
+Default `aria-label`: `'FX chain'`. `defaultOpen` sets uncontrolled initial open state — used for the static "open" demo card and tests that need the panel mounted without simulating a click.
 
 ---
 
