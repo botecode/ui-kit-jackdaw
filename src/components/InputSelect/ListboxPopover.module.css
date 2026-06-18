@@ -1,0 +1,77 @@
+/* src/components/InputSelect/ListboxPopover.module.css */
+
+/* ─── Popover panel ─────────────────────────────────────────────────────────── */
+
+.popover {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--menu-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  padding: 4px 0;
+  /* Open animation — zeroed by prefers-reduced-motion via --dur-fast */
+  animation: popover-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Option row ────────────────────────────────────────────────────────────── */
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  min-height: 28px;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text);
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.option:hover,
+.option[data-active] {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* ─── Check mark (column-stable: always present, invisible when unselected) ── */
+
+.check {
+  flex-shrink: 0;
+  width: 14px;
+  font-size: var(--text-xs);
+  color: var(--accent);
+  opacity: 0;
+  line-height: 1;
+}
+
+.option[aria-selected="true"] .check {
+  opacity: 1;
+}
+
+/* ─── Label text ────────────────────────────────────────────────────────────── */
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
