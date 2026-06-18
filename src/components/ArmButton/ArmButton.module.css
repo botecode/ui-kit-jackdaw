@@ -25,6 +25,10 @@
   padding: 0;
   user-select: none;
   -webkit-user-select: none;
+  /* Slow decay on ring when unarmed — incandescent off */
+  transition:
+    border-color var(--dur-led-off) var(--ease-out),
+    border-width var(--dur-led-off) var(--ease-out);
 }
 
 /* ─── Sizes ───────────────────────────────────────────────────────────────── */
@@ -52,19 +56,27 @@
 .root[data-size="md"]::before { width: 14px; height: 14px; }
 .root[data-size="sm"]::before { width: 10px; height: 10px; }
 
-/* ─── Armed: dark center + red ring — "ready, not rolling" ───────────────── */
+/* ─── Armed: red ring + deep-red matte center — "ready" ──────────────────── */
 
 /*
-  Center stays dark (--stage). The red ring (0 0 0 1px --led-red) and faint
-  outer glow signal the armed state without competing with recording's fill.
+  Ring turns red (border-color) and thickens to 2px. Center fills --led-red-deep
+  — saturated dark red, matte (no outer glow). Clearly "armed" without glowing.
+  Armed→recording distinction: matte deep-red vs lit bright-red + bloom.
 */
+.root[data-armed] {
+  border-color: var(--led-red);
+  border-width: 2px;
+  /* Fast attack on ring */
+  transition:
+    border-color var(--dur-led-on) var(--ease-out),
+    border-width var(--dur-led-on) var(--ease-out);
+}
+
 .root[data-armed]::before {
-  background: var(--stage);
+  background: var(--led-red-deep);
   box-shadow:
     inset 0 1px 3px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
-    0 0 0 1px var(--led-red),
-    0 0 4px 1px color-mix(in srgb, var(--led-red) 20%, transparent);
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2);
   /* Fast attack — overrides decay transition from base rule */
   transition:
     background var(--dur-led-on) var(--ease-out),
