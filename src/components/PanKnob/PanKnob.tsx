@@ -1,5 +1,5 @@
 // src/components/PanKnob/PanKnob.tsx
-import { useEffect, useId, useRef, useState } from 'react'
+import { Fragment, useEffect, useId, useRef, useState } from 'react'
 import { useSpring } from '../../motion/spring'
 import styles from './PanKnob.module.css'
 
@@ -151,12 +151,12 @@ export function PanKnob({
   }
 
   const knurlCount = size === 'sm' ? 16 : 24
-  const capColor = color ?? 'var(--accent)'
 
   return (
     <div
       className={`${styles.root}${disabled ? ` ${styles.disabled}` : ''}`}
       data-dragging={dragging || undefined}
+      style={color ? { '--pan-accent': color } as React.CSSProperties : undefined}
     >
       <svg
         ref={svgRef}
@@ -185,16 +185,6 @@ export function PanKnob({
           </radialGradient>
         </defs>
 
-        {/* ── Static layer: recessed well ── */}
-        <circle cx="20" cy="20" r="18" fill="var(--surface-2)" />
-        <circle
-          cx="20" cy="20" r="17.5"
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth="0.5"
-          opacity="0.4"
-        />
-
         {/* ── Static layer: 13 tick marks −135°..+135° at 22.5° steps ── */}
         {Array.from({ length: 13 }, (_, i) => {
           const deg = -135 + i * 22.5
@@ -207,39 +197,70 @@ export function PanKnob({
               x1={20 + Math.sin(rad) * 15.5} y1={20 - Math.cos(rad) * 15.5}
               x2={20 + Math.sin(rad) * (center ? 17.5 : 16.5)}
               y2={20 - Math.cos(rad) * (center ? 17.5 : 16.5)}
-              stroke={center ? 'var(--border-strong)' : 'var(--border)'}
+              stroke={center ? 'var(--border-strong)' : 'var(--text-muted)'}
               strokeWidth={center ? 1.5 : 0.8}
               shapeRendering="crispEdges"
             />
           )
         })}
 
+        {/* ── Static layer: silkscreen L / R labels ── */}
+        <text
+          data-testid="silkscreen-label"
+          x="7.3"
+          y="32.7"
+          fontSize="2.5"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="var(--text-muted)"
+          aria-hidden="true"
+        >L</text>
+        <text
+          data-testid="silkscreen-label"
+          x="32.7"
+          y="32.7"
+          fontSize="2.5"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="var(--text-muted)"
+          aria-hidden="true"
+        >R</text>
+
         {/* ── Rotating layer: knurled grip + cap + pointer ── */}
         <g
           data-testid="knob-body"
+          className={styles.knobBody}
           style={{
             transform: `rotate(${displayAngle}deg)`,
             transformOrigin: '20px 20px',
           }}
         >
-          {/* Knurled grip lines — outer band only (r 10→14), no inner fill */}
+          {/* Knurled grip — milled grooves: 1px dark shadow + 1px bright highlight per groove */}
           {Array.from({ length: knurlCount }, (_, i) => {
-            const rad = ((360 / knurlCount) * i * Math.PI) / 180
+            const shadowRad = ((360 / knurlCount) * i * Math.PI) / 180
+            const highlightRad = shadowRad + (1.5 * Math.PI) / 180
             return (
-              <line
-                key={i}
-                x1={20 + Math.sin(rad) * 10} y1={20 - Math.cos(rad) * 10}
-                x2={20 + Math.sin(rad) * 14} y2={20 - Math.cos(rad) * 14}
-                stroke="var(--border)"
-                strokeWidth="0.5"
-                opacity="0.5"
-                shapeRendering="crispEdges"
-              />
+              <Fragment key={i}>
+                <line
+                  x1={20 + Math.sin(shadowRad) * 10} y1={20 - Math.cos(shadowRad) * 10}
+                  x2={20 + Math.sin(shadowRad) * 14} y2={20 - Math.cos(shadowRad) * 14}
+                  stroke="rgba(0,0,0,0.45)"
+                  strokeWidth="1"
+                  shapeRendering="crispEdges"
+                />
+                <line
+                  x1={20 + Math.sin(highlightRad) * 10} y1={20 - Math.cos(highlightRad) * 10}
+                  x2={20 + Math.sin(highlightRad) * 14} y2={20 - Math.cos(highlightRad) * 14}
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="1"
+                  shapeRendering="crispEdges"
+                />
+              </Fragment>
             )
           })}
 
-          {/* Colored cap */}
-          <circle cx="20" cy="20" r="9.5" fill={capColor} />
+          {/* Colored cap — fill via CSS .cap → var(--pan-accent, var(--accent)) */}
+          <circle cx="20" cy="20" r="9.5" className={styles.cap} />
           {/* Soft top-highlight — radial gradient; no filter (no re-raster on rotate) */}
           <circle cx="20" cy="20" r="9.5" fill={`url(#${gradId})`} />
 
@@ -250,6 +271,14 @@ export function PanKnob({
             stroke="var(--bg)" strokeWidth="0.5" strokeOpacity="0.4"
           />
         </g>
+
+        {/* ── LED ring — edge ring + diffuse spill; CSS controls opacity ── */}
+        <circle
+          data-testid="led-ring"
+          cx="20" cy="20" r="10.25"
+          strokeWidth="1.5"
+          className={styles.ledRing}
+        />
       </svg>
 
       <span className={styles.readout} data-testid="readout" aria-hidden="true">
