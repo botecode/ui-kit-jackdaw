@@ -7,7 +7,6 @@ export const PLANNED: Array<Pick<DemoMeta, 'name' | 'group' | 'route'>> = [
   { name: 'MuteSoloToggle',           group: 'Primitives',  route: '/mute-solo' },
   { name: 'TransportBar',             group: 'Primitives',  route: '/transport' },
   { name: 'TimelineRuler',            group: 'Primitives',  route: '/timeline-ruler' },
-  { name: 'InputSelect',              group: 'Primitives',  route: '/input-select' },
   { name: 'FXChip',                   group: 'Primitives',  route: '/fx-chip' },
   { name: 'ContextMenu',              group: 'Primitives',  route: '/context-menu' },
   { name: 'Dialog',                   group: 'Primitives',  route: '/dialog' },
