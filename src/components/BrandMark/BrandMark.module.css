@@ -1,0 +1,159 @@
+/* src/components/BrandMark/BrandMark.module.css */
+
+/* ─── Fixed brand identity vars ─────────────────────────────────────────────
+   These are the jackdaw's own colours — not theme semantic tokens.
+   Defined here so they're tweakable in one place if the bird is ever recoloured.
+   --brand-eye and --brand-keyline map to --bg so the cream adapts per theme.      */
+.root {
+  --brand-crown:      #8a8a8a;
+  --brand-crown-deep: #2a2a2a;
+  --brand-ink:        #1a1a18;
+  --brand-eye:        var(--bg);
+  --brand-keyline:    var(--bg);
+}
+
+/* ─── Root wrapper ───────────────────────────────────────────────────────── */
+
+.root {
+  display:   inline-block;
+  position:  relative;
+  /* em-relative: font-size is set via inline style to the `size` prop (px).
+     All internal measurements below use em so the whole mark scales uniformly. */
+}
+
+/* Variant-specific dimensions (in em units, so they scale with font-size). */
+.root[data-variant="icon"]  { width: 1em; height: 1em; }
+.root[data-variant="full"]  { width: 1em; height: 1.4em; }
+.root[data-variant="sigil"] { width: 0.36em; height: 0.58em; }
+
+/* Light surface: paper texture. Dark stage: scanline texture. */
+.root:not([data-stage]) {
+  background:       var(--bg);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+}
+.root[data-stage] {
+  background:       var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+}
+
+/* ─── Fan pivot ──────────────────────────────────────────────────────────── */
+
+/* Zero-size anchor at bottom-centre. Petals position relative to this. */
+.fanPivot {
+  position:  absolute;
+  bottom:    0.1em;
+  left:      50%;
+  transform: translateX(-50%);
+  width:     0;
+  height:    0;
+}
+
+/* ─── Petals ─────────────────────────────────────────────────────────────── */
+
+.petal {
+  position:        absolute;
+  bottom:          0;          /* sits on the pivot */
+  left:            -0.09em;   /* half of 0.18em width → centres on pivot */
+  width:           0.18em;
+  height:          0.52em;
+  border-radius:   0 100% 0 100%;
+  transform-origin: 50% 100%;  /* rotate around bottom centre */
+  /* Cream separator — box-shadow follows the rounded shape (outline does not) */
+  box-shadow:      0 0 0 2px var(--brand-keyline);
+}
+
+/* Rotation + colour + stacking: centre petal (yellow) on top */
+.petal:nth-child(1) { background: var(--chroma-red);    rotate: -60deg; z-index: 1; }
+.petal:nth-child(2) { background: var(--chroma-orange); rotate: -30deg; z-index: 2; }
+.petal:nth-child(3) { background: var(--chroma-yellow); rotate:   0deg; z-index: 3; }
+.petal:nth-child(4) { background: var(--chroma-teal);   rotate:  30deg; z-index: 2; }
+.petal:nth-child(5) { background: var(--chroma-blue);   rotate:  60deg; z-index: 1; }
+
+/* ─── Bird wrapper ───────────────────────────────────────────────────────── */
+
+/* Positions the SVG bird centred in the upper portion, overlapping the fan. */
+.bird {
+  position:  absolute;
+  top:       0.06em;
+  left:      50%;
+  transform: translateX(-50%);
+  width:     0.44em;
+  /* Height is auto — SVG maintains its 100:120 aspect ratio.
+     At 0.44em wide, height = 0.44 × (120/100) = 0.528em.
+     It overlaps the fan pivot by roughly 0.1em — intentional. */
+  display:   block;
+  z-index:   10; /* in front of all petals */
+}
+
+/* ─── Wordmark (Interpretation A only) ──────────────────────────────────── */
+
+.wordmark {
+  position:       absolute;
+  bottom:         0.04em;
+  left:           50%;
+  transform:      translateX(-50%);
+  white-space:    nowrap;
+  font-family:    var(--font-display);
+  font-weight:    700;
+  font-size:      0.12em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color:          var(--text);
+  z-index:        10;
+}
+
+.root[data-stage] .wordmark {
+  color: var(--stage-text);
+}
+
+/* Triangle-A stretch goal: hide the letter, overlay ▲ glyph */
+.wordmarkA {
+  display:  inline-block;
+  position: relative;
+  color:    transparent;
+  /* Cabinet Grotesk's A still contributes to letter-spacing — intentional */
+}
+
+.wordmarkA::before {
+  content:     '▲';
+  position:    absolute;
+  inset:       0;
+  display:     flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size:   0.78em;
+  line-height: 1;
+  bottom:      0.05em;
+}
+
+.wordmarkA1::before { color: var(--chroma-red);  }
+.wordmarkA2::before { color: var(--chroma-teal); }
+
+/* ─── Sigil eye ──────────────────────────────────────────────────────────── */
+
+/* The eye sits above the fanPivot on the single sigil petal. */
+.sigilEye {
+  position:  absolute;
+  bottom:    0.32em;
+  left:      50%;
+  transform: translateX(-50%);
+  width:     0.14em;
+  height:    0.14em;
+  z-index:   10;
+}
+
+.sigilEyeRing {
+  position:      absolute;
+  inset:         0;
+  border-radius: 50%;
+  background:    var(--brand-eye);
+}
+
+.sigilEyePupil {
+  position:      absolute;
+  inset:         22%;
+  border-radius: 50%;
+  background:    var(--brand-ink);
+}
