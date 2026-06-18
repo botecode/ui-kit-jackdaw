@@ -369,3 +369,12 @@
   z-index: 201;
   border-radius: 1px;
 }
+
+/* ─── Reduced motion: suppress drag visuals ──────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost,
+  .insertionLine {
+    display: none;
+  }
+}

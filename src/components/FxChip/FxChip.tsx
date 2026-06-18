@@ -76,11 +76,12 @@ function MasterLED({ chainEnabled, plugins, onToggle, ledRef }: MasterLEDProps) 
 // ── DragState ─────────────────────────────────────────────────────────────────
 
 interface DragState {
-  dragIndex:   number
-  hoverIndex:  number
-  ghostY:      number
-  panelTop:    number
-  panelBottom: number
+  dragIndex:     number
+  hoverIndex:    number
+  ghostY:        number
+  panelTop:      number
+  panelBottom:   number
+  reducedMotion: boolean
 }
 
 // ── SlotRow ───────────────────────────────────────────────────────────────────
@@ -97,14 +98,17 @@ interface SlotRowProps {
   onDragStart:    (index: number, e: React.PointerEvent<HTMLDivElement>) => void
   onDragMove:     (e: React.PointerEvent<HTMLDivElement>) => void
   onDragEnd:      (e: React.PointerEvent<HTMLDivElement>) => void
+  onPointerCancel: (e: React.PointerEvent<HTMLDivElement>) => void
 }
 
 function SlotRow({
   plugin, index, total, onTogglePlugin, onReorder, onRemove, onAnnounce,
-  slotRef, onDragStart, onDragMove, onDragEnd,
+  slotRef, onDragStart, onDragMove, onDragEnd, onPointerCancel,
 }: SlotRowProps) {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!e.altKey) return
+    const t = e.target as HTMLElement
+    if (t.classList.contains(styles.moveUp) || t.classList.contains(styles.moveDown)) return
     if (e.key === 'ArrowUp' && index > 0) {
       e.preventDefault()
       onReorder(index, index - 1)
@@ -153,6 +157,7 @@ function SlotRow({
         onPointerDown={e => onDragStart(index, e)}
         onPointerMove={onDragMove}
         onPointerUp={onDragEnd}
+        onPointerCancel={onPointerCancel}
       >⠿</div>
       <button
         className={styles.removeBtn}
@@ -187,12 +192,14 @@ function ChainEditor({
   function handleDragStart(index: number, e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId)
     const panel = panelRef.current?.getBoundingClientRect()
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     setDragState({
-      dragIndex:   index,
-      hoverIndex:  index,
-      ghostY:      e.clientY,
-      panelTop:    panel?.top    ?? 0,
-      panelBottom: panel?.bottom ?? window.innerHeight,
+      dragIndex:     index,
+      hoverIndex:    index,
+      ghostY:        e.clientY,
+      panelTop:      panel?.top    ?? 0,
+      panelBottom:   panel?.bottom ?? window.innerHeight,
+      reducedMotion,
     })
   }
 
@@ -259,9 +266,10 @@ function ChainEditor({
                 onDragStart={handleDragStart}
                 onDragMove={handleDragMove}
                 onDragEnd={handleDragEnd}
+                onPointerCancel={handleDragEnd}
               />
             ))}
-            {dragState && dragState.hoverIndex !== dragState.dragIndex && (
+            {dragState && !dragState.reducedMotion && dragState.hoverIndex !== dragState.dragIndex && (
               <div
                 className={styles.insertionLine}
                 style={{ top: getInsertionLineY(dragState.hoverIndex) }}
@@ -275,7 +283,7 @@ function ChainEditor({
           {announcement}
         </div>
       </Panel>
-      {dragState && (
+      {dragState && !dragState.reducedMotion && (
         <div
           className={styles.ghost}
           style={{ top: dragState.ghostY, width: panelRef.current?.getBoundingClientRect().width ?? 220 }}
