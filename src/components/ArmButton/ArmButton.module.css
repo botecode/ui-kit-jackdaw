@@ -1,3 +1,133 @@
 /* src/components/ArmButton/ArmButton.module.css */
-/* Placeholder — filled in Task 2 */
-.root {}
+
+/*
+  --_arm-glow-base and --_arm-glow-peak are defined on .root so that:
+  - The static [data-armed]::before rule and the @keyframes 0%/100% both reference
+    --_arm-glow-base — guaranteeing identical values, so adding data-recording causes
+    no visible jump into the pulse.
+  - --_arm-glow-peak is used at the keyframe 50% AND in the reduced-motion steady rule.
+*/
+
+/* ─── Root (the ring) ─────────────────────────────────────────────────────── */
+
+.root {
+  --_arm-glow-base: 0 0 8px 3px color-mix(in srgb, var(--led-red) 40%, transparent);
+  --_arm-glow-peak: 0 0 14px 5px color-mix(in srgb, var(--led-red) 60%, transparent);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-dim);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── Sizes ───────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] { width: 28px; height: 28px; }
+.root[data-size="sm"] { width: 20px; height: 20px; }
+
+/* ─── Dot (::before) ─────────────────────────────────────────────────────── */
+
+.root::before {
+  content: '';
+  display: block;
+  border-radius: 50%;
+  /* Off state: recessed well — same recipe as mute/solo chip */
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  /* Slow decay — incandescent off */
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow  var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-size="md"]::before { width: 14px; height: 14px; }
+.root[data-size="sm"]::before { width: 10px; height: 10px; }
+
+/* ─── Armed state ─────────────────────────────────────────────────────────── */
+
+.root[data-armed]::before {
+  background: color-mix(in srgb, var(--led-red) 25%, var(--stage));
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 0 0 1px var(--led-red),
+    var(--_arm-glow-base);
+  /* Fast attack — overrides decay transition from base rule */
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Recording: pulse the dot glow only ─────────────────────────────────── */
+
+/*
+  0%/100% box-shadow is identical to [data-armed]::before — uses the same
+  --_arm-glow-base custom property, so the transition into the pulse is seamless.
+  Only box-shadow animates; background and transform are untouched (no reflow).
+*/
+@keyframes arm-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.5),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+      0 0 0 1px var(--led-red),
+      var(--_arm-glow-base);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.4),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+      0 0 0 1px var(--led-red),
+      var(--_arm-glow-peak);
+  }
+}
+
+/*
+  Dual selector: recording-implies-armed is enforced structurally.
+  A stray recording=true without armed=true renders no animation.
+*/
+.root[data-armed][data-recording]::before {
+  animation: arm-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-armed][data-recording]::before {
+    animation: none;
+    /* Steady brighter red — no motion, but clearly active */
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.4),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+      0 0 0 1px var(--led-red),
+      var(--_arm-glow-peak);
+  }
+}
+
+/* ─── Disabled ────────────────────────────────────────────────────────────── */
+
+.root:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Hover ───────────────────────────────────────────────────────────────── */
+
+.root:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Focus ring ──────────────────────────────────────────────────────────── */
+
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-red) 70%, transparent);
+  outline-offset: 2px;
+}
