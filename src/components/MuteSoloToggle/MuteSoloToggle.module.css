@@ -115,12 +115,25 @@
 
 .chip[data-silenced] {
   background-color: var(--stage);
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent 0px, transparent 3px,
-    color-mix(in srgb, var(--stage-text) 35%, transparent) 3px,
-    color-mix(in srgb, var(--stage-text) 35%, transparent) 4px
-  );
+  /*
+    Two layers: fine hatch (4px period) + coarser accent stripe (12px period).
+    Where they overlap every 12px the stripe reads bolder — visually emphasised
+    without any extra DOM. Uses --led-yellow so the hatch reads "caused by solo",
+    not "broken" or "disabled". No opacity reduction — chip stays fully alive.
+  */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px, transparent 3px,
+      color-mix(in srgb, var(--led-yellow) 20%, transparent) 3px,
+      color-mix(in srgb, var(--led-yellow) 20%, transparent) 4px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px, transparent 10px,
+      color-mix(in srgb, var(--led-yellow) 25%, transparent) 10px,
+      color-mix(in srgb, var(--led-yellow) 25%, transparent) 12px
+    );
   color: var(--text-dim);
   /* No glow: box-shadow remains as the off-state value inherited from .chip */
 }
