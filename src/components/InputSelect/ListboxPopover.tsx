@@ -32,7 +32,6 @@ export function ListboxPopover({ id, options, selectedId, activeId, onSelect }: 
       id={id}
       className={styles.popover}
       role="listbox"
-      aria-activedescendant={activeId ? `${id}-${activeId}` : undefined}
     >
       {options.map(opt => (
         <div

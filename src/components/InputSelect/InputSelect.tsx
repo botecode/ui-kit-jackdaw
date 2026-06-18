@@ -114,6 +114,7 @@ export function InputSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
+        aria-activedescendant={open && activeId ? `${listboxId}-${activeId}` : undefined}
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={open ? closeMenu : openMenu}
