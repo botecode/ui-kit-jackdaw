@@ -55,9 +55,10 @@ function MasterLED({ chainEnabled, plugins, onToggle, ledRef }: MasterLEDProps) 
     :                       'active'
 
   const ariaChecked: boolean | 'mixed' =
-    !chainEnabled        ? false
-    : someBypassedPlugins ? 'mixed'
-    :                       true
+    plugins.length === 0  ? false
+    : !chainEnabled        ? false
+    : someBypassedPlugins  ? 'mixed'
+    :                        true
 
   return (
     <button
@@ -88,6 +89,8 @@ interface SlotRowProps {
 function SlotRow({ plugin, index, total, onTogglePlugin, onReorder, onRemove, onAnnounce, slotRef }: SlotRowProps) {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!e.altKey) return
+    const t = e.target as HTMLElement
+    if (t.classList.contains(styles.moveUp) || t.classList.contains(styles.moveDown)) return
     if (e.key === 'ArrowUp' && index > 0) {
       e.preventDefault()
       onReorder(index, index - 1)
