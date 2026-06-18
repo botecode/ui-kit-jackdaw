@@ -1,6 +1,5 @@
 /* src/components/Popover/Popover.module.css */
 
-/* TODO: portal + viewport-flip when a clipped/low anchor needs it (FxChip in a real track corner) */
 .shell {
   position: absolute;
   top: calc(100% + 2px);
@@ -8,6 +7,15 @@
   min-width: 100%;
   z-index: 100;
   animation: popover-in var(--dur-fast) var(--ease-out) both;
+}
+
+/* Portal variant — comes after .shell so its declarations win when both are applied.
+   position: fixed + z-index override .shell. .shell's animation still applies.
+   top/left are overridden by the inline style from computePosition. */
+.shellPortal {
+  position: fixed;
+  min-width: unset;
+  z-index: 1000;
 }
 
 @keyframes popover-in {
