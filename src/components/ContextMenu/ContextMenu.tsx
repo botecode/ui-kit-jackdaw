@@ -183,7 +183,7 @@ export function ContextMenu({
                   handleClose()
                 }}
               >
-                <span className={styles.leadSlot} aria-hidden>
+                <span className={styles.leadSlot} aria-hidden="true">
                   {entry.checked !== undefined
                     ? (entry.checked
                         ? <span className={styles.checkmark}>✓</span>
@@ -192,7 +192,7 @@ export function ContextMenu({
                 </span>
                 <span className={styles.label}>{entry.label}</span>
                 {entry.shortcut && (
-                  <span className={styles.shortcut} aria-hidden>{entry.shortcut}</span>
+                  <span className={styles.shortcut} aria-hidden="true">{entry.shortcut}</span>
                 )}
               </li>
             )
