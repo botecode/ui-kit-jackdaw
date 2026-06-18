@@ -22,16 +22,16 @@ function StatesDemo() {
   return (
     <StatesGrid>
       <State label="Unity (0 dB)">
-        <Fader value={0} onChange={noop} min={-60} max={6} scale={db} resetValue={0} />
+        <Fader value={0} onChange={noop} min={-60} max={6} scale={db} resetValue={0} ticks={[6, 0, -6, -12, -24, -60]} />
       </State>
       <State label="-6 dB">
-        <Fader value={-6} onChange={noop} min={-60} max={6} scale={db} resetValue={0} />
+        <Fader value={-6} onChange={noop} min={-60} max={6} scale={db} resetValue={0} ticks={[6, 0, -6, -12, -24, -60]} />
       </State>
       <State label="-∞ (−60 dB)">
-        <Fader value={-60} onChange={noop} min={-60} max={6} scale={db} resetValue={0} />
+        <Fader value={-60} onChange={noop} min={-60} max={6} scale={db} resetValue={0} ticks={[6, 0, -6, -12, -24, -60]} />
       </State>
       <State label="+6 dB">
-        <Fader value={6} onChange={noop} min={-60} max={6} scale={db} resetValue={0} />
+        <Fader value={6} onChange={noop} min={-60} max={6} scale={db} resetValue={0} ticks={[6, 0, -6, -12, -24, -60]} />
       </State>
       <State label="Horizontal">
         <Fader
@@ -46,7 +46,7 @@ function StatesDemo() {
         />
       </State>
       <State label="sm size">
-        <Fader value={0} onChange={noop} min={-60} max={6} scale={db} size="sm" resetValue={0} />
+        <Fader value={0} onChange={noop} min={-60} max={6} scale={db} size="sm" resetValue={0} ticks={[6, 0, -6, -12, -24, -60]} />
       </State>
       <State label="Disabled">
         <Fader value={-6} onChange={noop} min={-60} max={6} scale={db} disabled />
@@ -60,6 +60,7 @@ function StatesDemo() {
           scale={db}
           color="var(--accent-green)"
           resetValue={0}
+          ticks={[6, 0, -6, -12, -24, -60]}
         />
       </State>
     </StatesGrid>
@@ -89,6 +90,7 @@ function PlaygroundDemo() {
             resetValue={resetVal}
             aria-label="Volume"
             size="lg"
+            ticks={[6, 0, -6, -12, -24, -60]}
           />
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)' }}>
             double-click to reset
