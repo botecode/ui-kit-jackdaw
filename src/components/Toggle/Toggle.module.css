@@ -1,0 +1,154 @@
+/* src/components/Toggle/Toggle.module.css */
+
+/* ─── Root (the button row) ─────────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── Disabled ───────────────────────────────────────────────────────────────── */
+
+.root:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Hover ──────────────────────────────────────────────────────────────────── */
+
+.root:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Focus ring (whole row is the control) ──────────────────────────────────── */
+
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--_toggle-accent, var(--accent)) 70%, transparent);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+/* ─── Label text ─────────────────────────────────────────────────────────────── */
+
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+/* ─── Pill (the track) ───────────────────────────────────────────────────────── */
+
+/*
+  No overflow:hidden — the knob's box-shadow glow extends beyond the track edge.
+  Clipping the pill would chop the LED bloom on the knob at the track boundary.
+  The knob is positioned absolutely inside .pill (position:relative) without clipping.
+*/
+
+.pill {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 999px;
+  /* Off state: recessed well — same recipe as mute chip / Fader channel */
+  background: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  /* Slow decay — incandescent off */
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow  var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Pill sizes ─────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] .pill {
+  width: 44px;
+  height: 24px;
+  --_knob-offset: 20px; /* 44 − 18 − 6 = 20 */
+}
+
+.root[data-size="sm"] .pill {
+  width: 32px;
+  height: 18px;
+  --_knob-offset: 13px; /* 32 − 13 − 6 = 13 */
+}
+
+/* ─── Pill on state ──────────────────────────────────────────────────────────── */
+
+.root[data-checked] .pill {
+  background: var(--_toggle-accent, var(--accent));
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--_toggle-accent, var(--accent)),
+    0 0 8px 2px color-mix(in srgb, var(--_toggle-accent, var(--accent)) 35%, transparent);
+  /* Fast attack — overrides decay from base .pill rule */
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Knob ───────────────────────────────────────────────────────────────────── */
+
+/*
+  Transition intentional asymmetry (do not "fix" to match):
+  - transform: --dur-led-on in BOTH directions — a switch throws fast, on and off.
+  - background-color + box-shadow: --dur-led-off base (slow decay when going off),
+    overridden to --dur-led-on in [data-checked] (fast attack when going on).
+  Turning off reads as: knob snaps left immediately, lamp cools behind it.
+*/
+
+.knob {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  border-radius: 50%;
+  /* Matte neutral off */
+  background-color: var(--text-dim);
+  /* Knurl catch-light: subtle radial gradient mimicking the Fader cap's top-left highlight */
+  background-image: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.22), transparent 55%);
+  /* Cast shadow — raises knob visually above the track */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  /* Off position */
+  transform: translateX(0) translateY(-50%);
+  /* transform always fast (both directions); color/shadow slow decay going off */
+  transition:
+    transform       var(--dur-led-on)  var(--ease-out),
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow      var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Knob sizes ─────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] .knob { width: 18px; height: 18px; }
+.root[data-size="sm"] .knob { width: 13px; height: 13px; }
+
+/* ─── Knob on state ──────────────────────────────────────────────────────────── */
+
+/*
+  --_knob-offset is defined on .pill (the knob's parent); .knob inherits it.
+  transform and background-color/box-shadow all use --dur-led-on here (fast attack).
+*/
+
+.root[data-checked] .knob {
+  transform: translateX(var(--_knob-offset)) translateY(-50%);
+  background-color: color-mix(in srgb, var(--_toggle-accent, var(--accent)) 90%, white);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    0 0 0 1.5px color-mix(in srgb, var(--_toggle-accent, var(--accent)) 60%, transparent),
+    0 0 6px 2px color-mix(in srgb, var(--_toggle-accent, var(--accent)) 40%, transparent);
+  /* Fast attack — overrides decay from base .knob rule */
+  transition:
+    transform       var(--dur-led-on) var(--ease-out),
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow      var(--dur-led-on) var(--ease-out);
+}
