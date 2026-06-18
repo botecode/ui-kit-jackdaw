@@ -96,6 +96,27 @@ describe('PanKnob rendering', () => {
   })
 })
 
+describe('PanKnob branding', () => {
+  const noop = vi.fn()
+
+  it('renders LED ring element', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    expect(container.querySelector('[data-testid="led-ring"]')).not.toBeNull()
+  })
+
+  it('sets --pan-accent CSS variable on root when color prop provided', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} color="#ff0000" />)
+    const root = container.firstElementChild as HTMLElement
+    expect(root.style.getPropertyValue('--pan-accent')).toBe('#ff0000')
+  })
+
+  it('renders L and R silkscreen labels', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    const labels = container.querySelectorAll('[data-testid="silkscreen-label"]')
+    expect(labels.length).toBe(2)
+  })
+})
+
 describe('PanKnob accessibility', () => {
   const noop = vi.fn()
 
