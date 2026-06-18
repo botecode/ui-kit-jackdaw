@@ -1,0 +1,64 @@
+/* src/components/MuteSoloToggle/MuteSoloToggle.module.css */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-orientation="stacked"] {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.root[data-orientation="inline"] {
+  flex-direction: row;
+  gap: 3px;
+}
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Chip base ─────────────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+
+  /* Recessed well — same recipe as Fader track and PanKnob well */
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--text-dim);
+}
+
+/* ─── Sizes ─────────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] .chip {
+  width: 28px;
+  height: 20px;
+  font-size: var(--text-sm);
+}
+
+.root[data-size="sm"] .chip {
+  width: 22px;
+  height: 16px;
+  font-size: var(--text-xs);
+}
