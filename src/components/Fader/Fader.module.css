@@ -148,9 +148,19 @@
   border-radius: 3px;
   z-index: 2;
   pointer-events: none;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
 }
 
-/* Vertical: centered horiz, travels top↔bottom (top = max) */
+/* LED bloom — active (drag) or keyboard-focused state */
+.root:is([data-dragging], :focus-visible) .cap {
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1.5px color-mix(in srgb, var(--fader-accent, var(--accent)) 70%, transparent),
+    0 0 12px 4px color-mix(in srgb, var(--fader-accent, var(--accent)) 30%, transparent);
+}
+
+/* Vertical: horizontal grooves perpendicular to travel direction */
 .root[data-orientation='vertical'] .cap {
   left: 50%;
   transform: translateX(-50%);
@@ -160,15 +170,20 @@
   background:
     repeating-linear-gradient(
       0deg,
-      transparent 0px,
-      transparent 3px,
-      rgba(0, 0, 0, 0.18) 3px,
-      rgba(0, 0, 0, 0.18) 4px
+      rgba(0, 0, 0, 0.22) 0px,
+      rgba(0, 0, 0, 0.22) 1px,
+      rgba(255, 255, 255, 0.07) 1px,
+      rgba(255, 255, 255, 0.07) 2px,
+      transparent 2px,
+      transparent 5px
     ),
     var(--fader-accent, var(--accent));
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-/* Horizontal: centered vert, travels left↔right (right = max) */
+/* Horizontal: vertical grooves perpendicular to travel direction */
 .root[data-orientation='horizontal'] .cap {
   top: 50%;
   transform: translateY(-50%);
@@ -178,12 +193,17 @@
   background:
     repeating-linear-gradient(
       90deg,
-      transparent 0px,
-      transparent 3px,
-      rgba(0, 0, 0, 0.18) 3px,
-      rgba(0, 0, 0, 0.18) 4px
+      rgba(0, 0, 0, 0.22) 0px,
+      rgba(0, 0, 0, 0.22) 1px,
+      rgba(255, 255, 255, 0.07) 1px,
+      rgba(255, 255, 255, 0.07) 2px,
+      transparent 2px,
+      transparent 5px
     ),
     var(--fader-accent, var(--accent));
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* Gloss highlight */
