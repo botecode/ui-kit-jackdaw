@@ -186,8 +186,9 @@ function ChainEditor({
 }: ChainEditorProps) {
   const [announcement, setAnnouncement] = useState('')
   const [dragState, setDragState]       = useState<DragState | null>(null)
-  const slotRefs  = useRef<(HTMLDivElement | null)[]>([])
-  const panelRef  = useRef<HTMLDivElement>(null)
+  const slotRefs    = useRef<(HTMLDivElement | null)[]>([])
+  const panelRef    = useRef<HTMLDivElement>(null)
+  const slotListRef = useRef<HTMLDivElement>(null)
 
   function handleDragStart(index: number, e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -228,9 +229,9 @@ function ChainEditor({
 
   function getInsertionLineY(afterIndex: number): number {
     const rect = slotRefs.current[afterIndex]?.getBoundingClientRect()
-    const panelRect = panelRef.current?.getBoundingClientRect()
-    if (!rect || !panelRect) return 0
-    return rect.bottom - panelRect.top
+    const slotListRect = slotListRef.current?.getBoundingClientRect()
+    if (!rect || !slotListRect) return 0
+    return rect.bottom - slotListRect.top
   }
 
   return (
@@ -251,7 +252,7 @@ function ChainEditor({
         {plugins.length === 0 ? (
           <p className={styles.empty}>No effects yet — add one.</p>
         ) : (
-          <div style={{ position: 'relative' }}>
+          <div ref={slotListRef} style={{ position: 'relative' }}>
             {plugins.map((p, i) => (
               <SlotRow
                 key={p.id}

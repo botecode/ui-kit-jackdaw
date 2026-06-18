@@ -3,14 +3,14 @@ import { useEffect } from 'react'
 import styles from './Popover.module.css'
 
 export interface PopoverProps {
-  containerRef:   React.RefObject<HTMLElement>
-  returnFocusRef: React.RefObject<HTMLElement>
-  onClose:        () => void
-  children:       React.ReactNode
-  className?:     string
+  containerRef:    React.RefObject<HTMLElement>
+  returnFocusRef?: React.RefObject<HTMLElement>
+  onClose:         () => void
+  children:        React.ReactNode
+  className?:      string
 }
 
-export function Popover({ containerRef, returnFocusRef, onClose, children, className }: PopoverProps) {
+export function Popover({ containerRef, onClose, children, className }: PopoverProps) {
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (!containerRef.current?.contains(e.target as Node)) onClose()
@@ -23,13 +23,12 @@ export function Popover({ containerRef, returnFocusRef, onClose, children, class
     function handle(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.preventDefault()
-        returnFocusRef.current?.focus()
         onClose()
       }
     }
     document.addEventListener('keydown', handle)
     return () => document.removeEventListener('keydown', handle)
-  }, [returnFocusRef, onClose])
+  }, [onClose])
 
   return (
     <div className={className ? `${styles.shell} ${className}` : styles.shell}>
