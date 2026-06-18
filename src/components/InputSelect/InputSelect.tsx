@@ -1,8 +1,9 @@
 // src/components/InputSelect/InputSelect.tsx
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import styles from './InputSelect.module.css'
 import { ListboxPopover } from './ListboxPopover'
 import type { ListboxOption } from './ListboxPopover'
+import { Popover } from '../Popover'
 
 export type { ListboxOption as InputSelectOption }
 
@@ -56,17 +57,6 @@ export function InputSelect({
     closeMenu()
   }
 
-  useEffect(() => {
-    if (!open) return
-    function handleOutside(e: MouseEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [open])
-
   function handleKeyDown(e: React.KeyboardEvent) {
     if (disabled) return
     if (!open) {
@@ -79,11 +69,9 @@ export function InputSelect({
     const idx = options.findIndex(o => o.id === activeId)
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      // Past the last item → clear active (allows ArrowUp to return to last)
       setActiveId(idx < options.length - 1 ? (options[idx + 1]?.id ?? null) : null)
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      // null means past-end; ArrowUp snaps back to last item
       if (idx === -1) {
         setActiveId(options[options.length - 1]?.id ?? null)
       } else {
@@ -130,13 +118,19 @@ export function InputSelect({
         <span className={styles.caret} aria-hidden="true">▾</span>
       </button>
       {open && (
-        <ListboxPopover
-          id={listboxId}
-          options={options}
-          selectedId={value}
-          activeId={activeId}
-          onSelect={handleSelect}
-        />
+        <Popover
+          containerRef={containerRef as React.RefObject<HTMLElement>}
+          returnFocusRef={triggerRef as React.RefObject<HTMLElement>}
+          onClose={closeMenu}
+        >
+          <ListboxPopover
+            id={listboxId}
+            options={options}
+            selectedId={value}
+            activeId={activeId}
+            onSelect={handleSelect}
+          />
+        </Popover>
       )}
     </div>
   )

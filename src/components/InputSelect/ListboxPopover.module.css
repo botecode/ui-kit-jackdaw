@@ -1,33 +1,15 @@
 /* src/components/InputSelect/ListboxPopover.module.css */
 
-/* ─── Popover panel ─────────────────────────────────────────────────────────── */
+/* ─── Listbox card ───────────────────────────────────────────────────────────── */
 
-.popover {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  min-width: 100%;
+.listbox {
   max-height: 200px;
   overflow-y: auto;
   background: var(--menu-bg);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
-  z-index: 100;
   padding: 4px 0;
-  /* Open animation — zeroed by prefers-reduced-motion via --dur-fast */
-  animation: popover-in var(--dur-fast) var(--ease-out) both;
-}
-
-@keyframes popover-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ─── Option row ────────────────────────────────────────────────────────────── */
@@ -52,7 +34,7 @@
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
-/* ─── Check mark (column-stable: always present, invisible when unselected) ── */
+/* ─── Check mark ────────────────────────────────────────────────────────────── */
 
 .check {
   flex-shrink: 0;
@@ -67,7 +49,7 @@
   opacity: 1;
 }
 
-/* ─── Label text ────────────────────────────────────────────────────────────── */
+/* ─── Label ─────────────────────────────────────────────────────────────────── */
 
 .label {
   flex: 1;

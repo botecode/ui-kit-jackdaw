@@ -28,11 +28,7 @@ export function ListboxPopover({ id, options, selectedId, activeId, onSelect }: 
   }, [activeId])
 
   return (
-    <div
-      id={id}
-      className={styles.popover}
-      role="listbox"
-    >
+    <div id={id} className={styles.listbox} role="listbox">
       {options.map(opt => (
         <div
           key={opt.id}
@@ -45,10 +41,7 @@ export function ListboxPopover({ id, options, selectedId, activeId, onSelect }: 
           role="option"
           aria-selected={opt.id === selectedId}
           data-active={opt.id === activeId || undefined}
-          onMouseDown={e => {
-            e.preventDefault()
-            onSelect(opt.id)
-          }}
+          onMouseDown={e => { e.preventDefault(); onSelect(opt.id) }}
         >
           <span className={styles.check} aria-hidden="true">✓</span>
           <span className={styles.label}>{opt.label}</span>
