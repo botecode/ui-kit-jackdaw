@@ -1,18 +1,17 @@
 /* src/components/ArmButton/ArmButton.module.css */
 
 /*
-  --_arm-glow-base and --_arm-glow-peak are defined on .root so that:
-  - The static [data-armed]::before rule and the @keyframes 0%/100% both reference
-    --_arm-glow-base — guaranteeing identical values, so adding data-recording causes
-    no visible jump into the pulse.
-  - --_arm-glow-peak is used at the keyframe 50% AND in the reduced-motion steady rule.
+  --_rec-glow-base / --_rec-glow-peak are scoped to .root so that the static
+  [data-armed][data-recording]::before rule and @keyframes 0%/100% share the
+  exact same box-shadow value — no jump when the pulse starts.
+  --_rec-glow-peak drives the keyframe 50% and the reduced-motion steady state.
 */
 
 /* ─── Root (the ring) ─────────────────────────────────────────────────────── */
 
 .root {
-  --_arm-glow-base: 0 0 8px 3px color-mix(in srgb, var(--led-red) 40%, transparent);
-  --_arm-glow-peak: 0 0 14px 5px color-mix(in srgb, var(--led-red) 60%, transparent);
+  --_rec-glow-base: 0 0 8px 3px color-mix(in srgb, var(--led-red) 40%, transparent);
+  --_rec-glow-peak: 0 0 14px 5px color-mix(in srgb, var(--led-red) 60%, transparent);
 
   position: relative;
   display: inline-flex;
@@ -53,62 +52,64 @@
 .root[data-size="md"]::before { width: 14px; height: 14px; }
 .root[data-size="sm"]::before { width: 10px; height: 10px; }
 
-/* ─── Armed state ─────────────────────────────────────────────────────────── */
+/* ─── Armed: dark center + red ring — "ready, not rolling" ───────────────── */
 
+/*
+  Center stays dark (--stage). The red ring (0 0 0 1px --led-red) and faint
+  outer glow signal the armed state without competing with recording's fill.
+*/
 .root[data-armed]::before {
-  background: color-mix(in srgb, var(--led-red) 25%, var(--stage));
+  background: var(--stage);
   box-shadow:
     inset 0 1px 3px rgba(0, 0, 0, 0.5),
     inset 0 0 0 1px rgba(0, 0, 0, 0.2),
     0 0 0 1px var(--led-red),
-    var(--_arm-glow-base);
+    0 0 4px 1px color-mix(in srgb, var(--led-red) 20%, transparent);
   /* Fast attack — overrides decay transition from base rule */
   transition:
     background var(--dur-led-on) var(--ease-out),
     box-shadow  var(--dur-led-on) var(--ease-out);
 }
 
-/* ─── Recording: pulse the dot glow only ─────────────────────────────────── */
+/* ─── Recording: solid red fill + glow pulse — "rolling" ─────────────────── */
 
 /*
-  0%/100% box-shadow is identical to [data-armed]::before — uses the same
-  --_arm-glow-base custom property, so the transition into the pulse is seamless.
-  Only box-shadow animates; background and transform are untouched (no reflow).
+  Dual selector enforces recording-implies-armed structurally.
+  Background fills solid --led-red (the eye fully lit).
+  @keyframes 0%/100% box-shadow matches this rule exactly — no jump into pulse.
+  Only box-shadow animates; background is static solid red throughout.
 */
+.root[data-armed][data-recording]::before {
+  background: var(--led-red);
+  box-shadow:
+    0 0 0 1px var(--led-red),
+    var(--_rec-glow-base);
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+  animation: arm-dot-pulse 2s ease-in-out infinite;
+}
+
 @keyframes arm-dot-pulse {
   0%, 100% {
     box-shadow:
-      inset 0 1px 3px rgba(0, 0, 0, 0.5),
-      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
       0 0 0 1px var(--led-red),
-      var(--_arm-glow-base);
+      var(--_rec-glow-base);
   }
   50% {
     box-shadow:
-      inset 0 1px 3px rgba(0, 0, 0, 0.4),
-      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
       0 0 0 1px var(--led-red),
-      var(--_arm-glow-peak);
+      var(--_rec-glow-peak);
   }
-}
-
-/*
-  Dual selector: recording-implies-armed is enforced structurally.
-  A stray recording=true without armed=true renders no animation.
-*/
-.root[data-armed][data-recording]::before {
-  animation: arm-dot-pulse 2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .root[data-armed][data-recording]::before {
     animation: none;
-    /* Steady brighter red — no motion, but clearly active */
+    /* Solid bright red, peak glow, no motion */
     box-shadow:
-      inset 0 1px 3px rgba(0, 0, 0, 0.4),
-      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
       0 0 0 1px var(--led-red),
-      var(--_arm-glow-peak);
+      var(--_rec-glow-peak);
   }
 }
 
