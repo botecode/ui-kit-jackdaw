@@ -62,3 +62,71 @@
   height: 16px;
   font-size: var(--text-xs);
 }
+
+/* ─── LED color routing ─────────────────────────────────────────────────────── */
+
+.chip[data-variant="mute"] { --chip-led: var(--led-red); }
+.chip[data-variant="solo"] { --chip-led: var(--led-yellow); }
+
+/* ─── Decay transition on base chip (slow — incandescent off) ──────────────── */
+/*
+  This MUST be on the base rule so removing [data-active] triggers the slow decay.
+  [data-active] below overrides the duration to --dur-led-on (fast attack).
+  Both vars are zeroed by prefers-reduced-motion in global.css — no rule needed here.
+*/
+.chip {
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow  var(--dur-led-off) var(--ease-out),
+    color       var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Lit state ─────────────────────────────────────────────────────────────── */
+
+.chip[data-active] {
+  background-color: color-mix(in srgb, var(--chip-led) 18%, var(--stage));
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--chip-led),
+    0 0 8px 2px color-mix(in srgb, var(--chip-led) 35%, transparent);
+  color: var(--chip-led);
+  /* Fast attack — overrides decay duration from base .chip rule */
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out),
+    color       var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Silenced by solo ─────────────────────────────────────────────────────── */
+/*
+  background-image (hatch) is independent of box-shadow (glow) — they never fight.
+  Focus ring and hover brightness apply on top without disturbing the hatch.
+  --text at 18% is a theme-aware neutral: reads on dark (--stage ≈ black) and
+  light (Chroma/manuscript cream) surfaces. Verify in Compare.
+*/
+
+.chip[data-silenced] {
+  background-color: var(--stage);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0px, transparent 3px,
+    color-mix(in srgb, var(--text) 18%, transparent) 3px,
+    color-mix(in srgb, var(--text) 18%, transparent) 4px
+  );
+  color: var(--text-dim);
+  /* No glow: box-shadow remains as the off-state value inherited from .chip */
+}
+
+/* ─── Hover ─────────────────────────────────────────────────────────────────── */
+
+.chip:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Focus ring ────────────────────────────────────────────────────────────── */
+
+.chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--chip-led, var(--accent)) 70%, transparent);
+  outline-offset: 2px;
+}
