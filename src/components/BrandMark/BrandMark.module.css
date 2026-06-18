@@ -71,6 +71,11 @@
 .petal:nth-child(4) { background: var(--chroma-teal);   rotate:  30deg; z-index: 2; }
 .petal:nth-child(5) { background: var(--chroma-blue);   rotate:  60deg; z-index: 1; }
 
+/* Sigil variant has only one petal — reset its rotation to 0° (straight up). */
+.root[data-variant="sigil"] .petal {
+  rotate: 0deg;
+}
+
 /* ─── Bird wrapper ───────────────────────────────────────────────────────── */
 
 /* Positions the SVG bird centred in the upper portion, overlapping the fan. */
