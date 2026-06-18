@@ -86,6 +86,61 @@
   transform: translateX(-50%);
 }
 
+/* ─── Scale strip (printed tick marks beside the channel) ───────────────── */
+
+.scale {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Vertical: strip to the right of the channel */
+.root[data-orientation='vertical'] .scale {
+  left: calc(100% + 3px);
+  top: 0;
+  bottom: 0;
+  width: 10px;
+}
+
+/* Horizontal: strip below the channel */
+.root[data-orientation='horizontal'] .scale {
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+/* ─── Tick mark (major) ──────────────────────────────────────────────────── */
+
+.tickMark {
+  position: absolute;
+  background: var(--text-muted);
+}
+
+/* Vertical: horizontal hairline at (1 − tick-pos) × 100% from top */
+.root[data-orientation='vertical'] .tickMark {
+  left: 0;
+  width: 6px;
+  height: 1px;
+  top: calc((1 - var(--tick-pos, 0)) * 100%);
+}
+
+/* Horizontal: vertical hairline at tick-pos × 100% from left */
+.root[data-orientation='horizontal'] .tickMark {
+  top: 0;
+  height: 6px;
+  width: 1px;
+  left: calc(var(--tick-pos, 0) * 100%);
+}
+
+/* ─── Unity / detent notch (emphasis) ───────────────────────────────────── */
+
+.tickUnity {
+  background: var(--border-strong);
+}
+
+.root[data-orientation='vertical'] .tickUnity   { width: 9px; height: 2px; }
+.root[data-orientation='horizontal'] .tickUnity { height: 9px; width: 2px; }
+
 /* ─── Cap ────────────────────────────────────────────────────────────────── */
 
 .cap {

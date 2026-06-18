@@ -380,3 +380,38 @@ describe('Fader reduced-motion', () => {
     expect(noop).toHaveBeenCalledWith(0.5)
   })
 })
+
+// ─── Scale strip ─────────────────────────────────────────────────────────────
+
+describe('Fader scale strip', () => {
+  const noop = vi.fn()
+  beforeEach(() => { noop.mockReset(); mockMatchMedia(false) })
+
+  it('renders tick marks when ticks prop is provided', () => {
+    const { getAllByTestId } = render(
+      <Fader value={0} onChange={noop} ticks={[6, 0, -6]} min={-60} max={6} scale={dbScale()} />,
+    )
+    expect(getAllByTestId('fader-tick')).toHaveLength(3)
+  })
+
+  it('renders no tick marks when ticks prop is absent', () => {
+    const { container } = render(<Fader value={0.5} onChange={noop} />)
+    expect(container.querySelector('[data-testid="fader-tick"]')).toBeNull()
+  })
+
+  it('marks the unity tick with data-unity when its value matches detent.value', () => {
+    const { container } = render(
+      <Fader
+        value={0}
+        onChange={noop}
+        ticks={[6, 0, -6]}
+        min={-60}
+        max={6}
+        scale={dbScale()}
+        detent={{ value: 0 }}
+      />,
+    )
+    const unityTick = container.querySelector('[data-testid="fader-tick"][data-unity="true"]')
+    expect(unityTick).not.toBeNull()
+  })
+})

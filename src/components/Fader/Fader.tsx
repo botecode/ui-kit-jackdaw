@@ -37,6 +37,7 @@ export interface FaderProps {
   disabled?: boolean
   color?: string
   format?: (value: number) => string
+  ticks?: number[]
   'aria-label'?: string
 }
 
@@ -56,6 +57,7 @@ export function Fader({
   disabled = false,
   color,
   format,
+  ticks,
   'aria-label': ariaLabel = 'Fader',
 }: FaderProps) {
   const effectiveScale = scale ?? DEFAULT_SCALE
@@ -272,6 +274,7 @@ export function Fader({
         ref={trackRef}
         className={styles.track}
         data-testid="fader-track"
+        style={detent ? { '--detent-pos': detentPosition } as React.CSSProperties : undefined}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -281,8 +284,24 @@ export function Fader({
           <div
             className={styles.detentTick}
             data-testid="fader-detent"
-            style={{ '--detent-pos': detentPosition } as React.CSSProperties}
           />
+        )}
+        {ticks && ticks.length > 0 && (
+          <div className={styles.scale} aria-hidden="true">
+            {ticks.map(tickValue => {
+              const pos = clamp(effectiveScale.toPosition(tickValue, min, max), 0, 1)
+              const isUnity = detent != null && tickValue === detent.value
+              return (
+                <div
+                  key={tickValue}
+                  className={isUnity ? `${styles.tickMark} ${styles.tickUnity}` : styles.tickMark}
+                  style={{ '--tick-pos': pos } as React.CSSProperties}
+                  data-testid="fader-tick"
+                  data-unity={isUnity ? 'true' : undefined}
+                />
+              )
+            })}
+          </div>
         )}
         <div
           ref={capRef}
