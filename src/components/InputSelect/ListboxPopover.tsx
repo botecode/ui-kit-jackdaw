@@ -20,7 +20,10 @@ export function ListboxPopover({ id, options, selectedId, activeId, onSelect }: 
 
   useEffect(() => {
     if (activeId) {
-      optionRefs.current.get(activeId)?.scrollIntoView({ block: 'nearest' })
+      const el = optionRefs.current.get(activeId)
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ block: 'nearest' })
+      }
     }
   }, [activeId])
 
