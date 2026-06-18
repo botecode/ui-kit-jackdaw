@@ -11,10 +11,13 @@ import { Tokens } from './pages/Tokens'
 import { DesignLanguage } from './pages/DesignLanguage'
 
 const COMPARE_THEMES: ThemeId[] = ['chroma', 'bowie', 'tropicalia', 'manuscript', 'ink']
+const ZOOM_LEVELS = [1, 1.5, 2, 4] as const
+type ZoomLevel = typeof ZOOM_LEVELS[number]
 
 export function Stage() {
   const route = useHashRoute()
   const [compareMode, setCompareMode] = useState(false)
+  const [zoom, setZoom] = useState<ZoomLevel>(1)
 
   const PAGE_MAP: Record<string, ComponentType> = {
     '/tokens': Tokens,
@@ -40,6 +43,20 @@ export function Stage() {
             {COMPARE_THEMES.join(' · ')}
           </span>
         )}
+        {!compareMode && (
+          <div className={styles.zoomControl} role="group" aria-label="Zoom">
+            {ZOOM_LEVELS.map(z => (
+              <button
+                key={z}
+                className={`${styles.zoomBtn}${zoom === z ? ` ${styles.zoomBtnActive}` : ''}`}
+                onClick={() => setZoom(z)}
+                aria-pressed={zoom === z}
+              >
+                {z}×
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       {compareMode ? (
@@ -57,7 +74,16 @@ export function Stage() {
         </div>
       ) : (
         <div className={styles.content}>
-          <Page />
+          <div
+            style={zoom !== 1 ? {
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top left',
+              // Compensate layout width so overflow: auto creates a scroll region
+              width: `${(100 / zoom).toFixed(2)}%`,
+            } : undefined}
+          >
+            <Page />
+          </div>
         </div>
       )}
     </div>
