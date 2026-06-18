@@ -142,11 +142,12 @@ export type MenuEntry = MenuItem | MenuSeparator
 
 ```ts
 export interface ContextMenuProps {
-  items:   MenuEntry[]
-  open:    boolean
-  x:       number          // viewport coords (clientX from contextmenu event)
-  y:       number          // viewport coords (clientY from contextmenu event)
-  onClose: () => void
+  items:      MenuEntry[]
+  open:       boolean
+  x:          number          // viewport coords (clientX from contextmenu event)
+  y:          number          // viewport coords (clientY from contextmenu event)
+  onClose:    () => void
+  'aria-label'?: string       // default "Context menu"; set per-consumer for screen readers
 }
 ```
 
