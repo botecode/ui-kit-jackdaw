@@ -12,7 +12,6 @@ export const PLANNED: Array<Pick<DemoMeta, 'name' | 'group' | 'route'>> = [
   { name: 'Tooltip',                  group: 'Primitives',  route: '/tooltip' },
   { name: 'Toggle',                   group: 'Primitives',  route: '/toggle' },
   { name: 'Badge',                    group: 'Primitives',  route: '/badge' },
-  { name: 'TrackHeader',              group: 'Composites',  route: '/track-header' },
   { name: 'FolderTrackHeader',        group: 'Composites',  route: '/folder-track-header' },
   { name: 'TrackLane',                group: 'Composites',  route: '/track-lane' },
   { name: 'FocusedTrackDetailPanel',  group: 'Composites',  route: '/focus-panel' },
