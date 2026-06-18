@@ -7,17 +7,23 @@
   align-items: center;
   user-select: none;
   -webkit-user-select: none;
+  /* Padding gives lit chip glows room to breathe at the component boundary */
+  padding: 4px;
 }
 
 .root[data-orientation="stacked"] {
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .root[data-orientation="inline"] {
   flex-direction: row;
-  gap: 3px;
+  gap: 6px;
 }
+
+/* sm chips get slightly less gap — same bloom, but proportionally tighter layout */
+.root[data-size="sm"][data-orientation="stacked"] { gap: 6px; }
+.root[data-size="sm"][data-orientation="inline"]  { gap: 4px; }
 
 .disabled {
   pointer-events: none;
@@ -102,8 +108,9 @@
 /*
   background-image (hatch) is independent of box-shadow (glow) — they never fight.
   Focus ring and hover brightness apply on top without disturbing the hatch.
-  --text at 18% is a theme-aware neutral: reads on dark (--stage ≈ black) and
-  light (Chroma/manuscript cream) surfaces. Verify in Compare.
+  --stage-text is designed to contrast with --stage (the dark recessed well) so
+  it reads on both dark and light themes without needing a flip. 35% gives a
+  clearly visible stripe. Verify in Compare on dark + light themes.
 */
 
 .chip[data-silenced] {
@@ -111,8 +118,8 @@
   background-image: repeating-linear-gradient(
     45deg,
     transparent 0px, transparent 3px,
-    color-mix(in srgb, var(--text) 18%, transparent) 3px,
-    color-mix(in srgb, var(--text) 18%, transparent) 4px
+    color-mix(in srgb, var(--stage-text) 35%, transparent) 3px,
+    color-mix(in srgb, var(--stage-text) 35%, transparent) 4px
   );
   color: var(--text-dim);
   /* No glow: box-shadow remains as the off-state value inherited from .chip */
