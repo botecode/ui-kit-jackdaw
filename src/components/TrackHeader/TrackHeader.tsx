@@ -1,5 +1,5 @@
 // src/components/TrackHeader/TrackHeader.tsx
-import { CSSProperties } from 'react'
+import { CSSProperties, useState, useRef } from 'react'
 import {
   Waveform, PianoKeys, MusicNote, FolderSimple, CaretRight,
 } from '@phosphor-icons/react'
@@ -94,8 +94,33 @@ function TopBar({
   name, type, armed, inputId, plugins, chainEnabled,
   mode, variant, folderOpen, inputOptions, disabled,
   onArm, onSelectInput, onToggleChain, onTogglePlugin, onReorder,
-  onRemovePlugin, onAddPlugin, onToggleFolder, onRename: _onRename,
+  onRemovePlugin, onAddPlugin, onToggleFolder, onRename,
 }: TopBarProps) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(name)
+  const originalRef = useRef(name)
+  const committedRef = useRef(false)
+
+  function startEdit() {
+    committedRef.current = false
+    originalRef.current = name
+    setDraft(name)
+    setEditing(true)
+  }
+
+  function commit() {
+    if (committedRef.current) return
+    committedRef.current = true
+    const value = draft.trim() || originalRef.current
+    onRename(value)
+    setEditing(false)
+  }
+
+  function cancel() {
+    committedRef.current = true  // prevent onBlur commit after cancel
+    setEditing(false)
+  }
+
   const inputVariant = mode === 'producer' && inputId === null ? 'field' : 'chip'
 
   const TypeGlyph =
@@ -107,9 +132,31 @@ function TopBar({
   return (
     <div className={styles.topBar}>
       <TypeGlyph size={14} className={styles.glyph} aria-hidden />
-      <span className={styles.name} tabIndex={0}>
-        {name}
-      </span>
+      {editing ? (
+        <input
+          className={styles.nameInput}
+          aria-label="Track name"
+          value={draft}
+          autoFocus
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => {
+            if (e.key === 'Enter')  { e.preventDefault(); commit() }
+            if (e.key === 'Escape') { e.preventDefault(); cancel() }
+          }}
+        />
+      ) : (
+        <span
+          className={styles.name}
+          tabIndex={0}
+          onDoubleClick={startEdit}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEdit() }
+          }}
+        >
+          {name}
+        </span>
+      )}
       {variant === 'folder' ? (
         <button
           className={styles.disclosure}

@@ -116,3 +116,75 @@ describe('TrackHeader — structure', () => {
     expect(inputRoot).toHaveAttribute('data-variant', 'chip')
   })
 })
+
+describe('TrackHeader — states', () => {
+  it('has data-selected when track.selected=true', () => {
+    render(<TrackHeader {...BASE_PROPS} track={{ ...BASE_TRACK, selected: true }} />)
+    expect(screen.getByRole('group', { name: 'Vocals' })).toHaveAttribute('data-selected')
+  })
+
+  it('has data-armed when track.armed=true', () => {
+    render(<TrackHeader {...BASE_PROPS} track={{ ...BASE_TRACK, armed: true }} />)
+    expect(screen.getByRole('group', { name: 'Vocals' })).toHaveAttribute('data-armed')
+  })
+
+  it('has data-muted when track.muted=true', () => {
+    render(<TrackHeader {...BASE_PROPS} track={{ ...BASE_TRACK, muted: true }} />)
+    expect(screen.getByRole('group', { name: 'Vocals' })).toHaveAttribute('data-muted')
+  })
+
+  it('has data-soloed when track.soloed=true', () => {
+    render(<TrackHeader {...BASE_PROPS} track={{ ...BASE_TRACK, soloed: true }} />)
+    expect(screen.getByRole('group', { name: 'Vocals' })).toHaveAttribute('data-soloed')
+  })
+})
+
+describe('TrackHeader — name editing', () => {
+  it('shows an input with current name value on double-click', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByText('Vocals'))
+    const input = screen.getByRole('textbox', { name: /track name/i })
+    expect(input).toBeInTheDocument()
+    expect(input).toHaveValue('Vocals')
+  })
+
+  it('calls onRename with trimmed value on Enter and exits edit mode', () => {
+    const onRename = vi.fn()
+    render(<TrackHeader {...BASE_PROPS} onRename={onRename} />)
+    fireEvent.dblClick(screen.getByText('Vocals'))
+    const input = screen.getByRole('textbox', { name: /track name/i })
+    fireEvent.change(input, { target: { value: '  Lead Vocals  ' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onRename).toHaveBeenCalledWith('Lead Vocals')
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+
+  it('does not call onRename on Escape; restores original name', () => {
+    const onRename = vi.fn()
+    render(<TrackHeader {...BASE_PROPS} onRename={onRename} />)
+    fireEvent.dblClick(screen.getByText('Vocals'))
+    const input = screen.getByRole('textbox', { name: /track name/i })
+    fireEvent.change(input, { target: { value: 'Changed Name' } })
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(onRename).not.toHaveBeenCalled()
+    expect(screen.getByText('Vocals')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+
+  it('calls onRename with original name when input is empty on Enter', () => {
+    const onRename = vi.fn()
+    render(<TrackHeader {...BASE_PROPS} onRename={onRename} />)
+    fireEvent.dblClick(screen.getByText('Vocals'))
+    const input = screen.getByRole('textbox', { name: /track name/i })
+    fireEvent.change(input, { target: { value: '' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onRename).toHaveBeenCalledWith('Vocals')
+  })
+
+  it('updates aria-label on root group when track.name prop changes', () => {
+    const { rerender } = render(<TrackHeader {...BASE_PROPS} />)
+    expect(screen.getByRole('group', { name: 'Vocals' })).toBeInTheDocument()
+    rerender(<TrackHeader {...BASE_PROPS} track={{ ...BASE_TRACK, name: 'Lead Vocals' }} />)
+    expect(screen.getByRole('group', { name: 'Lead Vocals' })).toBeInTheDocument()
+  })
+})
