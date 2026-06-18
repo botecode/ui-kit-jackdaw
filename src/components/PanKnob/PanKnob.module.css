@@ -36,6 +36,14 @@
     0 0 0 1px var(--border);
 }
 
+.knob:focus-visible {
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border),
+    0 0 0 3px color-mix(in srgb, var(--pan-accent, var(--accent)) 60%, transparent);
+}
+
 .knob[data-size="sm"] {
   width: 32px;
   height: 32px;
@@ -43,7 +51,8 @@
 
 /* ─── Hover — subtle brightness on the cap only ─────────────────────────────── */
 
-.root:hover .cap {
+.root:hover .cap,
+.root[data-dragging] .cap {
   filter: brightness(1.1);
 }
 
@@ -70,6 +79,7 @@
 
 .ledRing {
   fill: none;
+  stroke: var(--pan-accent, var(--accent)); /* fallback for no color-mix support */
   stroke: color-mix(in srgb, var(--pan-accent, var(--accent)) 70%, transparent);
   opacity: 0;
   transition:
@@ -101,5 +111,9 @@
 
 .root:hover .readout,
 .root[data-dragging] .readout {
+  opacity: 1;
+}
+
+.knob:focus-visible + .readout {
   opacity: 1;
 }
