@@ -205,3 +205,46 @@ describe('FxChip chain editor — keyboard reorder', () => {
     expect(onReorder).toHaveBeenCalledWith(1, 0)
   })
 })
+
+// ── Drag reorder ─────────────────────────────────────────────────────────────
+
+describe('FxChip drag reorder', () => {
+  beforeEach(() => {
+    // jsdom does not implement pointer capture
+    HTMLElement.prototype.setPointerCapture   = vi.fn()
+    HTMLElement.prototype.releasePointerCapture = vi.fn()
+  })
+
+  it('pointerdown → pointermove past midpoint → pointerup calls onReorder(0, 1)', () => {
+    const onReorder = vi.fn()
+    const { container } = render(
+      <FxChip
+        {...DEFAULT_PROPS}
+        plugins={MIXED_PLUGINS}
+        chainEnabled
+        onReorder={onReorder}
+        defaultOpen
+      />
+    )
+
+    const slot0 = container.querySelector('[data-slot-index="0"]') as HTMLElement
+    const slot1 = container.querySelector('[data-slot-index="1"]') as HTMLElement
+
+    // Mock slot getBoundingClientRect — jsdom returns all zeros by default
+    slot0.getBoundingClientRect = vi.fn().mockReturnValue(
+      { top: 0, bottom: 32, height: 32, left: 0, right: 220, width: 220 } as DOMRect
+    )
+    slot1.getBoundingClientRect = vi.fn().mockReturnValue(
+      { top: 32, bottom: 64, height: 32, left: 0, right: 220, width: 220 } as DOMRect
+    )
+
+    const handle = container.querySelectorAll('[data-testid="drag-handle"]')[0] as HTMLElement
+
+    // Drag from slot 0 (Y=16) past slot 1 midpoint (Y=48)
+    fireEvent.pointerDown(handle, { clientY: 16, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientY: 55, pointerId: 1 })
+    fireEvent.pointerUp(handle,   { clientY: 55, pointerId: 1 })
+
+    expect(onReorder).toHaveBeenCalledWith(0, 1)
+  })
+})

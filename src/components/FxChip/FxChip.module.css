@@ -333,3 +333,39 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* ─── Drag ghost ─────────────────────────────────────────────────────────────── */
+
+.ghost {
+  position: fixed;
+  left: 0;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0.88;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text);
+  min-height: 28px;
+  /* no transition — pointer drag should track cursor precisely */
+}
+
+/* ─── Drag insertion line ────────────────────────────────────────────────────── */
+
+.insertionLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 201;
+  border-radius: 1px;
+}

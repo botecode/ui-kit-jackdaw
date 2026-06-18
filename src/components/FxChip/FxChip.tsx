@@ -73,6 +73,16 @@ function MasterLED({ chainEnabled, plugins, onToggle, ledRef }: MasterLEDProps) 
   )
 }
 
+// ── DragState ─────────────────────────────────────────────────────────────────
+
+interface DragState {
+  dragIndex:   number
+  hoverIndex:  number
+  ghostY:      number
+  panelTop:    number
+  panelBottom: number
+}
+
 // ── SlotRow ───────────────────────────────────────────────────────────────────
 
 interface SlotRowProps {
@@ -84,13 +94,17 @@ interface SlotRowProps {
   onRemove:       (id: string) => void
   onAnnounce:     (msg: string) => void
   slotRef:        (el: HTMLDivElement | null) => void
+  onDragStart:    (index: number, e: React.PointerEvent<HTMLDivElement>) => void
+  onDragMove:     (e: React.PointerEvent<HTMLDivElement>) => void
+  onDragEnd:      (e: React.PointerEvent<HTMLDivElement>) => void
 }
 
-function SlotRow({ plugin, index, total, onTogglePlugin, onReorder, onRemove, onAnnounce, slotRef }: SlotRowProps) {
+function SlotRow({
+  plugin, index, total, onTogglePlugin, onReorder, onRemove, onAnnounce,
+  slotRef, onDragStart, onDragMove, onDragEnd,
+}: SlotRowProps) {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!e.altKey) return
-    const t = e.target as HTMLElement
-    if (t.classList.contains(styles.moveUp) || t.classList.contains(styles.moveDown)) return
     if (e.key === 'ArrowUp' && index > 0) {
       e.preventDefault()
       onReorder(index, index - 1)
@@ -136,6 +150,9 @@ function SlotRow({ plugin, index, total, onTogglePlugin, onReorder, onRemove, on
         className={styles.handle}
         aria-hidden
         data-testid="drag-handle"
+        onPointerDown={e => onDragStart(index, e)}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
       >⠿</div>
       <button
         className={styles.removeBtn}
@@ -163,10 +180,54 @@ function ChainEditor({
   plugins, chainEnabled, onToggleChain, onTogglePlugin, onReorder, onRemove, onAdd, masterLedRef,
 }: ChainEditorProps) {
   const [announcement, setAnnouncement] = useState('')
-  const slotRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [dragState, setDragState]       = useState<DragState | null>(null)
+  const slotRefs  = useRef<(HTMLDivElement | null)[]>([])
+  const panelRef  = useRef<HTMLDivElement>(null)
+
+  function handleDragStart(index: number, e: React.PointerEvent<HTMLDivElement>) {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const panel = panelRef.current?.getBoundingClientRect()
+    setDragState({
+      dragIndex:   index,
+      hoverIndex:  index,
+      ghostY:      e.clientY,
+      panelTop:    panel?.top    ?? 0,
+      panelBottom: panel?.bottom ?? window.innerHeight,
+    })
+  }
+
+  function handleDragMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragState) return
+    let hoverIndex = dragState.dragIndex
+    for (let i = 0; i < slotRefs.current.length; i++) {
+      const rect = slotRefs.current[i]?.getBoundingClientRect()
+      if (!rect) continue
+      if (e.clientY > rect.top + rect.height / 2) hoverIndex = i
+    }
+    const ghostY = Math.max(
+      dragState.panelTop,
+      Math.min(dragState.panelBottom - 28, e.clientY - 14)
+    )
+    setDragState(prev => prev ? { ...prev, hoverIndex, ghostY } : null)
+  }
+
+  function handleDragEnd(_e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragState) return
+    if (dragState.hoverIndex !== dragState.dragIndex) {
+      onReorder(dragState.dragIndex, dragState.hoverIndex)
+    }
+    setDragState(null)
+  }
+
+  function getInsertionLineY(afterIndex: number): number {
+    const rect = slotRefs.current[afterIndex]?.getBoundingClientRect()
+    const panelRect = panelRef.current?.getBoundingClientRect()
+    if (!rect || !panelRect) return 0
+    return rect.bottom - panelRect.top
+  }
 
   return (
-    <div role="dialog" aria-label="FX chain" className={styles.chainDialog}>
+    <div role="dialog" aria-label="FX chain" className={styles.chainDialog} ref={panelRef}>
       <Panel
         tone="stage"
         padding="sm"
@@ -183,7 +244,7 @@ function ChainEditor({
         {plugins.length === 0 ? (
           <p className={styles.empty}>No effects yet — add one.</p>
         ) : (
-          <div>
+          <div style={{ position: 'relative' }}>
             {plugins.map((p, i) => (
               <SlotRow
                 key={p.id}
@@ -195,8 +256,18 @@ function ChainEditor({
                 onRemove={onRemove}
                 onAnnounce={setAnnouncement}
                 slotRef={el => { slotRefs.current[i] = el }}
+                onDragStart={handleDragStart}
+                onDragMove={handleDragMove}
+                onDragEnd={handleDragEnd}
               />
             ))}
+            {dragState && dragState.hoverIndex !== dragState.dragIndex && (
+              <div
+                className={styles.insertionLine}
+                style={{ top: getInsertionLineY(dragState.hoverIndex) }}
+                aria-hidden
+              />
+            )}
           </div>
         )}
         <button className={styles.addRow} onClick={onAdd}>+ Add plugin…</button>
@@ -204,6 +275,15 @@ function ChainEditor({
           {announcement}
         </div>
       </Panel>
+      {dragState && (
+        <div
+          className={styles.ghost}
+          style={{ top: dragState.ghostY, width: panelRef.current?.getBoundingClientRect().width ?? 220 }}
+          aria-hidden
+        >
+          {plugins[dragState.dragIndex]?.name}
+        </div>
+      )}
     </div>
   )
 }
