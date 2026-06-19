@@ -6,6 +6,7 @@ import { dirname, resolve } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  server: { port: 5273, strictPort: true },
   plugins: [react()],
   resolve: {
     alias: {
