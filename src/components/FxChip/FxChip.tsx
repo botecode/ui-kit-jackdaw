@@ -321,7 +321,12 @@ export function FxChip({
   const triggerRef    = useRef<HTMLButtonElement>(null)
   const masterLedRef  = useRef<HTMLButtonElement>(null)
 
-  const chipState = plugins.length === 0 ? 'empty' : chainEnabled ? 'active' : 'bypassed'
+  const someBypassedPlugins = chainEnabled && plugins.some(p => !p.enabled)
+  const chipState =
+    plugins.length === 0  ? 'empty'
+    : !chainEnabled       ? 'bypassed'
+    : someBypassedPlugins ? 'partial'
+    :                       'active'
   const chipLabel = plugins.length === 0 ? '+ FX' : plugins.length === 1 ? 'FX' : `FX ${plugins.length}`
 
   function openMenu()  { if (!disabled) setOpen(true) }

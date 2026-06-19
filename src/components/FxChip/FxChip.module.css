@@ -60,6 +60,18 @@
     box-shadow var(--dur-led-on) var(--ease-out);
 }
 
+/* ─── Partial: amber attention (chain on, ≥1 plugin bypassed) ───────────────── */
+
+.root[data-state="partial"] .chip {
+  border-color: color-mix(in srgb, var(--led-yellow) 60%, var(--border));
+  box-shadow:
+    0 0 0 1px var(--led-yellow),
+    0 0 8px 3px color-mix(in srgb, var(--led-yellow) 35%, transparent);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
 /* ─── Open: accent border (overrides active bloom border) ───────────────────── */
 
 .root[data-open] .chip {
@@ -118,8 +130,13 @@
 }
 
 .masterLed[data-state="partial"] {
-  background: color-mix(in srgb, var(--led-cyan) 45%, var(--stage));
-  box-shadow: none;
+  background: var(--led-yellow);
+  box-shadow:
+    0 0 0 1px var(--led-yellow),
+    0 0 8px 3px color-mix(in srgb, var(--led-yellow) 40%, transparent);
+  transition:
+    background  var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
 }
 
 .masterLed:focus-visible {

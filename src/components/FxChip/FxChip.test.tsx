@@ -248,3 +248,41 @@ describe('FxChip drag reorder', () => {
     expect(onReorder).toHaveBeenCalledWith(0, 1)
   })
 })
+
+// ── Partial state (amber) ──────────────────────────────────────────────────────
+
+describe('FxChip partial state', () => {
+  const MIXED_PLUGINS: FxPlugin[] = [
+    { id: 'p1', name: 'Reverb',     enabled: true  },
+    { id: 'p2', name: 'Compressor', enabled: false },
+  ]
+
+  it('root data-state="partial" when chainEnabled and some plugins bypassed', () => {
+    const { container } = render(
+      <FxChip {...DEFAULT_PROPS} plugins={MIXED_PLUGINS} chainEnabled />
+    )
+    expect(container.firstChild).toHaveAttribute('data-state', 'partial')
+  })
+
+  it('root data-state="active" when chainEnabled and all plugins enabled', () => {
+    const { container } = render(
+      <FxChip {...DEFAULT_PROPS} plugins={ONE_PLUGIN} chainEnabled />
+    )
+    expect(container.firstChild).toHaveAttribute('data-state', 'active')
+  })
+
+  it('root data-state="bypassed" when chainEnabled=false (regardless of plugin state)', () => {
+    const { container } = render(
+      <FxChip {...DEFAULT_PROPS} plugins={MIXED_PLUGINS} chainEnabled={false} />
+    )
+    expect(container.firstChild).toHaveAttribute('data-state', 'bypassed')
+  })
+
+  it('master LED data-state="partial" when chainEnabled and some plugins bypassed', () => {
+    render(
+      <FxChip {...DEFAULT_PROPS} plugins={MIXED_PLUGINS} chainEnabled defaultOpen />
+    )
+    const master = screen.getByRole('checkbox', { name: 'FX chain' })
+    expect(master).toHaveAttribute('data-state', 'partial')
+  })
+})
