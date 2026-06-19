@@ -20,6 +20,7 @@ export interface FxChipProps {
   onReorder:      (fromIdx: number, toIdx: number) => void
   onRemove:       (id: string) => void
   onAdd:          () => void
+  onOpenPlugin:   (id: string) => void
   size?:          'sm' | 'md'
   disabled?:      boolean
   defaultOpen?:   boolean
@@ -87,22 +88,23 @@ interface DragState {
 // ── SlotRow ───────────────────────────────────────────────────────────────────
 
 interface SlotRowProps {
-  plugin:         FxPlugin
-  index:          number
-  total:          number
-  onTogglePlugin: (id: string, next: boolean) => void
-  onReorder:      (fromIdx: number, toIdx: number) => void
-  onRemove:       (id: string) => void
-  onAnnounce:     (msg: string) => void
-  slotRef:        (el: HTMLDivElement | null) => void
-  onDragStart:    (index: number, e: React.PointerEvent<HTMLDivElement>) => void
-  onDragMove:     (e: React.PointerEvent<HTMLDivElement>) => void
-  onDragEnd:      (e: React.PointerEvent<HTMLDivElement>) => void
+  plugin:          FxPlugin
+  index:           number
+  total:           number
+  onTogglePlugin:  (id: string, next: boolean) => void
+  onReorder:       (fromIdx: number, toIdx: number) => void
+  onRemove:        (id: string) => void
+  onOpenPlugin:    (id: string) => void
+  onAnnounce:      (msg: string) => void
+  slotRef:         (el: HTMLDivElement | null) => void
+  onDragStart:     (index: number, e: React.PointerEvent<HTMLDivElement>) => void
+  onDragMove:      (e: React.PointerEvent<HTMLDivElement>) => void
+  onDragEnd:       (e: React.PointerEvent<HTMLDivElement>) => void
   onPointerCancel: (e: React.PointerEvent<HTMLDivElement>) => void
 }
 
 function SlotRow({
-  plugin, index, total, onTogglePlugin, onReorder, onRemove, onAnnounce,
+  plugin, index, total, onTogglePlugin, onReorder, onRemove, onOpenPlugin, onAnnounce,
   slotRef, onDragStart, onDragMove, onDragEnd, onPointerCancel,
 }: SlotRowProps) {
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -137,7 +139,13 @@ function SlotRow({
         aria-label={plugin.name}
         onClick={() => onTogglePlugin(plugin.id, !plugin.enabled)}
       />
-      <span className={styles.name}>{plugin.name}</span>
+      <button
+        className={styles.nameBtn}
+        aria-label={`Open ${plugin.name}`}
+        onClick={() => onOpenPlugin(plugin.id)}
+      >
+        {plugin.name}
+      </button>
       <button
         className={styles.moveUp}
         aria-label={`Move ${plugin.name} up`}
@@ -178,11 +186,12 @@ interface ChainEditorProps {
   onReorder:      (fromIdx: number, toIdx: number) => void
   onRemove:       (id: string) => void
   onAdd:          () => void
+  onOpenPlugin:   (id: string) => void
   masterLedRef:   React.RefObject<HTMLButtonElement | null>
 }
 
 function ChainEditor({
-  plugins, chainEnabled, onToggleChain, onTogglePlugin, onReorder, onRemove, onAdd, masterLedRef,
+  plugins, chainEnabled, onToggleChain, onTogglePlugin, onReorder, onRemove, onAdd, onOpenPlugin, masterLedRef,
 }: ChainEditorProps) {
   const [announcement, setAnnouncement] = useState('')
   const [dragState, setDragState]       = useState<DragState | null>(null)
@@ -262,6 +271,7 @@ function ChainEditor({
                 onTogglePlugin={onTogglePlugin}
                 onReorder={onReorder}
                 onRemove={onRemove}
+                onOpenPlugin={onOpenPlugin}
                 onAnnounce={setAnnouncement}
                 slotRef={el => { slotRefs.current[i] = el }}
                 onDragStart={handleDragStart}
@@ -311,6 +321,7 @@ export function FxChip({
   onReorder,
   onRemove,
   onAdd,
+  onOpenPlugin,
   size = 'md',
   disabled,
   defaultOpen = false,
@@ -379,6 +390,7 @@ export function FxChip({
             onReorder={onReorder}
             onRemove={onRemove}
             onAdd={onAdd}
+            onOpenPlugin={onOpenPlugin}
             masterLedRef={masterLedRef}
           />
         </Popover>

@@ -64,7 +64,7 @@ function StatesDemo() {
     <StatesGrid>
       <State label="empty">
         <TrackCorner>
-          <FxChip plugins={[]} chainEnabled={false} onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} />
+          <FxChip plugins={[]} chainEnabled={false} onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop} />
         </TrackCorner>
       </State>
 
@@ -73,7 +73,7 @@ function StatesDemo() {
           <FxChip
             plugins={[{ id: 'r', name: 'Reverb', enabled: true }]}
             chainEnabled
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop}
           />
         </TrackCorner>
       </State>
@@ -83,7 +83,7 @@ function StatesDemo() {
           <FxChip
             plugins={STUB_PLUGINS.slice(0, 4)}
             chainEnabled
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop}
           />
         </TrackCorner>
       </State>
@@ -93,7 +93,7 @@ function StatesDemo() {
           <FxChip
             plugins={STUB_PLUGINS.slice(0, 4)}
             chainEnabled={false}
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop}
           />
         </TrackCorner>
       </State>
@@ -107,7 +107,7 @@ function StatesDemo() {
               { id: 'e', name: 'EQ',         enabled: true  },
             ]}
             chainEnabled
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop}
           />
         </TrackCorner>
       </State>
@@ -118,7 +118,7 @@ function StatesDemo() {
             plugins={STUB_PLUGINS.slice(0, 2)}
             chainEnabled
             disabled
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop}
           />
         </TrackCorner>
       </State>
@@ -129,7 +129,7 @@ function StatesDemo() {
             plugins={STUB_PLUGINS.slice(0, 2)}
             chainEnabled
             size="sm"
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop}
           />
         </TrackCorner>
       </State>
@@ -142,7 +142,7 @@ function StatesDemo() {
               plugins={STUB_PLUGINS.slice(0, 3)}
               chainEnabled
               defaultOpen
-              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop} onOpenPlugin={noop}
             />
           </TrackCorner>
         </div>
@@ -198,6 +198,7 @@ function PlaygroundDemo() {
               onReorder={handleReorder}
               onRemove={handleRemove}
               onAdd={handleAdd}
+              onOpenPlugin={id => console.log('open plugin', id)}
               size={size}
               disabled={disabled}
             />
