@@ -1,6 +1,7 @@
 // src/components/Popover/Popover.tsx
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { usePortalTarget } from '../../theme/ThemeProvider'
 import styles from './Popover.module.css'
 
 export interface PopoverProps {
@@ -42,8 +43,9 @@ export function Popover({
   className,
   anchor,
 }: PopoverProps) {
-  const contentRef = useRef<HTMLDivElement>(null)
+  const contentRef   = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const portalTarget  = usePortalTarget()
 
   // Outside-click: close when mousedown is outside both containerRef AND contentRef.
   // The second check is essential for portaled content — the portaled div is not a
@@ -109,7 +111,7 @@ export function Popover({
       <div ref={contentRef} className={shellClass} style={style}>
         {children}
       </div>,
-      document.body,
+      portalTarget ?? document.body,
     )
   }
 
