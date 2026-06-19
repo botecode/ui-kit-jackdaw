@@ -59,6 +59,10 @@ export interface TrackHeaderProps {
   inputOptions:    InputSelectOption[]
   anySoloActive?:  boolean
   disabled?:       boolean
+  /** Track has clipped — shows meter with latched clip indicator even when not armed/selected. */
+  clipping?:       boolean
+  /** Show meters on all tracks regardless of armed/selected/clipping state. */
+  showAllMeters?:  boolean
 }
 
 // ── Shared scale (module-level to avoid recreating per render) ────────────────
@@ -168,15 +172,17 @@ function TopBar({
         </button>
       )}
       <div className={styles.cornerChips}>
-        <InputSelect
-          value={inputId}
-          onChange={onSelectInput}
-          options={inputOptions}
-          variant={inputVariant}
-          size="sm"
-          disabled={disabled}
-          aria-label="Audio input"
-        />
+        {variant !== 'folder' && (
+          <InputSelect
+            value={inputId}
+            onChange={onSelectInput}
+            options={inputOptions}
+            variant={inputVariant}
+            size="sm"
+            disabled={disabled}
+            aria-label="Audio input"
+          />
+        )}
         <FxChip
           plugins={plugins}
           chainEnabled={chainEnabled}
@@ -202,6 +208,7 @@ interface ControlStripProps {
   volumeDb:      number
   pan:           number
   color:         string
+  showMeter:     boolean
   meterLevel?:   number
   meterLevelL?:  number
   meterLevelR?:  number
@@ -216,7 +223,7 @@ interface ControlStripProps {
 
 function ControlStrip({
   armed, muted, soloed, volumeDb, pan, color,
-  meterLevel, meterLevelL, meterLevelR,
+  showMeter, meterLevel, meterLevelL, meterLevelR,
   anySoloActive, disabled,
   onArm, onMute, onSolo, onVolume, onPan,
 }: ControlStripProps) {
@@ -257,17 +264,19 @@ function ControlStrip({
         size="sm"
         disabled={disabled}
       />
-      <Meter
-        value={meterLevel}
-        valueL={meterLevelL}
-        valueR={meterLevelR}
-        peakHold
-        clipLatch
-        ballistics
-        orientation="vertical"
-        size="sm"
-        aria-label="Level"
-      />
+      {showMeter && (
+        <Meter
+          value={meterLevel}
+          valueL={meterLevelL}
+          valueR={meterLevelR}
+          peakHold
+          clipLatch
+          ballistics
+          orientation="vertical"
+          size="sm"
+          aria-label="Level"
+        />
+      )}
     </div>
   )
 }
@@ -278,16 +287,25 @@ interface FolderControlStripProps {
   muted:         boolean
   soloed:        boolean
   volumeDb:      number
+  pan:           number
+  color:         string
+  showMeter:     boolean
+  meterLevel?:   number
+  meterLevelL?:  number
+  meterLevelR?:  number
   anySoloActive: boolean
   disabled:      boolean
   onMute:        () => void
   onSolo:        () => void
   onVolume:      (db: number) => void
+  onPan:         (pan: number) => void
 }
 
 function FolderControlStrip({
-  muted, soloed, volumeDb, anySoloActive, disabled,
-  onMute, onSolo, onVolume,
+  muted, soloed, volumeDb, pan, color,
+  showMeter, meterLevel, meterLevelL, meterLevelR,
+  anySoloActive, disabled,
+  onMute, onSolo, onVolume, onPan,
 }: FolderControlStripProps) {
   return (
     <div className={styles.controlStrip} data-section="strip">
@@ -311,6 +329,26 @@ function FolderControlStrip({
         disabled={disabled}
         aria-label="Group volume"
       />
+      <PanKnob
+        pan={pan}
+        onChange={onPan}
+        color={color}
+        size="sm"
+        disabled={disabled}
+      />
+      {showMeter && (
+        <Meter
+          value={meterLevel}
+          valueL={meterLevelL}
+          valueR={meterLevelR}
+          peakHold
+          clipLatch
+          ballistics
+          orientation="vertical"
+          size="sm"
+          aria-label="Level"
+        />
+      )}
     </div>
   )
 }
@@ -342,7 +380,11 @@ export function TrackHeader({
   inputOptions,
   anySoloActive = false,
   disabled = false,
+  clipping = false,
+  showAllMeters = false,
 }: TrackHeaderProps) {
+  const showMeter = track.armed || track.selected || clipping || showAllMeters
+
   return (
     <div
       role="group"
@@ -354,6 +396,7 @@ export function TrackHeader({
       data-muted={track.muted || undefined}
       data-soloed={track.soloed || undefined}
       data-selected={track.selected || undefined}
+      data-clipping={clipping || undefined}
       data-disabled={disabled || undefined}
       style={{ '--track-color': track.color } as CSSProperties}
       onClick={onSelect}
@@ -387,6 +430,7 @@ export function TrackHeader({
           volumeDb={track.volumeDb}
           pan={track.pan}
           color={track.color}
+          showMeter={showMeter}
           meterLevel={meterLevel}
           meterLevelL={meterLevelL}
           meterLevelR={meterLevelR}
@@ -403,11 +447,18 @@ export function TrackHeader({
           muted={track.muted}
           soloed={track.soloed}
           volumeDb={track.volumeDb}
+          pan={track.pan}
+          color={track.color}
+          showMeter={showMeter}
+          meterLevel={meterLevel}
+          meterLevelL={meterLevelL}
+          meterLevelR={meterLevelR}
           anySoloActive={anySoloActive}
           disabled={disabled}
           onMute={onMute}
           onSolo={onSolo}
           onVolume={onVolume}
+          onPan={onPan}
         />
       )}
     </div>

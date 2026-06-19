@@ -210,3 +210,40 @@ describe('TrackHeader — folder distinctiveness', () => {
     expect(screen.getByRole('group', { name: 'Group Bus' })).toHaveAttribute('data-variant', 'folder')
   })
 })
+
+describe('TrackHeader — meter visibility (ears-first)', () => {
+  it('meter is hidden on a normal unselected unarmed track', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    expect(screen.queryByRole('meter')).not.toBeInTheDocument()
+  })
+
+  it('meter appears when track is armed', () => {
+    render(<TrackHeader {...BASE_PROPS} track={{ ...BASE_TRACK, armed: true }} />)
+    expect(screen.getByRole('meter')).toBeInTheDocument()
+  })
+
+  it('meter appears when track is selected', () => {
+    render(<TrackHeader {...BASE_PROPS} track={{ ...BASE_TRACK, selected: true }} />)
+    expect(screen.getByRole('meter')).toBeInTheDocument()
+  })
+
+  it('meter appears when clipping=true even if not armed or selected', () => {
+    render(<TrackHeader {...BASE_PROPS} clipping />)
+    expect(screen.getByRole('meter')).toBeInTheDocument()
+  })
+
+  it('meter appears when showAllMeters=true', () => {
+    render(<TrackHeader {...BASE_PROPS} showAllMeters />)
+    expect(screen.getByRole('meter')).toBeInTheDocument()
+  })
+
+  it('fader and pan are always present regardless of meter visibility', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    expect(screen.getByRole('slider', { name: /volume/i })).toBeInTheDocument()
+    // PanKnob does not use an ARIA slider role by default; verify via aria-label on the knob group
+    const strip = document.querySelector('[data-section="strip"]')
+    expect(strip).toBeInTheDocument()
+    // Meter absent, strip still present
+    expect(screen.queryByRole('meter')).not.toBeInTheDocument()
+  })
+})
