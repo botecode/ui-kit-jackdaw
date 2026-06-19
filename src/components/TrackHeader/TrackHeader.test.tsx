@@ -209,6 +209,30 @@ describe('TrackHeader — folder distinctiveness', () => {
     )
     expect(screen.getByRole('group', { name: 'Group Bus' })).toHaveAttribute('data-variant', 'folder')
   })
+
+  it('folder variant renders a PanKnob (group pan)', () => {
+    const { container } = render(
+      <TrackHeader {...BASE_PROPS}
+        variant="folder"
+        track={{ ...BASE_TRACK, name: 'Group Bus' }}
+        onToggleFolder={noop}
+      />
+    )
+    // PanKnob renders an element with aria-label containing "Pan"
+    expect(container.querySelector('[aria-label*="Pan"]')).toBeInTheDocument()
+  })
+
+  it('folder variant does not render an audio input selector', () => {
+    render(
+      <TrackHeader {...BASE_PROPS}
+        variant="folder"
+        track={{ ...BASE_TRACK, name: 'Group Bus' }}
+        onToggleFolder={noop}
+        inputOptions={[{ id: 'in-1', label: 'Input 1' }]}
+      />
+    )
+    expect(screen.queryByRole('button', { name: /audio input/i })).not.toBeInTheDocument()
+  })
 })
 
 describe('TrackHeader — meter visibility (ears-first)', () => {

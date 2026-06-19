@@ -205,11 +205,10 @@
   padding-left: calc(var(--space-3) + 6px);
 }
 
-/* Bolder name — heavier weight + slightly larger */
+/* Bolder name — weight only; InputSelect removal already frees enough horizontal room */
 .root[data-variant="folder"] .name,
 .root[data-variant="folder"] .nameInput {
   font-weight: var(--weight-bold);
-  font-size: var(--text-base);
 }
 
 /* Larger glyph for folder variant */
