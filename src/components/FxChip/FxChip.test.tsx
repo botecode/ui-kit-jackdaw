@@ -252,11 +252,6 @@ describe('FxChip drag reorder', () => {
 // ── Partial state (amber) ──────────────────────────────────────────────────────
 
 describe('FxChip partial state', () => {
-  const MIXED_PLUGINS: FxPlugin[] = [
-    { id: 'p1', name: 'Reverb',     enabled: true  },
-    { id: 'p2', name: 'Compressor', enabled: false },
-  ]
-
   it('root data-state="partial" when chainEnabled and some plugins bypassed', () => {
     const { container } = render(
       <FxChip {...DEFAULT_PROPS} plugins={MIXED_PLUGINS} chainEnabled />
