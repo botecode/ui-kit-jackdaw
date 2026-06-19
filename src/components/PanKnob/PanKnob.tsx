@@ -40,6 +40,9 @@ export function arcPath(
   return `M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} ${sweep} ${ex} ${ey}`
 }
 
+const ARC_R = 18
+const ARC_C = 20
+
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export interface PanKnobProps {
@@ -166,9 +169,6 @@ export function PanKnob({
   }
 
   const knurlCount = size === 'sm' ? 16 : 24
-
-  const ARC_R = 18
-  const ARC_C = 20  // center x and y
 
   return (
     <div

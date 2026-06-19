@@ -387,6 +387,7 @@ describe('PanKnob arc elements', () => {
     const { container } = render(<PanKnob pan={0.5} onChange={noop} />)
     expect(container.querySelector('[data-testid="range-arc"]')?.getAttribute('aria-hidden')).toBe('true')
     expect(container.querySelector('[data-testid="center-tick"]')?.getAttribute('aria-hidden')).toBe('true')
+    expect(container.querySelector('[data-testid="value-arc"]')?.getAttribute('aria-hidden')).toBe('true')
   })
 
   it('value arc is absent at pan near-zero (-0.001)', () => {
