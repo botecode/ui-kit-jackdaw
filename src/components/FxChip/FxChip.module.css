@@ -154,10 +154,15 @@
   min-height: 28px;
   user-select: none;
   -webkit-user-select: none;
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
 .slot + .slot {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.slot:hover {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 /* ─── Per-slot colored LED button ────────────────────────────────────────────── */
@@ -214,10 +219,6 @@
   cursor: pointer;
   outline: none;
   transition: color var(--dur-fast) var(--ease-out);
-}
-
-.nameBtn:hover {
-  color: var(--text);
 }
 
 .nameBtn:focus-visible {
