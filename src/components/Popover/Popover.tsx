@@ -16,6 +16,7 @@ export interface PopoverProps {
 
 const MARGIN = 4
 
+// Point-anchor position: place menu at (anchorX, anchorY), flip + clamp to viewport.
 function computePosition(
   anchorX: number,
   anchorY: number,
@@ -37,21 +38,41 @@ function computePosition(
   return { left, top }
 }
 
+// Element-anchor position: align to trigger bottom-left; flip up; clamp to viewport.
+function computeElementPosition(
+  triggerRect: DOMRect,
+  menuW:       number,
+  menuH:       number,
+): { left: number; top: number; minWidth: number } {
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+
+  let left = triggerRect.left
+  let top  = triggerRect.bottom + 2   // 2px gap — matches old CSS top: calc(100% + 2px)
+
+  if (top + menuH + MARGIN > vh) top = triggerRect.top - menuH - 2
+
+  left = Math.max(MARGIN, Math.min(left, vw - menuW - MARGIN))
+  top  = Math.max(MARGIN, Math.min(top,  vh - menuH - MARGIN))
+
+  return { left, top, minWidth: triggerRect.width }
+}
+
 export function Popover({
   containerRef,
   onClose,
   children,
   className,
   anchor,
+  anchorRef,
 }: PopoverProps) {
-  const contentRef   = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const contentRef  = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ left: number; top: number; minWidth?: number } | null>(null)
   const portalTarget  = usePortalTarget()
 
   // Outside-click: close when mousedown is outside both containerRef AND contentRef.
   // The second check is essential for portaled content — the portaled div is not a
-  // DOM descendant of containerRef, so without it every click inside the menu would
-  // be treated as "outside" and dismiss it immediately.
+  // DOM descendant of containerRef, so without it every click inside would dismiss it.
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (
@@ -77,7 +98,7 @@ export function Popover({
     return () => document.removeEventListener('keydown', handle)
   }, [onClose])
 
-  // Scroll/resize → close (portaled only). Repositioning a stale point is worse than closing.
+  // Point-anchor: close on scroll/resize — a stale point is worse than a closed menu.
   useEffect(() => {
     if (!anchor) return
     function handle() { onClose() }
@@ -89,8 +110,8 @@ export function Popover({
     }
   }, [anchor, onClose])
 
-  // Measure + position. Deps are the raw coords, not the anchor object, because
-  // anchor is created inline on every render (new object reference each time).
+  // Point-anchor: measure + position. Deps are raw coords, not the anchor object,
+  // because anchor is created inline on every render (new reference each time).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     if (!anchor || !contentRef.current) return
@@ -98,28 +119,53 @@ export function Popover({
     setPos(computePosition(anchor.x, anchor.y, rect.width, rect.height))
   }, [anchor?.x, anchor?.y])
 
-  // ── Portal (point-anchored) branch ────────────────────────────────────────
-  if (anchor) {
-    const shellClass = className
-      ? `${styles.shell} ${styles.shellPortal} ${className}`
-      : `${styles.shell} ${styles.shellPortal}`
+  // Element-anchor: initial measure + position in one pass — never paints at (0,0).
+  useLayoutEffect(() => {
+    if (!anchorRef?.current || !contentRef.current) return
+    const tRect = anchorRef.current.getBoundingClientRect()
+    const cRect = contentRef.current.getBoundingClientRect()
+    setPos(computeElementPosition(tRect, cRect.width, cRect.height))
+  }, [anchorRef])
 
-    const style: React.CSSProperties = pos
-      ? { left: pos.left, top: pos.top, visibility: 'visible' }
-      : { visibility: 'hidden' }
+  // Element-anchor: rAF-throttled reposition on scroll/resize.
+  // One rAF per frame regardless of how many scroll events the browser dispatches.
+  useEffect(() => {
+    if (!anchorRef) return
+    let rafId: number | null = null
 
-    return createPortal(
-      <div ref={contentRef} className={shellClass} style={style}>
-        {children}
-      </div>,
-      portalTarget ?? document.body,
-    )
-  }
+    function schedule() {
+      if (rafId !== null) return          // already queued — drop extra events
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        const trigger = anchorRef!.current
+        const content = contentRef.current
+        if (!trigger || !content) return
+        const tRect = trigger.getBoundingClientRect()
+        const cRect = content.getBoundingClientRect()
+        setPos(computeElementPosition(tRect, cRect.width, cRect.height))
+      })
+    }
 
-  // ── Trigger-anchored branch (unchanged from before this task) ─────────────
-  return (
-    <div className={className ? `${styles.shell} ${className}` : styles.shell}>
+    window.addEventListener('scroll', schedule, { capture: true })
+    window.addEventListener('resize', schedule)
+    return () => {
+      window.removeEventListener('scroll', schedule, { capture: true })
+      window.removeEventListener('resize', schedule)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
+  }, [anchorRef])
+
+  const shellClass = className ? `${styles.shell} ${className}` : styles.shell
+
+  // `minWidth: undefined` is silently dropped by React — no style attribute emitted.
+  const style: React.CSSProperties = pos
+    ? { left: pos.left, top: pos.top, minWidth: pos.minWidth, visibility: 'visible' }
+    : { visibility: 'hidden' }
+
+  return createPortal(
+    <div ref={contentRef} className={shellClass} style={style}>
       {children}
-    </div>
+    </div>,
+    portalTarget ?? document.body,
   )
 }

@@ -1,21 +1,11 @@
 /* src/components/Popover/Popover.module.css */
 
+/* Single portal class — both anchor paths use position:fixed.
+   left / top / min-width come from the inline style set by Popover.tsx. */
 .shell {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  min-width: 100%;
-  z-index: 100;
-  animation: popover-in var(--dur-fast) var(--ease-out) both;
-}
-
-/* Portal variant — comes after .shell so its declarations win when both are applied.
-   position: fixed + z-index override .shell. .shell's animation still applies.
-   top/left are overridden by the inline style from computePosition. */
-.shellPortal {
   position: fixed;
-  min-width: unset;
   z-index: 1000;
+  animation: popover-in var(--dur-fast) var(--ease-out) both;
 }
 
 @keyframes popover-in {
