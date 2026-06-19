@@ -128,6 +128,16 @@
   padding: var(--space-1) var(--space-2) var(--space-2) calc(var(--space-3) + 3px);
 }
 
+/* ── R/M/S cluster (Arm on top, Mute+Solo below) ─────────────────────────── */
+
+.rmsCluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
 /* ── States ───────────────────────────────────────────────────────────────── */
 
 /* selected: accent inset ring + full-brightness keyline */

@@ -115,6 +115,15 @@ describe('TrackHeader — structure', () => {
     const inputRoot = screen.getByRole('button', { name: /audio input/i }).closest('[data-variant]')
     expect(inputRoot).toHaveAttribute('data-variant', 'chip')
   })
+
+  it('arm button is in the control strip, not the top bar (track variant)', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    const armBtn = screen.getByRole('button', { name: /arm for recording/i })
+    const topBar = document.querySelector('[data-section="topbar"]')
+    const strip  = document.querySelector('[data-section="strip"]')
+    expect(topBar).not.toContainElement(armBtn)
+    expect(strip).toContainElement(armBtn)
+  })
 })
 
 describe('TrackHeader — states', () => {

@@ -70,7 +70,6 @@ const DB_SCALE = dbScale()
 interface TopBarProps {
   name:           string
   type:           'audio' | 'midi' | 'instrument'
-  armed:          boolean
   inputId:        string | null
   plugins:        FxPlugin[]
   chainEnabled:   boolean
@@ -79,7 +78,6 @@ interface TopBarProps {
   folderOpen:     boolean
   inputOptions:   InputSelectOption[]
   disabled:       boolean
-  onArm:          () => void
   onSelectInput:  (id: string) => void
   onToggleChain:  (next: boolean) => void
   onTogglePlugin: (id: string, next: boolean) => void
@@ -87,13 +85,13 @@ interface TopBarProps {
   onRemovePlugin: (id: string) => void
   onAddPlugin:    () => void
   onToggleFolder: () => void
-  onRename:       (name: string) => void  // used in Task 2
+  onRename:       (name: string) => void
 }
 
 function TopBar({
-  name, type, armed, inputId, plugins, chainEnabled,
+  name, type, inputId, plugins, chainEnabled,
   mode, variant, folderOpen, inputOptions, disabled,
-  onArm, onSelectInput, onToggleChain, onTogglePlugin, onReorder,
+  onSelectInput, onToggleChain, onTogglePlugin, onReorder,
   onRemovePlugin, onAddPlugin, onToggleFolder, onRename,
 }: TopBarProps) {
   const [editing, setEditing] = useState(false)
@@ -117,7 +115,7 @@ function TopBar({
   }
 
   function cancel() {
-    committedRef.current = true  // prevent onBlur commit after cancel
+    committedRef.current = true
     setEditing(false)
   }
 
@@ -130,7 +128,7 @@ function TopBar({
     :                       MusicNote
 
   return (
-    <div className={styles.topBar}>
+    <div className={styles.topBar} data-section="topbar">
       <TypeGlyph size={14} className={styles.glyph} aria-hidden />
       {editing ? (
         <input
@@ -157,7 +155,7 @@ function TopBar({
           {name}
         </span>
       )}
-      {variant === 'folder' ? (
+      {variant === 'folder' && (
         <button
           className={styles.disclosure}
           aria-label={folderOpen ? `Collapse ${name}` : `Expand ${name}`}
@@ -168,13 +166,6 @@ function TopBar({
         >
           <CaretRight size={12} />
         </button>
-      ) : (
-        <ArmButton
-          armed={armed}
-          onToggle={onArm}
-          size="sm"
-          disabled={disabled}
-        />
       )}
       <div className={styles.cornerChips}>
         <InputSelect
@@ -205,6 +196,7 @@ function TopBar({
 // ── ControlStrip ──────────────────────────────────────────────────────────────
 
 interface ControlStripProps {
+  armed:         boolean
   muted:         boolean
   soloed:        boolean
   volumeDb:      number
@@ -215,6 +207,7 @@ interface ControlStripProps {
   meterLevelR?:  number
   anySoloActive: boolean
   disabled:      boolean
+  onArm:         () => void
   onMute:        () => void
   onSolo:        () => void
   onVolume:      (db: number) => void
@@ -222,22 +215,30 @@ interface ControlStripProps {
 }
 
 function ControlStrip({
-  muted, soloed, volumeDb, pan, color,
+  armed, muted, soloed, volumeDb, pan, color,
   meterLevel, meterLevelL, meterLevelR,
   anySoloActive, disabled,
-  onMute, onSolo, onVolume, onPan,
+  onArm, onMute, onSolo, onVolume, onPan,
 }: ControlStripProps) {
   return (
-    <div className={styles.controlStrip}>
-      <MuteSoloToggle
-        muted={muted}
-        soloed={soloed}
-        onToggleMute={onMute}
-        onToggleSolo={onSolo}
-        anySoloActive={anySoloActive}
-        size="sm"
-        disabled={disabled}
-      />
+    <div className={styles.controlStrip} data-section="strip">
+      <div className={styles.rmsCluster}>
+        <ArmButton
+          armed={armed}
+          onToggle={onArm}
+          size="sm"
+          disabled={disabled}
+        />
+        <MuteSoloToggle
+          muted={muted}
+          soloed={soloed}
+          onToggleMute={onMute}
+          onToggleSolo={onSolo}
+          anySoloActive={anySoloActive}
+          size="sm"
+          disabled={disabled}
+        />
+      </div>
       <Fader
         orientation="vertical"
         scale={DB_SCALE}
@@ -289,7 +290,7 @@ function FolderControlStrip({
   onMute, onSolo, onVolume,
 }: FolderControlStripProps) {
   return (
-    <div className={styles.controlStrip}>
+    <div className={styles.controlStrip} data-section="strip">
       <MuteSoloToggle
         muted={muted}
         soloed={soloed}
@@ -361,7 +362,6 @@ export function TrackHeader({
       <TopBar
         name={track.name}
         type={track.type}
-        armed={track.armed}
         inputId={track.inputId}
         plugins={track.plugins}
         chainEnabled={track.chainEnabled}
@@ -370,7 +370,6 @@ export function TrackHeader({
         folderOpen={folderOpen}
         inputOptions={inputOptions}
         disabled={disabled}
-        onArm={onArm}
         onSelectInput={onSelectInput}
         onToggleChain={onToggleChain}
         onTogglePlugin={onTogglePlugin}
@@ -382,6 +381,7 @@ export function TrackHeader({
       />
       {variant === 'track' ? (
         <ControlStrip
+          armed={track.armed}
           muted={track.muted}
           soloed={track.soloed}
           volumeDb={track.volumeDb}
@@ -392,6 +392,7 @@ export function TrackHeader({
           meterLevelR={meterLevelR}
           anySoloActive={anySoloActive}
           disabled={disabled}
+          onArm={onArm}
           onMute={onMute}
           onSolo={onSolo}
           onVolume={onVolume}
