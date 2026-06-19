@@ -63,6 +63,7 @@ function MasterLED({ chainEnabled, plugins, onToggle, ledRef }: MasterLEDProps) 
 
   return (
     <button
+      type="button"
       ref={ledRef}
       role="checkbox"
       aria-checked={ariaChecked}
@@ -110,7 +111,12 @@ function SlotRow({
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!e.altKey) return
     const t = e.target as HTMLElement
-    if (t.classList.contains(styles.moveUp) || t.classList.contains(styles.moveDown)) return
+    if (
+      t.classList.contains(styles.moveUp) ||
+      t.classList.contains(styles.moveDown) ||
+      t.classList.contains(styles.nameBtn) ||
+      t.classList.contains(styles.removeBtn)
+    ) return
     if (e.key === 'ArrowUp' && index > 0) {
       e.preventDefault()
       onReorder(index, index - 1)
@@ -133,6 +139,7 @@ function SlotRow({
       onKeyDown={handleKeyDown}
     >
       <button
+        type="button"
         className={styles.ledBtn}
         role="checkbox"
         aria-checked={plugin.enabled}
@@ -140,6 +147,7 @@ function SlotRow({
         onClick={() => onTogglePlugin(plugin.id, !plugin.enabled)}
       />
       <button
+        type="button"
         className={styles.nameBtn}
         aria-label={`Open ${plugin.name}`}
         onClick={() => onOpenPlugin(plugin.id)}
@@ -147,12 +155,14 @@ function SlotRow({
         {plugin.name}
       </button>
       <button
+        type="button"
         className={styles.moveUp}
         aria-label={`Move ${plugin.name} up`}
         disabled={index === 0}
         onClick={() => { onReorder(index, index - 1); onAnnounce(`${plugin.name} moved to position ${index} of ${total}`) }}
       >↑</button>
       <button
+        type="button"
         className={styles.moveDown}
         aria-label={`Move ${plugin.name} down`}
         disabled={index === total - 1}
@@ -168,6 +178,7 @@ function SlotRow({
         onPointerCancel={onPointerCancel}
       >⠿</div>
       <button
+        type="button"
         className={styles.removeBtn}
         aria-label={`Remove ${plugin.name}`}
         onClick={() => onRemove(plugin.id)}
@@ -289,7 +300,7 @@ function ChainEditor({
             )}
           </div>
         )}
-        <button className={styles.addRow} onClick={onAdd}>+ Add plugin…</button>
+        <button type="button" className={styles.addRow} onClick={onAdd}>+ Add plugin…</button>
         <div className={styles.srAnnounce} aria-live="polite" aria-atomic="true">
           {announcement}
         </div>
@@ -364,6 +375,7 @@ export function FxChip({
       data-size={size}
     >
       <button
+        type="button"
         ref={triggerRef}
         className={styles.chip}
         aria-haspopup="dialog"

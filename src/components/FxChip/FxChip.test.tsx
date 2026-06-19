@@ -205,6 +205,24 @@ describe('FxChip chain editor — keyboard reorder', () => {
     fireEvent.keyDown(compressorLed, { key: 'ArrowUp', altKey: true })
     expect(onReorder).toHaveBeenCalledWith(1, 0)
   })
+
+  it('Alt+ArrowUp on name button does NOT call onReorder', () => {
+    const onReorder = vi.fn()
+    render(
+      <FxChip
+        {...DEFAULT_PROPS}
+        plugins={MIXED_PLUGINS}
+        chainEnabled
+        onReorder={onReorder}
+        defaultOpen
+      />
+    )
+    fireEvent.keyDown(
+      screen.getByRole('button', { name: 'Open Compressor' }),
+      { key: 'ArrowUp', altKey: true }
+    )
+    expect(onReorder).not.toHaveBeenCalled()
+  })
 })
 
 // ── Drag reorder ─────────────────────────────────────────────────────────────
