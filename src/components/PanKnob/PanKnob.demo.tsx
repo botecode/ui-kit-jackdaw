@@ -23,17 +23,29 @@ function StatesDemo() {
       <State label="Default (C)">
         <PanKnob pan={0} onChange={noop} />
       </State>
+      <State label="L100 (full left)">
+        <PanKnob pan={-1} onChange={noop} />
+      </State>
       <State label="L40">
         <PanKnob pan={-0.4} onChange={noop} />
       </State>
       <State label="R75">
         <PanKnob pan={0.75} onChange={noop} />
       </State>
-      <State label="sm size">
-        <PanKnob pan={0.3} onChange={noop} size="sm" />
+      <State label="R100 (full right)">
+        <PanKnob pan={1} onChange={noop} />
+      </State>
+      <State label="sm — C">
+        <PanKnob pan={0} onChange={noop} size="sm" />
+      </State>
+      <State label="sm — L60">
+        <PanKnob pan={-0.6} onChange={noop} size="sm" />
+      </State>
+      <State label="sm — R60">
+        <PanKnob pan={0.6} onChange={noop} size="sm" />
       </State>
       <State label="Custom color">
-        <PanKnob pan={0} onChange={noop} color="var(--accent-green)" />
+        <PanKnob pan={0.3} onChange={noop} color="var(--accent-green)" />
       </State>
       <State label="Disabled">
         <PanKnob pan={0.3} onChange={noop} disabled />
