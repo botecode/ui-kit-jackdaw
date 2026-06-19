@@ -63,10 +63,10 @@
 /* ─── Partial: amber attention (chain on, ≥1 plugin bypassed) ───────────────── */
 
 .root[data-state="partial"] .chip {
-  border-color: color-mix(in srgb, var(--led-yellow) 60%, var(--border));
+  border-color: var(--led-yellow);
   box-shadow:
     0 0 0 1px var(--led-yellow),
-    0 0 8px 3px color-mix(in srgb, var(--led-yellow) 35%, transparent);
+    0 0 12px 5px color-mix(in srgb, var(--led-yellow) 55%, transparent);
   transition:
     border-color var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-led-on) var(--ease-out);
@@ -133,7 +133,7 @@
   background: var(--led-yellow);
   box-shadow:
     0 0 0 1px var(--led-yellow),
-    0 0 8px 3px color-mix(in srgb, var(--led-yellow) 40%, transparent);
+    0 0 12px 5px color-mix(in srgb, var(--led-yellow) 55%, transparent);
   transition:
     background  var(--dur-led-on) var(--ease-out),
     box-shadow  var(--dur-led-on) var(--ease-out);
