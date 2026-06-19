@@ -23,6 +23,7 @@ const DEFAULT_PROPS = {
   onReorder: noop,
   onRemove: noop,
   onAdd: noop,
+  onOpenPlugin: noop,
 }
 
 beforeEach(() => { noop.mockClear() })
@@ -279,5 +280,43 @@ describe('FxChip partial state', () => {
     )
     const master = screen.getByRole('checkbox', { name: 'FX chain' })
     expect(master).toHaveAttribute('data-state', 'partial')
+  })
+})
+
+// ── onOpenPlugin ──────────────────────────────────────────────────────────────
+
+describe('FxChip onOpenPlugin', () => {
+  it('clicking the plugin name button fires onOpenPlugin with the plugin id', () => {
+    const onOpenPlugin = vi.fn()
+    render(
+      <FxChip
+        {...DEFAULT_PROPS}
+        plugins={ONE_PLUGIN}
+        chainEnabled
+        onOpenPlugin={onOpenPlugin}
+        defaultOpen
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Open Reverb' }))
+    expect(onOpenPlugin).toHaveBeenCalledOnce()
+    expect(onOpenPlugin).toHaveBeenCalledWith('p1')
+  })
+
+  it('clicking the name button does not call onTogglePlugin or onRemove', () => {
+    const onTogglePlugin = vi.fn()
+    const onRemove = vi.fn()
+    render(
+      <FxChip
+        {...DEFAULT_PROPS}
+        plugins={ONE_PLUGIN}
+        chainEnabled
+        onTogglePlugin={onTogglePlugin}
+        onRemove={onRemove}
+        defaultOpen
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Open Reverb' }))
+    expect(onTogglePlugin).not.toHaveBeenCalled()
+    expect(onRemove).not.toHaveBeenCalled()
   })
 })
