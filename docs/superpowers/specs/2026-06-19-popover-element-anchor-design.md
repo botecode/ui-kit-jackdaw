@@ -44,7 +44,7 @@ export interface PopoverProps {
 ### Dev guard — exactly one prop required
 
 ```ts
-if (process.env.NODE_ENV !== 'production') {
+if (import.meta.env.DEV) {
   if (anchor && anchorRef)
     throw new Error('Popover: pass anchor or anchorRef, not both')
   if (!anchor && !anchorRef)
