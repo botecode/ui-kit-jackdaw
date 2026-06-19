@@ -66,6 +66,13 @@ export function Popover({
   anchor,
   anchorRef,
 }: PopoverProps) {
+  if (import.meta.env.DEV) {
+    if (anchor && anchorRef)
+      throw new Error('Popover: pass anchor or anchorRef, not both')
+    if (!anchor && !anchorRef)
+      throw new Error('Popover: one of anchor or anchorRef is required')
+  }
+
   const contentRef  = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number; minWidth?: number } | null>(null)
   const portalTarget  = usePortalTarget()
