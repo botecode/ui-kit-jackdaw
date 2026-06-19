@@ -270,7 +270,7 @@ function ChainEditor({
                 onPointerCancel={handleDragEnd}
               />
             ))}
-            {dragState && !dragState.reducedMotion && dragState.hoverIndex !== dragState.dragIndex && (
+            {dragState && !dragState.reducedMotion && (
               <div
                 className={styles.insertionLine}
                 style={{ top: getInsertionLineY(dragState.hoverIndex) }}
@@ -287,7 +287,11 @@ function ChainEditor({
       {dragState && !dragState.reducedMotion && (
         <div
           className={styles.ghost}
-          style={{ top: dragState.ghostY, width: panelRef.current?.getBoundingClientRect().width ?? 220 }}
+          style={{
+            top:   dragState.ghostY,
+            left:  panelRef.current?.getBoundingClientRect().left ?? 0,
+            width: panelRef.current?.getBoundingClientRect().width ?? 220,
+          }}
           aria-hidden
         >
           {plugins[dragState.dragIndex]?.name}

@@ -216,10 +216,8 @@
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 
-.slot:hover .moveUp,
-.slot:hover .moveDown,
-.slot:focus-within .moveUp,
-.slot:focus-within .moveDown {
+.slot:has(:focus-visible) .moveUp,
+.slot:has(:focus-visible) .moveDown {
   opacity: 1;
 }
 
