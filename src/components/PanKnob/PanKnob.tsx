@@ -25,6 +25,21 @@ export function formatAriaValueText(pan: number): string {
   return pan < 0 ? `Left ${pct}` : `Right ${pct}`
 }
 
+export function arcPath(
+  cx: number, cy: number, r: number, fromDeg: number, toDeg: number,
+): string {
+  const r4 = (n: number) => Math.round(n * 10000) / 10000
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  const sx = r4(cx + r * Math.sin(toRad(fromDeg)))
+  const sy = r4(cy - r * Math.cos(toRad(fromDeg)))
+  const ex = r4(cx + r * Math.sin(toRad(toDeg)))
+  const ey = r4(cy - r * Math.cos(toRad(toDeg)))
+  const dAngle = toDeg - fromDeg
+  const largeArc = Math.abs(dAngle) > 180 ? 1 : 0
+  const sweep = dAngle > 0 ? 1 : 0
+  return `M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} ${sweep} ${ex} ${ey}`
+}
+
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export interface PanKnobProps {

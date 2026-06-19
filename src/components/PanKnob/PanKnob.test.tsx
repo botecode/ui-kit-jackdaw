@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
-import { PanKnob, panToAngle, formatReadout, formatAriaValueText, clamp } from './PanKnob'
+import { PanKnob, panToAngle, formatReadout, formatAriaValueText, clamp, arcPath } from './PanKnob'
 
 function mockMatchMedia(reducedMotion: boolean) {
   Object.defineProperty(window, 'matchMedia', {
@@ -46,6 +46,50 @@ describe('formatAriaValueText', () => {
   it('0 → "Center"',       () => expect(formatAriaValueText(0)).toBe('Center'))
   it('-0.2 → "Left 20"',   () => expect(formatAriaValueText(-0.2)).toBe('Left 20'))
   it('0.35 → "Right 35"',  () => expect(formatAriaValueText(0.35)).toBe('Right 35'))
+})
+
+describe('arcPath', () => {
+  it('starts at top for fromDeg=0 (M 20 2)', () => {
+    const d = arcPath(20, 20, 18, 0, 90)
+    expect(d).toMatch(/^M 20 2 /)
+  })
+
+  it('clockwise sweep=1 when toDeg > fromDeg', () => {
+    const d = arcPath(20, 20, 18, 0, 90)
+    // "A 18 18 0 <large> 1 ..."
+    expect(d).toContain('A 18 18 0 0 1 ')
+  })
+
+  it('counter-clockwise sweep=0 when toDeg < fromDeg', () => {
+    const d = arcPath(20, 20, 18, 0, -90)
+    expect(d).toContain('A 18 18 0 0 0 ')
+  })
+
+  it('large-arc=1 when |toDeg - fromDeg| > 180', () => {
+    // range arc: -135 to 135 = 270°
+    const d = arcPath(20, 20, 18, -135, 135)
+    expect(d).toContain('A 18 18 0 1 1 ')
+  })
+
+  it('large-arc=0 when |toDeg - fromDeg| <= 180', () => {
+    // value arc at full right: 0 to 135 = 135°
+    const d = arcPath(20, 20, 18, 0, 135)
+    expect(d).toContain('A 18 18 0 0 1 ')
+  })
+
+  it('range arc starts at bottom-left (−135°)', () => {
+    // sin(-135°) = -0.7071, cos(-135°) = -0.7071
+    // sx = 20 + 18*(-0.7071) = 7.2721, sy = 20 - 18*(-0.7071) = 32.7279
+    const d = arcPath(20, 20, 18, -135, 135)
+    expect(d).toMatch(/^M 7\.272\d* 32\.727\d* /)
+  })
+
+  it('value arc at pan=1 ends at bottom-right (+135°)', () => {
+    // sin(135°) = 0.7071, cos(135°) = -0.7071
+    // ex = 20 + 18*(0.7071) = 32.7279, ey = 20 - 18*(-0.7071) = 32.7279
+    const d = arcPath(20, 20, 18, 0, 135)
+    expect(d).toMatch(/32\.727\d* 32\.727\d*$/)
+  })
 })
 
 describe('PanKnob rendering', () => {
