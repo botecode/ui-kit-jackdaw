@@ -76,7 +76,7 @@
   transition: opacity var(--dur-led-on) var(--ease-out);
 }
 
-/* ─── Checked: accent fill + LED bloom + check glyph ───────────────────────── */
+/* ─── Checked: accent fill + LED bloom (no glyph — lit square reads as "on") ── */
 
 .input:checked + .box {
   background: var(--accent);
@@ -90,27 +90,6 @@
     box-shadow  var(--dur-led-on) var(--ease-out);
 }
 
-/* Checkmark: border-trick L rotated 45° */
-.input:checked + .box::after {
-  border-right: 2px solid var(--accent-contrast);
-  border-bottom: 2px solid var(--accent-contrast);
-  border-radius: 0 0 1px 0;
-  opacity: 1;
-}
-
-.root[data-size="md"] .input:checked + .box::after {
-  width: 4px;
-  height: 8px;
-  transform: translate(-50%, -62%) rotate(45deg);
-}
-
-.root[data-size="sm"] .input:checked + .box::after {
-  width: 3px;
-  height: 6px;
-  border-right-width: 1.5px;
-  border-bottom-width: 1.5px;
-  transform: translate(-50%, -62%) rotate(45deg);
-}
 
 /* ─── Indeterminate: same lit fill + dash ───────────────────────────────────── */
 
