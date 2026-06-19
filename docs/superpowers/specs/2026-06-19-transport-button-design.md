@@ -57,7 +57,7 @@ export interface TransportButtonProps {
   className={styles.root}
   data-variant={variant}          // 'play' | 'stop' | 'pause'
   data-size={size}                // 'sm' | 'md'
-  data-playing={playing || undefined}  // present only when lit (play variant)
+  data-playing={(variant === 'play' && playing) || undefined}  // gated on play variant
   aria-label={resolvedLabel}      // see ARIA section
   disabled={disabled}
   onClick={onClick}
