@@ -50,11 +50,6 @@ function StatesDemo() {
           <InputSelect value="in-1" onChange={noop} options={BASIC_OPTIONS} showInTag />
         </div>
       </State>
-      <State label="field · open">
-        <div style={{ width: 180, paddingBottom: 140 }}>
-          <InputSelect value="in-1" onChange={noop} options={BASIC_OPTIONS} defaultOpen />
-        </div>
-      </State>
       <State label="field · sm">
         <div style={{ width: 160 }}>
           <InputSelect value="in-2" onChange={noop} options={BASIC_OPTIONS} size="sm" />
@@ -63,11 +58,6 @@ function StatesDemo() {
       <State label="field · disabled">
         <div style={{ width: 180 }}>
           <InputSelect value="in-1" onChange={noop} options={BASIC_OPTIONS} disabled />
-        </div>
-      </State>
-      <State label="field · long list">
-        <div style={{ width: 180, paddingBottom: 220 }}>
-          <InputSelect value="in-1" onChange={noop} options={LONG_OPTIONS} defaultOpen />
         </div>
       </State>
       <State label="field · focus">
@@ -82,11 +72,6 @@ function StatesDemo() {
       </State>
       <State label="chip · selected">
         <InputSelect value="in-3" onChange={noop} options={BASIC_OPTIONS} variant="chip" />
-      </State>
-      <State label="chip · open">
-        <div style={{ paddingBottom: 140 }}>
-          <InputSelect value="in-1" onChange={noop} options={BASIC_OPTIONS} variant="chip" defaultOpen />
-        </div>
       </State>
       <State label="chip · disabled">
         <InputSelect value="in-1" onChange={noop} options={BASIC_OPTIONS} variant="chip" disabled />
@@ -106,7 +91,6 @@ function StatesDemo() {
             justifyContent: 'flex-end',
             gap: 'var(--space-1)',
             padding: '0 var(--space-2)',
-            paddingBottom: 80,
           }}
         >
           {/* Fake FX chip for sibling comparison */}
@@ -128,6 +112,23 @@ function StatesDemo() {
             REVERB
           </div>
           <InputSelect value="in-2" onChange={noop} options={BASIC_OPTIONS} variant="chip" aria-label="Audio input" />
+        </div>
+      </State>
+
+      {/* ── open states last — portaled dropdowns float past the grid edge ── */}
+      <State label="field · open">
+        <div style={{ width: 180, paddingBottom: 140 }}>
+          <InputSelect value="in-1" onChange={noop} options={BASIC_OPTIONS} defaultOpen />
+        </div>
+      </State>
+      <State label="chip · open">
+        <div style={{ paddingBottom: 140 }}>
+          <InputSelect value="in-1" onChange={noop} options={BASIC_OPTIONS} variant="chip" defaultOpen />
+        </div>
+      </State>
+      <State label="field · long list">
+        <div style={{ width: 180, paddingBottom: 220 }}>
+          <InputSelect value="in-1" onChange={noop} options={LONG_OPTIONS} defaultOpen />
         </div>
       </State>
     </StatesGrid>

@@ -112,19 +112,6 @@ function StatesDemo() {
         </TrackCorner>
       </State>
 
-      <State label="open (chain editor)">
-        <div style={{ paddingBottom: 180 }}>
-          <TrackCorner>
-            <FxChip
-              plugins={STUB_PLUGINS.slice(0, 3)}
-              chainEnabled
-              defaultOpen
-              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
-            />
-          </TrackCorner>
-        </div>
-      </State>
-
       <State label="disabled">
         <TrackCorner>
           <FxChip
@@ -145,6 +132,20 @@ function StatesDemo() {
             onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
           />
         </TrackCorner>
+      </State>
+
+      {/* ── open state last — portaled editor floats past the grid edge ── */}
+      <State label="open (chain editor)">
+        <div style={{ paddingBottom: 180 }}>
+          <TrackCorner>
+            <FxChip
+              plugins={STUB_PLUGINS.slice(0, 3)}
+              chainEnabled
+              defaultOpen
+              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop} onRemove={noop} onAdd={noop}
+            />
+          </TrackCorner>
+        </div>
       </State>
     </StatesGrid>
   )
