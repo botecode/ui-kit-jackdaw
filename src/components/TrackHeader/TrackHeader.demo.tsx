@@ -59,7 +59,7 @@ function StatesDemo() {
           />
         </div>
       </State>
-      <State label="armed">
+      <State label="armed (R/M/S cluster)">
         <div style={{ width: 200 }}>
           <TrackHeader
             track={makeTrack({ name: 'MIDI Keys', type: 'midi', armed: true })}
@@ -95,23 +95,41 @@ function StatesDemo() {
           />
         </div>
       </State>
-      <State label="folder · open">
-        <div style={{ width: 200 }}>
-          <TrackHeader
-            track={makeTrack({ name: 'Group Bus', color: 'var(--track-color-4)' })}
-            variant="folder" folderOpen
-            onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
-            onVolume={noop} onPan={noop} onSelectInput={noopId}
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
-            onToggleFolder={noop} inputOptions={INPUT_OPTIONS}
-          />
+      <State label="folder vs track">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>track</div>
+            <div style={{ width: 200 }}>
+              <TrackHeader
+                track={makeTrack({ name: 'Synth Pad', color: 'var(--track-color-3)' })}
+                onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop} onSelectInput={noopId}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+                inputOptions={INPUT_OPTIONS}
+              />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>folder</div>
+            <div style={{ width: 200 }}>
+              <TrackHeader
+                track={makeTrack({ name: 'Group Bus', color: 'var(--track-color-3)' })}
+                variant="folder" folderOpen
+                onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop} onSelectInput={noopId}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+                onToggleFolder={noop} inputOptions={INPUT_OPTIONS}
+              />
+            </div>
+          </div>
         </div>
       </State>
-      <State label="folder · closed">
+      <State label="folder · selected">
         <div style={{ width: 200 }}>
           <TrackHeader
-            track={makeTrack({ name: 'Group Bus', color: 'var(--track-color-4)' })}
+            track={makeTrack({ name: 'Drums Bus', color: 'var(--track-color-4)', selected: true })}
             variant="folder" folderOpen={false}
             onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
             onVolume={noop} onPan={noop} onSelectInput={noopId}
@@ -266,7 +284,7 @@ function PlaygroundDemo() {
           <Toggle checked={type === 'midi'} onChange={next => setType(next ? 'midi' : 'audio')} size="sm" label="type=midi" />
           <Toggle checked={type === 'instrument'} onChange={next => setType(next ? 'instrument' : 'audio')} size="sm" label="type=instrument" />
 
-          {/* Meter driver — dogfood: Fader drives the Meter in the live header */}
+          {/* Meter driver */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
             meter
             <Fader
