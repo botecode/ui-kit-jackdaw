@@ -42,6 +42,7 @@ export function TransportButton({
 
   return (
     <button
+      type="button"
       className={styles.root}
       data-variant={variant}
       data-size={size}

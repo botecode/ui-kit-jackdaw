@@ -49,6 +49,17 @@
     0 0 0 1px var(--border);
 }
 
+/* Preserve LED bloom on press — :active (0,3,0) beats [data-playing] (0,2,0) without this */
+.root[data-playing]:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--led-green) 18%, var(--stage));
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--led-green),
+    0 0 8px 2px color-mix(in srgb, var(--led-green) 35%, transparent);
+  color: var(--led-green);
+}
+
 /* ─── Playing — green LED bloom (play variant only, gated in TSX) ────────────── */
 /*
   Fast attack on in, slow decay on out (the base .root rule handles the out).
@@ -83,6 +94,12 @@
   each chip's LED color. Play uses green to match its lit state; stop/pause use
   --accent as the kit-wide interactive fallback.
 */
+
+/* Fallback focus ring — catches any path where data-variant is absent */
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
 
 .root[data-variant="play"]:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--led-green) 70%, transparent);

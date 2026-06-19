@@ -127,6 +127,7 @@ describe('TransportButton interaction', () => {
     const { getByRole } = render(
       <TransportButton variant="play" disabled onClick={onClick} />,
     )
+    expect(getByRole('button')).toBeDisabled()   // ← add this line
     fireEvent.click(getByRole('button'))
     expect(onClick).not.toHaveBeenCalled()
   })
