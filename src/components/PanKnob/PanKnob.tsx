@@ -250,7 +250,7 @@ export function PanKnob({
           aria-hidden="true"
           d={arcPath(ARC_C, ARC_C, ARC_R, -135, 135)}
           className={styles.rangeArc}
-          strokeWidth="1.5"
+          strokeWidth="2.5"
         />
         <line
           data-testid="center-tick"
@@ -258,7 +258,7 @@ export function PanKnob({
           x1={ARC_C} y1={ARC_C - ARC_R - 1.5}
           x2={ARC_C} y2={ARC_C - ARC_R + 1.5}
           className={styles.centerTick}
-          strokeWidth="1.5"
+          strokeWidth="2.5"
         />
         {Math.abs(pan) > 0.005 && (
           <path
@@ -266,7 +266,7 @@ export function PanKnob({
             aria-hidden="true"
             d={arcPath(ARC_C, ARC_C, ARC_R, 0, panToAngle(pan))}
             className={styles.valueArc}
-            strokeWidth="1.5"
+            strokeWidth="2.5"
           />
         )}
 

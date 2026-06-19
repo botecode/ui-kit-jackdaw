@@ -100,22 +100,22 @@
 
 .rangeArc {
   fill: none;
-  stroke: var(--border-strong);
+  stroke: var(--text-muted);
   stroke-linecap: round;
-  opacity: 0.55;
+  opacity: 0.35;
 }
 
 .valueArc {
   fill: none;
   stroke: var(--pan-accent, var(--accent));
   stroke-linecap: round;
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .centerTick {
-  stroke: var(--border-strong);
+  stroke: var(--text-muted);
   stroke-linecap: round;
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
 /* ─── Readout ─────────────────────────────────────────────────────────────── */
