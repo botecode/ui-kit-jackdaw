@@ -1,0 +1,96 @@
+/* src/components/TransportButton/TransportButton.module.css */
+
+/* ─── Root (recessed well) ───────────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--text-dim);
+
+  /* Slow decay — incandescent off */
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow       var(--dur-led-off) var(--ease-out),
+    color            var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Sizes ───────────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] { width: 36px; height: 36px; }
+.root[data-size="sm"] { width: 28px; height: 28px; }
+
+/* ─── Hover ───────────────────────────────────────────────────────────────────── */
+
+.root:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Pressed ─────────────────────────────────────────────────────────────────── */
+
+.root:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+/* ─── Playing — green LED bloom (play variant only, gated in TSX) ────────────── */
+/*
+  Fast attack on in, slow decay on out (the base .root rule handles the out).
+  data-playing is set only when variant="play" && playing — never on stop/pause.
+*/
+
+.root[data-playing] {
+  background-color: color-mix(in srgb, var(--led-green) 18%, var(--stage));
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--led-green),
+    0 0 8px 2px color-mix(in srgb, var(--led-green) 35%, transparent);
+  color: var(--led-green);
+  /* Fast attack */
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    color            var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Disabled ────────────────────────────────────────────────────────────────── */
+
+.root:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Focus ring — per-variant identity color (kit convention) ───────────────── */
+/*
+  Deliberate, not accidental: ArmButton uses --led-red, MuteSoloToggle uses
+  each chip's LED color. Play uses green to match its lit state; stop/pause use
+  --accent as the kit-wide interactive fallback.
+*/
+
+.root[data-variant="play"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-green) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.root[data-variant="stop"]:focus-visible,
+.root[data-variant="pause"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
