@@ -48,6 +48,7 @@ export interface TrackHeaderProps {
   onReorder:       (from: number, to: number) => void
   onRemovePlugin:  (id: string) => void
   onAddPlugin:     () => void
+  onOpenPlugin:    (id: string) => void
   onSelect:        () => void
   onToggleFolder?: () => void
   folderOpen?:     boolean
@@ -88,6 +89,7 @@ interface TopBarProps {
   onReorder:      (from: number, to: number) => void
   onRemovePlugin: (id: string) => void
   onAddPlugin:    () => void
+  onOpenPlugin:   (id: string) => void
   onToggleFolder: () => void
   onRename:       (name: string) => void
 }
@@ -96,7 +98,7 @@ function TopBar({
   name, type, inputId, plugins, chainEnabled,
   mode, variant, folderOpen, inputOptions, disabled,
   onSelectInput, onToggleChain, onTogglePlugin, onReorder,
-  onRemovePlugin, onAddPlugin, onToggleFolder, onRename,
+  onRemovePlugin, onAddPlugin, onOpenPlugin, onToggleFolder, onRename,
 }: TopBarProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
@@ -191,6 +193,7 @@ function TopBar({
           onReorder={onReorder}
           onRemove={onRemovePlugin}
           onAdd={onAddPlugin}
+          onOpenPlugin={onOpenPlugin}
           size="sm"
           disabled={disabled}
         />
@@ -369,6 +372,7 @@ export function TrackHeader({
   onReorder,
   onRemovePlugin,
   onAddPlugin,
+  onOpenPlugin,
   onSelect,
   onToggleFolder = () => {},
   folderOpen = false,
@@ -419,6 +423,7 @@ export function TrackHeader({
         onReorder={onReorder}
         onRemovePlugin={onRemovePlugin}
         onAddPlugin={onAddPlugin}
+        onOpenPlugin={onOpenPlugin}
         onToggleFolder={onToggleFolder}
         onRename={onRename}
       />

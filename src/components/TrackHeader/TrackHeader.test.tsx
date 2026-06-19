@@ -18,7 +18,7 @@ const BASE_PROPS = {
   onRename: noop, onArm: noop, onMute: noop, onSolo: noop,
   onVolume: noop, onPan: noop, onSelectInput: noop,
   onToggleChain: noop, onTogglePlugin: noop, onReorder: noop,
-  onRemovePlugin: noop, onAddPlugin: noop, onSelect: noop,
+  onRemovePlugin: noop, onAddPlugin: noop, onOpenPlugin: noop, onSelect: noop,
   inputOptions: [],
 }
 

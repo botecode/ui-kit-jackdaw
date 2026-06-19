@@ -54,7 +54,7 @@ function StatesDemo() {
             onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
             onVolume={noop} onPan={noop} onSelectInput={noopId}
             onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
             inputOptions={INPUT_OPTIONS}
           />
         </div>
@@ -66,7 +66,7 @@ function StatesDemo() {
             onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
             onVolume={noop} onPan={noop} onSelectInput={noopId}
             onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
             inputOptions={INPUT_OPTIONS} meterLevel={-12}
           />
         </div>
@@ -78,7 +78,7 @@ function StatesDemo() {
             onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
             onVolume={noop} onPan={noop} onSelectInput={noopId}
             onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
             inputOptions={INPUT_OPTIONS} meterLevel={-6}
           />
         </div>
@@ -90,7 +90,7 @@ function StatesDemo() {
             onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
             onVolume={noop} onPan={noop} onSelectInput={noopId}
             onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
             inputOptions={INPUT_OPTIONS} meterLevel={2} clipping
           />
         </div>
@@ -102,7 +102,7 @@ function StatesDemo() {
             onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
             onVolume={noop} onPan={noop} onSelectInput={noopId}
             onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
             inputOptions={INPUT_OPTIONS} anySoloActive meterLevel={-18}
           />
         </div>
@@ -117,7 +117,7 @@ function StatesDemo() {
                 onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
                 onVolume={noop} onPan={noop} onSelectInput={noopId}
                 onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-                onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
                 inputOptions={INPUT_OPTIONS}
               />
             </div>
@@ -131,7 +131,7 @@ function StatesDemo() {
                 onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
                 onVolume={noop} onPan={noop} onSelectInput={noopId}
                 onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-                onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
                 onToggleFolder={noop} inputOptions={INPUT_OPTIONS}
               />
             </div>
@@ -146,7 +146,7 @@ function StatesDemo() {
             onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
             onVolume={noop} onPan={noop} onSelectInput={noopId}
             onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
             onToggleFolder={noop} inputOptions={INPUT_OPTIONS} meterLevel={-8}
           />
         </div>
@@ -160,7 +160,7 @@ function StatesDemo() {
               onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
               onVolume={noop} onPan={noop} onSelectInput={noopId}
               onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
               inputOptions={INPUT_OPTIONS}
             />
           </div>
@@ -171,7 +171,7 @@ function StatesDemo() {
               onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
               onVolume={noop} onPan={noop} onSelectInput={noopId}
               onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
               inputOptions={INPUT_OPTIONS}
             />
           </div>
@@ -185,7 +185,7 @@ function StatesDemo() {
               onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
               onVolume={noop} onPan={noop} onSelectInput={noopId}
               onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
               inputOptions={INPUT_OPTIONS}
             />
           </div>
@@ -195,7 +195,7 @@ function StatesDemo() {
               onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
               onVolume={noop} onPan={noop} onSelectInput={noopId}
               onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onSelect={noop}
+              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
               inputOptions={INPUT_OPTIONS} meterLevel={-24}
             />
           </div>
@@ -274,6 +274,7 @@ function PlaygroundDemo() {
             onAddPlugin={() =>
               setPlugins(ps => [...ps, { id: `p${Date.now()}`, name: 'EQ', enabled: true }])
             }
+            onOpenPlugin={id => console.log('open plugin', id)}
             onSelect={() => setSelected(s => !s)}
             onToggleFolder={() => setFolderOpen(o => !o)}
             mode={mode}
