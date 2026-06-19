@@ -233,6 +233,17 @@ describe('TrackHeader — folder distinctiveness', () => {
     )
     expect(screen.queryByRole('button', { name: /audio input/i })).not.toBeInTheDocument()
   })
+
+  it('folder variant renders FxChip and it is not hidden at narrow widths', () => {
+    render(
+      <TrackHeader {...BASE_PROPS}
+        variant="folder"
+        track={{ ...BASE_TRACK, name: 'Group Bus' }}
+        onToggleFolder={noop}
+      />
+    )
+    expect(screen.getByRole('button', { name: /fx chain/i })).toBeInTheDocument()
+  })
 })
 
 describe('TrackHeader — meter visibility (ears-first)', () => {

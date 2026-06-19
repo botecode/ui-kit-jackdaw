@@ -178,6 +178,10 @@
   .cornerChips > :first-child {
     display: none;
   }
+  /* Folder has no InputSelect — :first-child IS FxChip; restore it */
+  [data-variant="folder"] .cornerChips > :first-child {
+    display: flex;
+  }
 }
 
 /* ── Folder variant ───────────────────────────────────────────────────────── */
