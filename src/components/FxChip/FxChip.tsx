@@ -359,6 +359,7 @@ export function FxChip({
         <Popover
           containerRef={containerRef as React.RefObject<HTMLElement>}
           returnFocusRef={triggerRef as React.RefObject<HTMLElement>}
+          anchorRef={triggerRef as React.RefObject<HTMLElement>}
           onClose={closeMenu}
         >
           <ChainEditor
