@@ -35,7 +35,7 @@ export interface RecordModeProps {
 ```
 <div class="root" data-size>
   <button class="recordBtn" data-state data-size
-          aria-pressed aria-label>
+          aria-pressed aria-label disabled={disabled}>
     <RecordIcon aria-hidden />
     {mode === 'loop-punch' &&
       <span class="badge" aria-hidden><ArrowsClockwiseIcon /></span>}
