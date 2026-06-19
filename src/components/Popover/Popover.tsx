@@ -11,6 +11,7 @@ export interface PopoverProps {
   children:        React.ReactNode
   className?:      string
   anchor?:         { x: number; y: number }
+  anchorRef?:      React.RefObject<HTMLElement | null>
 }
 
 const MARGIN = 4
