@@ -41,6 +41,33 @@ const MIXED_ITEMS: MenuEntry[] = [
   { id: 'delete', label: 'Delete Track', danger: true,   onSelect: () => {} },
 ]
 
+const SUBMENU_ITEMS: MenuEntry[] = [
+  {
+    id: 'add-fx',
+    label: 'Quick add FX',
+    submenu: [
+      { id: 'eq',     label: 'EQ',         onSelect: () => {} },
+      { id: 'comp',   label: 'Compressor', onSelect: () => {} },
+      { id: 'reverb', label: 'Reverb',     onSelect: () => {} },
+      { id: 'sep',    separator: true },
+      { id: 'delay',  label: 'Delay',      onSelect: () => {} },
+      { id: 'sat',    label: 'Saturator',  disabled: true, onSelect: () => {} },
+    ],
+  },
+  {
+    id: 'move',
+    label: 'Move to group',
+    submenu: [
+      { id: 'drums', label: 'Drums', onSelect: () => {} },
+      { id: 'bass',  label: 'Bass',  onSelect: () => {} },
+      { id: 'vocals', label: 'Vocals', onSelect: () => {} },
+    ],
+  },
+  { id: 'sep1',   separator: true },
+  { id: 'rename', label: 'Rename',       onSelect: () => {} },
+  { id: 'delete', label: 'Delete Track', danger: true, onSelect: () => {} },
+]
+
 // ── Shared button style for demo trigger buttons ──────────────────────────────
 
 const TRIGGER_STYLE: React.CSSProperties = {
@@ -120,6 +147,7 @@ function StatesDemo() {
       <MenuCard label="Basic"             items={BASIC_ITEMS} />
       <MenuCard label="Shortcuts"         items={RICH_ITEMS}  />
       <MenuCard label="Mixed (sep / disabled / checked / danger)" items={MIXED_ITEMS} />
+      <MenuCard label="Submenus (hover ▸ or →)" items={SUBMENU_ITEMS} />
       <EdgeCard
         label="Near right edge (flips left)"
         getCoords={(e) => ({ x: window.innerWidth - 16, y: e.clientY })}
