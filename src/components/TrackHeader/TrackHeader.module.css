@@ -182,9 +182,11 @@
 
 /* ── Folder variant ───────────────────────────────────────────────────────── */
 
-/* Recessed container feel: darker bg, wider keyline, bolder name */
+/* Recessed container feel: darker bg, wider keyline, bolder name.
+   color-mix darkens strip-bg ~12% — subtle in dark themes, still-light in
+   light themes (avoids --stage which is always black). */
 .root[data-variant="folder"] {
-  background: var(--stage);
+  background: color-mix(in srgb, var(--strip-bg) 88%, black);
 }
 
 .root[data-variant="folder"] .keyline {
