@@ -158,7 +158,7 @@
 }
 
 .slot + .slot {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid color-mix(in srgb, white 5%, transparent);
 }
 
 .slot:hover {
@@ -326,7 +326,7 @@
   width: 100%;
   padding: var(--space-2) 0 0;
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid color-mix(in srgb, white 5%, transparent);
   margin-top: var(--space-1);
   background: none;
   color: var(--text-muted);
