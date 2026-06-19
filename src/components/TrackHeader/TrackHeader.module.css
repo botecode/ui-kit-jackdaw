@@ -179,3 +179,39 @@
     display: none;
   }
 }
+
+/* ── Folder variant ───────────────────────────────────────────────────────── */
+
+/* Recessed container feel: darker bg, wider keyline, bolder name */
+.root[data-variant="folder"] {
+  background: var(--stage);
+}
+
+.root[data-variant="folder"] .keyline {
+  width: 6px;
+  background: color-mix(in srgb, var(--track-color, var(--accent)) 70%, transparent);
+}
+
+.root[data-variant="folder"][data-selected] .keyline {
+  background: var(--track-color, var(--accent));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--track-color, var(--accent)) 70%, transparent);
+}
+
+/* Offset content past the wider 6px keyline */
+.root[data-variant="folder"] .topBar,
+.root[data-variant="folder"] .controlStrip {
+  padding-left: calc(var(--space-3) + 6px);
+}
+
+/* Bolder name — heavier weight + slightly larger */
+.root[data-variant="folder"] .name,
+.root[data-variant="folder"] .nameInput {
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
+}
+
+/* Larger glyph for folder variant */
+.root[data-variant="folder"] .glyph svg {
+  width: 16px;
+  height: 16px;
+}

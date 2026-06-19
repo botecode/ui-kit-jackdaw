@@ -197,3 +197,16 @@ describe('TrackHeader — name editing', () => {
     expect(screen.getByRole('group', { name: 'Lead Vocals' })).toBeInTheDocument()
   })
 })
+
+describe('TrackHeader — folder distinctiveness', () => {
+  it('root carries data-variant="folder" as the CSS styling hook', () => {
+    render(
+      <TrackHeader {...BASE_PROPS}
+        variant="folder"
+        track={{ ...BASE_TRACK, name: 'Group Bus' }}
+        onToggleFolder={noop}
+      />
+    )
+    expect(screen.getByRole('group', { name: 'Group Bus' })).toHaveAttribute('data-variant', 'folder')
+  })
+})
