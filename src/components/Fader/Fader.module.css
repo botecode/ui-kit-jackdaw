@@ -252,6 +252,10 @@
   line-height: 1;
   height: 1em;
   white-space: nowrap;
+  /* Fixed width = widest possible dB value (e.g. "−50.0 dB" = 8 chars).
+     Prevents the fader column from shifting neighbors when text length changes. */
+  min-width: 8ch;
+  text-align: center;
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-out);
 }
