@@ -41,63 +41,62 @@ const MIXED_ITEMS: MenuEntry[] = [
   { id: 'delete', label: 'Delete Track', danger: true,   onSelect: () => {} },
 ]
 
-// ── Simple state card: button opens menu at fixed coords ──────────────────────
+// ── Shared button style for demo trigger buttons ──────────────────────────────
 
-function MenuCard({
-  label,
-  items,
-  x = 20,
-  y = 20,
-}: {
-  label: string
-  items: MenuEntry[]
-  x?: number
-  y?: number
-}) {
-  const [open, setOpen] = useState(false)
-  return (
-    <State label={label}>
-      <button
-        onClick={() => setOpen(true)}
-        style={{
-          background: 'var(--stage)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          color: 'var(--text)',
-          cursor: 'pointer',
-          fontFamily: 'var(--font-ui)',
-          fontSize: 'var(--text-sm)',
-          padding: 'var(--space-1) var(--space-3)',
-        }}
-      >
-        Open menu
-      </button>
-      <ContextMenu items={items} open={open} x={x} y={y} onClose={() => setOpen(false)} aria-label={label} />
-    </State>
-  )
+const TRIGGER_STYLE: React.CSSProperties = {
+  background: 'var(--stage)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius)',
+  color: 'var(--stage-text)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-ui)',
+  fontSize: 'var(--text-sm)',
+  padding: 'var(--space-1) var(--space-3)',
 }
 
-// ── Edge-flip card: coords evaluated at click time against real viewport ──────
+// ── Simple state card: button opens menu at the click position ────────────────
 
-function EdgeCard({ label, getCoords }: { label: string; getCoords: () => { x: number; y: number } }) {
+function MenuCard({ label, items }: { label: string; items: MenuEntry[] }) {
   const [state, setState] = useState({ open: false, x: 0, y: 0 })
   return (
     <State label={label}>
       <button
-        onClick={() => {
-          const { x, y } = getCoords()
+        onClick={(e) => setState({ open: true, x: e.clientX, y: e.clientY })}
+        style={TRIGGER_STYLE}
+      >
+        Open menu
+      </button>
+      <ContextMenu
+        items={items}
+        open={state.open}
+        x={state.x}
+        y={state.y}
+        onClose={() => setState(s => ({ ...s, open: false }))}
+        aria-label={label}
+      />
+    </State>
+  )
+}
+
+// ── Edge-flip card: one axis forced near the viewport edge, the other tracks
+//    the actual click so the menu visually appears near the button ──────────────
+
+function EdgeCard({
+  label,
+  getCoords,
+}: {
+  label: string
+  getCoords: (e: React.MouseEvent<HTMLButtonElement>) => { x: number; y: number }
+}) {
+  const [state, setState] = useState({ open: false, x: 0, y: 0 })
+  return (
+    <State label={label}>
+      <button
+        onClick={(e) => {
+          const { x, y } = getCoords(e)
           setState({ open: true, x, y })
         }}
-        style={{
-          background: 'var(--stage)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          color: 'var(--text)',
-          cursor: 'pointer',
-          fontFamily: 'var(--font-ui)',
-          fontSize: 'var(--text-sm)',
-          padding: 'var(--space-1) var(--space-3)',
-        }}
+        style={TRIGGER_STYLE}
       >
         Open at edge
       </button>
@@ -118,16 +117,16 @@ function EdgeCard({ label, getCoords }: { label: string; getCoords: () => { x: n
 function StatesDemo() {
   return (
     <StatesGrid>
-      <MenuCard label="Basic"             items={BASIC_ITEMS} x={20} y={20} />
-      <MenuCard label="Shortcuts"         items={RICH_ITEMS}  x={20} y={20} />
-      <MenuCard label="Mixed (sep / disabled / checked / danger)" items={MIXED_ITEMS} x={20} y={20} />
+      <MenuCard label="Basic"             items={BASIC_ITEMS} />
+      <MenuCard label="Shortcuts"         items={RICH_ITEMS}  />
+      <MenuCard label="Mixed (sep / disabled / checked / danger)" items={MIXED_ITEMS} />
       <EdgeCard
         label="Near right edge (flips left)"
-        getCoords={() => ({ x: window.innerWidth - 16, y: 200 })}
+        getCoords={(e) => ({ x: window.innerWidth - 16, y: e.clientY })}
       />
       <EdgeCard
         label="Near bottom edge (flips up)"
-        getCoords={() => ({ x: 200, y: window.innerHeight - 16 })}
+        getCoords={(e) => ({ x: e.clientX, y: window.innerHeight - 16 })}
       />
       <EdgeCard
         label="Near corner (flips both)"
