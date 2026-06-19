@@ -328,3 +328,69 @@ describe('PanKnob reduced-motion', () => {
     expect(noop).toHaveBeenCalledWith(0)
   })
 })
+
+describe('PanKnob arc elements', () => {
+  const noop = vi.fn()
+
+  it('range arc is always present', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    expect(container.querySelector('[data-testid="range-arc"]')).not.toBeNull()
+  })
+
+  it('center tick is always present', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    expect(container.querySelector('[data-testid="center-tick"]')).not.toBeNull()
+  })
+
+  it('value arc is absent at pan=0 (center reads as empty)', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    expect(container.querySelector('[data-testid="value-arc"]')).toBeNull()
+  })
+
+  it('value arc is present at pan=1 (full right)', () => {
+    const { container } = render(<PanKnob pan={1} onChange={noop} />)
+    expect(container.querySelector('[data-testid="value-arc"]')).not.toBeNull()
+  })
+
+  it('value arc is present at pan=-1 (full left)', () => {
+    const { container } = render(<PanKnob pan={-1} onChange={noop} />)
+    expect(container.querySelector('[data-testid="value-arc"]')).not.toBeNull()
+  })
+
+  it('value arc at pan=1 sweeps clockwise (sweep=1 in d attribute)', () => {
+    const { container } = render(<PanKnob pan={1} onChange={noop} />)
+    const arc = container.querySelector('[data-testid="value-arc"]')!
+    // arcPath(20,20,18,0,135) → "... A 18 18 0 0 1 ..."
+    expect(arc.getAttribute('d')).toContain('A 18 18 0 0 1 ')
+  })
+
+  it('value arc at pan=-1 sweeps counter-clockwise (sweep=0 in d attribute)', () => {
+    const { container } = render(<PanKnob pan={-1} onChange={noop} />)
+    const arc = container.querySelector('[data-testid="value-arc"]')!
+    // arcPath(20,20,18,0,-135) → "... A 18 18 0 0 0 ..."
+    expect(arc.getAttribute('d')).toContain('A 18 18 0 0 0 ')
+  })
+
+  it('value arc d attribute starts at top-center (M 20 2)', () => {
+    const { container } = render(<PanKnob pan={0.5} onChange={noop} />)
+    const arc = container.querySelector('[data-testid="value-arc"]')!
+    expect(arc.getAttribute('d')).toMatch(/^M 20 2 /)
+  })
+
+  it('range arc d attribute uses full sweep A 18 18 0 1 1 (270°)', () => {
+    const { container } = render(<PanKnob pan={0} onChange={noop} />)
+    const arc = container.querySelector('[data-testid="range-arc"]')!
+    expect(arc.getAttribute('d')).toContain('A 18 18 0 1 1 ')
+  })
+
+  it('arc elements are aria-hidden', () => {
+    const { container } = render(<PanKnob pan={0.5} onChange={noop} />)
+    expect(container.querySelector('[data-testid="range-arc"]')?.getAttribute('aria-hidden')).toBe('true')
+    expect(container.querySelector('[data-testid="center-tick"]')?.getAttribute('aria-hidden')).toBe('true')
+  })
+
+  it('value arc is absent at pan near-zero (-0.001)', () => {
+    const { container } = render(<PanKnob pan={-0.001} onChange={noop} />)
+    expect(container.querySelector('[data-testid="value-arc"]')).toBeNull()
+  })
+})

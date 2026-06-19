@@ -96,6 +96,28 @@
   filter: drop-shadow(0 0 4px color-mix(in srgb, var(--pan-accent, var(--accent)) 40%, transparent));
 }
 
+/* ─── Arc layer: range groove + value arc + center tick ─────────────────── */
+
+.rangeArc {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.valueArc {
+  fill: none;
+  stroke: var(--pan-accent, var(--accent));
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.centerTick {
+  stroke: var(--border-strong);
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
 /* ─── Readout ─────────────────────────────────────────────────────────────── */
 
 .readout {

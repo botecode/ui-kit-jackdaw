@@ -167,6 +167,9 @@ export function PanKnob({
 
   const knurlCount = size === 'sm' ? 16 : 24
 
+  const ARC_R = 18
+  const ARC_C = 20  // center x and y
+
   return (
     <div
       className={`${styles.root}${disabled ? ` ${styles.disabled}` : ''}`}
@@ -240,6 +243,32 @@ export function PanKnob({
           fill="var(--text-muted)"
           aria-hidden="true"
         >R</text>
+
+        {/* ── Arc layer: range groove + value arc + center tick ── */}
+        <path
+          data-testid="range-arc"
+          aria-hidden="true"
+          d={arcPath(ARC_C, ARC_C, ARC_R, -135, 135)}
+          className={styles.rangeArc}
+          strokeWidth="1.5"
+        />
+        <line
+          data-testid="center-tick"
+          aria-hidden="true"
+          x1={ARC_C} y1={ARC_C - ARC_R - 1.5}
+          x2={ARC_C} y2={ARC_C - ARC_R + 1.5}
+          className={styles.centerTick}
+          strokeWidth="1.5"
+        />
+        {Math.abs(pan) > 0.005 && (
+          <path
+            data-testid="value-arc"
+            aria-hidden="true"
+            d={arcPath(ARC_C, ARC_C, ARC_R, 0, panToAngle(pan))}
+            className={styles.valueArc}
+            strokeWidth="1.5"
+          />
+        )}
 
         {/* ── Rotating layer: knurled grip + cap + pointer ── */}
         <g
