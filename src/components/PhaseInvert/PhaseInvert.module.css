@@ -1,0 +1,97 @@
+/* ─── Root (recessed well) ─────────────────────────────────────────────────── */
+
+/*
+  --accent (warm amber) is the lit color — not a semantic LED (red/green/cyan/yellow
+  are taken for arm/play/FX/solo). Phase-invert and the future automation button
+  share this "production-mode lit toggle" recipe, consistent with RepeatToggle.
+*/
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--text-dim);
+
+  /* Slow decay — incandescent off */
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow       var(--dur-led-off) var(--ease-out),
+    color            var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Sizes ─────────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] { width: 28px; height: 28px; }
+.root[data-size="sm"] { width: 20px; height: 20px; }
+
+/* ─── Hover ─────────────────────────────────────────────────────────────────── */
+
+.root:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Active press ──────────────────────────────────────────────────────────── */
+
+.root:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+/* Preserve LED bloom on press when inverted — [data-inverted]:active (0,3,0) must
+   beat :active (0,2,0) without this explicit rule */
+.root[data-inverted]:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--stage));
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+}
+
+/* ─── Inverted — accent LED bloom ───────────────────────────────────────────── */
+
+.root[data-inverted] {
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--stage));
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+  /* Fast attack */
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    color            var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Disabled ──────────────────────────────────────────────────────────────── */
+
+.root:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Focus ring ────────────────────────────────────────────────────────────── */
+
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}

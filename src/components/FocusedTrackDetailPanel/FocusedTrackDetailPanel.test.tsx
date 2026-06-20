@@ -128,13 +128,27 @@ describe('FocusedTrackDetailPanel — structure', () => {
     expect(newHeight).toBeGreaterThan(300)
   })
 
-  it('renders all four advanced slot placeholders', () => {
+  it('renders advanced panel with Phase control, Sidechain, Automation, Routing', () => {
     render(<FocusedTrackDetailPanel {...makeProps()} />)
-    // Use exact label text to avoid matching the longer description strings
     expect(screen.getByText('Sidechain')).toBeInTheDocument()
-    expect(screen.getByText('Phase / Polarity')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /invert phase/i })).toBeInTheDocument()
     expect(screen.getByText('Automation')).toBeInTheDocument()
     expect(screen.getByText('Routing')).toBeInTheDocument()
+  })
+
+  it('calls onTogglePhase when PhaseInvert is clicked', () => {
+    const onTogglePhase = vi.fn()
+    render(<FocusedTrackDetailPanel {...makeProps({ onTogglePhase })} />)
+    fireEvent.click(screen.getByRole('button', { name: /invert phase/i }))
+    expect(onTogglePhase).toHaveBeenCalledWith(true)
+  })
+
+  it('renders PhaseInvert as pressed when track.phaseInverted=true', () => {
+    render(<FocusedTrackDetailPanel {...makeProps({
+      track: { ...TRACK, phaseInverted: true },
+    })} />)
+    const btn = screen.getByRole('button', { name: /invert phase/i })
+    expect(btn.getAttribute('aria-pressed')).toBe('true')
   })
 
   it('sets data-disabled when disabled=true', () => {

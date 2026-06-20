@@ -22,12 +22,12 @@ export const meta: DemoMeta = {
 
 const TRACK_VOCAL = {
   id: 't1', name: 'Vocals', color: 'var(--track-color-1)', kind: 'audio' as const,
-  armed: false, muted: false, soloed: false, volumeDb: -6, pan: 0,
+  armed: false, muted: false, soloed: false, volumeDb: -6, pan: 0, phaseInverted: false,
 }
 
 const TRACK_DRUMS = {
   id: 't2', name: 'Drums', color: 'var(--track-color-2)', kind: 'audio' as const,
-  armed: true, muted: false, soloed: false, volumeDb: -3, pan: 0,
+  armed: true, muted: false, soloed: false, volumeDb: -3, pan: 0, phaseInverted: false,
 }
 
 const CLIPS: ClipInfo[] = [
@@ -146,21 +146,22 @@ function StatesDemo() {
 // ── Playground ────────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [open,         setOpen]         = useState(true)
-  const [height,       setHeight]       = useState(320)
-  const [armed,        setArmed]        = useState(false)
-  const [muted,        setMuted]        = useState(false)
-  const [soloed,       setSoloed]       = useState(false)
-  const [chainEnabled, setChainEnabled] = useState(true)
-  const [meterL,       setMeterL]       = useState(-12)
-  const [meterR,       setMeterR]       = useState(-18)
-  const [plugins,      setPlugins]      = useState<FxPlugin[]>(PLUGINS)
-  const [clips,        setClips]        = useState<ClipInfo[]>(CLIPS)
-  const [color,        setColor]        = useState('var(--track-color-1)')
+  const [open,          setOpen]          = useState(true)
+  const [height,        setHeight]        = useState(320)
+  const [armed,         setArmed]         = useState(false)
+  const [muted,         setMuted]         = useState(false)
+  const [soloed,        setSoloed]        = useState(false)
+  const [phaseInverted, setPhaseInverted] = useState(false)
+  const [chainEnabled,  setChainEnabled]  = useState(true)
+  const [meterL,        setMeterL]        = useState(-12)
+  const [meterR,        setMeterR]        = useState(-18)
+  const [plugins,       setPlugins]       = useState<FxPlugin[]>(PLUGINS)
+  const [clips,         setClips]         = useState<ClipInfo[]>(CLIPS)
+  const [color,         setColor]         = useState('var(--track-color-1)')
 
   const track = {
     id: 'pg', name: 'Vocals', color, kind: 'audio' as const,
-    armed, muted, soloed, volumeDb: -6, pan: 0,
+    armed, muted, soloed, volumeDb: -6, pan: 0, phaseInverted,
   }
 
   const COLORS = [
@@ -190,6 +191,7 @@ function PlaygroundDemo() {
               onResize={setHeight}
               open={open}
               onClose={() => setOpen(false)}
+              onTogglePhase={setPhaseInverted}
               onToggleChain={setChainEnabled}
               onTogglePlugin={(id, next) =>
                 setPlugins(ps => ps.map(p => p.id === id ? { ...p, enabled: next } : p))
@@ -217,6 +219,7 @@ function PlaygroundDemo() {
           <Toggle checked={armed}        onChange={setArmed}        size="sm" label="armed" />
           <Toggle checked={muted}        onChange={setMuted}        size="sm" label="muted" />
           <Toggle checked={soloed}       onChange={setSoloed}       size="sm" label="soloed" />
+          <Toggle checked={phaseInverted} onChange={setPhaseInverted} size="sm" label="phaseInverted" />
           <Toggle checked={chainEnabled} onChange={setChainEnabled} size="sm" label="chainEnabled" />
           <Toggle
             checked={clips.length === 0}

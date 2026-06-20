@@ -285,6 +285,13 @@
   margin-bottom: 0;
 }
 
+/* Phase row: label left, toggle right — overrides the column layout of .advancedSlot */
+.advancedPhaseRow {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .slotLabel {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
