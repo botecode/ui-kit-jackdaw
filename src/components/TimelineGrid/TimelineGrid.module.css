@@ -1,0 +1,60 @@
+/*
+  TimelineGrid — beat/bar division grid rendered as CSS gradients.
+
+  All periods are keyed off CSS vars set by the component:
+    --beat-px      pixels per beat (from pxPerBeat prop)
+    --bar-beats    beats per bar (= numerator)
+    --grid-div-px  pixels per subdivision (computed from division × denominator × pxPerBeat)
+
+  Reflow = one var update; no re-layout, no JS paint.
+
+  Gradient stacking (painter: first listed = topmost):
+    1. Bars      — heaviest, every (--beat-px × --bar-beats)px
+    2. Beats     — lighter,  every --beat-px
+    3. Sub       — lightest, every --grid-div-px  ← the changing layer
+    4. Texture   — paper grain (multiply-blended; none in dark themes)
+
+  When sub-step equals beat-step (e.g. 1/4 in 4/4), the sub gradient
+  coincides with the beat gradient. Beat is painted on top → no visible doubling.
+  Same logic applies when sub-step equals bar-step (1/1 division).
+*/
+
+.root {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  /* Internal line-color aliases — theme-overridable via custom props if needed */
+  --_bar-line:  var(--grid-line-bar,  var(--border-strong));
+  --_beat-line: var(--grid-line-beat, var(--border));
+  --_sub-line:  var(--grid-line-sub,  color-mix(in srgb, var(--border) 55%, transparent));
+
+  background-color: var(--arrange-bg);
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--_bar-line)  0px,
+      var(--_bar-line)  1.5px,
+      transparent       1.5px,
+      transparent       calc(var(--beat-px) * var(--bar-beats))
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--_beat-line) 0px,
+      var(--_beat-line) 1px,
+      transparent       1px,
+      transparent       var(--beat-px)
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--_sub-line)  0px,
+      var(--_sub-line)  1px,
+      transparent       1px,
+      transparent       var(--grid-div-px)
+    ),
+    var(--texture-paper);
+  background-repeat: repeat;
+  background-size: auto, auto, auto, 200px 200px;
+  /* texture sits at the bottom; multiply blends grain onto background-color */
+  background-blend-mode: normal, normal, normal, multiply;
+}
