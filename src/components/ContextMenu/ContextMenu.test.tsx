@@ -1,6 +1,6 @@
 // src/components/ContextMenu/ContextMenu.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { ContextMenu, useContextMenu } from './ContextMenu'
 import type { MenuEntry } from './ContextMenu'
 
@@ -222,6 +222,135 @@ describe('ContextMenu — outside-click and portal containment', () => {
     expect(document.activeElement).toBe(button)
 
     document.body.removeChild(button)
+  })
+})
+
+describe('ContextMenu — submenus', () => {
+  function withSub(onSelect = vi.fn()): MenuEntry[] {
+    return [
+      {
+        id: 'add',
+        label: 'Quick add FX',
+        submenu: [
+          { id: 'reverb', label: 'Reverb', onSelect },
+          { id: 'delay',  label: 'Delay' },
+        ],
+      },
+      { id: 'rename', label: 'Rename' },
+    ]
+  }
+
+  it('a submenu parent advertises aria-haspopup and starts collapsed', () => {
+    render(<ContextMenu {...BASE} items={withSub()} />)
+    const parent = screen.getByRole('menuitem', { name: 'Quick add FX' })
+    expect(parent).toHaveAttribute('aria-haspopup', 'menu')
+    expect(parent).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('menu', { name: /submenu/ })).not.toBeInTheDocument()
+  })
+
+  it('plain items carry no submenu affordance', () => {
+    render(<ContextMenu {...BASE} items={withSub()} />)
+    const plain = screen.getByRole('menuitem', { name: 'Rename' })
+    expect(plain).not.toHaveAttribute('aria-haspopup')
+    expect(plain).not.toHaveAttribute('aria-expanded')
+  })
+
+  it('ArrowRight opens the flyout, marks the parent expanded, and focuses the first item', () => {
+    render(<ContextMenu {...BASE} items={withSub()} />)
+    const root   = screen.getByRole('menu', { name: 'Context menu' })
+    const parent = screen.getByRole('menuitem', { name: 'Quick add FX' })
+
+    fireEvent.keyDown(root, { key: 'ArrowRight' })
+
+    expect(screen.getByRole('menu', { name: 'Quick add FX submenu' })).toBeInTheDocument()
+    expect(parent).toHaveAttribute('aria-expanded', 'true')
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Reverb' }))
+  })
+
+  it('Enter on a submenu parent opens the flyout instead of selecting/closing', () => {
+    const onClose = vi.fn()
+    render(<ContextMenu {...BASE} items={withSub()} onClose={onClose} />)
+    fireEvent.keyDown(screen.getByRole('menu', { name: 'Context menu' }), { key: 'Enter' })
+    expect(screen.getByRole('menu', { name: /submenu/ })).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('ArrowLeft closes the flyout and returns focus to the parent item', () => {
+    render(<ContextMenu {...BASE} items={withSub()} />)
+    const root   = screen.getByRole('menu', { name: 'Context menu' })
+    const parent = screen.getByRole('menuitem', { name: 'Quick add FX' })
+
+    fireEvent.keyDown(root, { key: 'ArrowRight' })
+    const submenu = screen.getByRole('menu', { name: /submenu/ })
+    fireEvent.keyDown(submenu, { key: 'ArrowLeft' })
+
+    expect(screen.queryByRole('menu', { name: /submenu/ })).not.toBeInTheDocument()
+    expect(document.activeElement).toBe(parent)
+  })
+
+  it('ArrowDown wraps within the flyout independently of the root menu', () => {
+    render(<ContextMenu {...BASE} items={withSub()} />)
+    fireEvent.keyDown(screen.getByRole('menu', { name: 'Context menu' }), { key: 'ArrowRight' })
+    const submenu = screen.getByRole('menu', { name: /submenu/ })
+    const reverb  = screen.getByRole('menuitem', { name: 'Reverb' })
+    const delay   = screen.getByRole('menuitem', { name: 'Delay' })
+
+    expect(document.activeElement).toBe(reverb)
+    fireEvent.keyDown(submenu, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(delay)
+    fireEvent.keyDown(submenu, { key: 'ArrowDown' })  // wraps
+    expect(document.activeElement).toBe(reverb)
+  })
+
+  it('clicking a flyout leaf fires its onSelect then closes the whole menu', () => {
+    const onSelect = vi.fn()
+    const onClose  = vi.fn()
+    render(<ContextMenu {...BASE} items={withSub(onSelect)} onClose={onClose} />)
+    fireEvent.keyDown(screen.getByRole('menu', { name: 'Context menu' }), { key: 'ArrowRight' })
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reverb' }))
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('hovering a submenu parent opens the flyout after the hover-intent delay', () => {
+    vi.useFakeTimers()
+    try {
+      render(<ContextMenu {...BASE} items={withSub()} />)
+      const parent = screen.getByRole('menuitem', { name: 'Quick add FX' })
+
+      fireEvent.mouseEnter(parent)
+      expect(screen.queryByRole('menu', { name: /submenu/ })).not.toBeInTheDocument()
+
+      act(() => { vi.advanceTimersByTime(130) })
+      expect(screen.getByRole('menu', { name: /submenu/ })).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('flips the sub-panel to the left when it would overflow the right edge', () => {
+    const origW = window.innerWidth
+    const origH = window.innerHeight
+    Object.defineProperty(window, 'innerWidth',  { value: 400, configurable: true, writable: true })
+    Object.defineProperty(window, 'innerHeight', { value: 300, configurable: true, writable: true })
+
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 200, height: 150,
+      top: 0, left: 0, right: 200, bottom: 150, x: 0, y: 0,
+      toJSON: () => ({}),
+    } as DOMRect)
+
+    render(<ContextMenu {...BASE} items={withSub()} />)
+    fireEvent.keyDown(screen.getByRole('menu', { name: 'Context menu' }), { key: 'ArrowRight' })
+    const submenu = screen.getByRole('menu', { name: /submenu/ })
+
+    // parent.right=200, subW=200 → 200-2=198; 198+200+4=402>400 → flip: 0-200+2=-198 → clamp → 4
+    expect(submenu.style.left).toBe('4px')
+    expect(submenu.style.top).toBe('4px')
+
+    Object.defineProperty(window, 'innerWidth',  { value: origW, configurable: true, writable: true })
+    Object.defineProperty(window, 'innerHeight', { value: origH, configurable: true, writable: true })
+    vi.restoreAllMocks()
   })
 })
 

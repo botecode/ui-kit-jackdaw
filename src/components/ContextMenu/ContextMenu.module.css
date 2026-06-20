@@ -49,6 +49,11 @@
   background: color-mix(in srgb, var(--danger) 15%, transparent);
 }
 
+/* Keep the parent row lit while its flyout is open. */
+.item[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
 /* Leading slot — fixed width so label stays aligned whether item is
    checked or unchecked. Holds checkmark OR icon, never both. */
 .leadSlot {
@@ -80,4 +85,12 @@
   color: color-mix(in srgb, var(--stage-text) 50%, transparent);
   margin-left: var(--space-4);
   flex-shrink: 0;
+}
+
+/* Submenu disclosure arrow — sits where the shortcut would, pushed to the edge. */
+.caret {
+  margin-left: var(--space-4);
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, var(--stage-text) 50%, transparent);
 }
