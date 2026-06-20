@@ -1,0 +1,159 @@
+/* ─── Root ────────────────────────────────────────────────────────────────────── */
+
+/*
+  Root is the timeline coordinate origin.
+  --beat-px and --bar-beats are set via inline style by the component.
+  Descendants (Playhead, Clip, loop band) read --beat-px to position themselves.
+  Width is set to totalWidth (secondsToX(duration)) via inline style.
+*/
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* Internal grid line colors — delegate to existing tokens (theme-neutral) */
+  --_bar-line:  var(--border-strong);
+  --_beat-line: var(--border);
+}
+
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: -2px;
+}
+
+/* ─── Ruler strip ─────────────────────────────────────────────────────────────── */
+
+/*
+  The seek surface. CSS gradient handles bar/beat tick lines.
+  DOM children are only bar number labels (much fewer elements than rendering every beat tick).
+*/
+
+.strip {
+  position: relative;
+  flex-shrink: 0;
+  background-color: var(--strip-mini-timeline);
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--_bar-line)  0px,
+      var(--_bar-line)  1.5px,
+      transparent       1.5px,
+      transparent       calc(var(--beat-px) * var(--bar-beats))
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--_beat-line) 0px,
+      var(--_beat-line) 1px,
+      transparent       1px,
+      transparent       var(--beat-px)
+    );
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  cursor: col-resize;
+}
+
+.root[data-size="md"] .strip { height: 24px; }
+.root[data-size="sm"] .strip { height: 20px; }
+
+.root:not([data-dragging]):hover .strip {
+  background-color: color-mix(in srgb, var(--strip-mini-timeline) 88%, var(--accent) 12%);
+}
+
+.root[data-dragging] .strip {
+  background-color: color-mix(in srgb, var(--strip-mini-timeline) 80%, var(--accent) 20%);
+}
+
+/* ─── Bar number labels ───────────────────────────────────────────────────────── */
+
+.barLabel {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.root[data-size="md"] .barLabel { font-size: var(--text-xs); }
+.root[data-size="sm"] .barLabel { font-size: 9px; }
+
+/* ─── Musical grid ────────────────────────────────────────────────────────────── */
+
+/*
+  Two-gradient stack + optional paper texture (see below).
+  All periods keyed off --beat-px and --bar-beats set on root.
+  Reflow = one CSS var update; no re-layout, no JS.
+
+  Stacking order (painter's algorithm — last listed = bottom):
+    1. Texture  (multiply-blended: faint grain in Chroma, invisible/none in dark themes)
+    2. Bar lines (heavier vertical rule every numerator beats)
+    3. Beat lines (lighter vertical rule every beat)
+    [4. Lane rules (optional horizontal stripes)]
+*/
+
+.grid {
+  flex: 1;
+  min-height: 0;
+  background-color: var(--arrange-bg);
+  background-image:
+    var(--texture-paper),
+    repeating-linear-gradient(
+      to right,
+      var(--_bar-line)  0px,
+      var(--_bar-line)  1.5px,
+      transparent       1.5px,
+      transparent       calc(var(--beat-px) * var(--bar-beats))
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--_beat-line) 0px,
+      var(--_beat-line) 1px,
+      transparent       1px,
+      transparent       var(--beat-px)
+    );
+  background-repeat: repeat;
+  background-size: 200px 200px, auto, auto;
+  /*
+    multiply: blends texture grain onto the background-color.
+    In Chroma: cream paper + low-opacity noise → subtle grain.
+    In other themes: --texture-paper is `none` (no pixels) → multiply has nothing to blend.
+  */
+  background-blend-mode: multiply, normal, normal;
+}
+
+/* ─── Lane rules (optional horizontal ledger rows) ────────────────────────────── */
+
+.root[data-lane-rules] .grid {
+  background-image:
+    var(--texture-paper),
+    repeating-linear-gradient(
+      to right,
+      var(--_bar-line)  0px,
+      var(--_bar-line)  1.5px,
+      transparent       1.5px,
+      transparent       calc(var(--beat-px) * var(--bar-beats))
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--_beat-line) 0px,
+      var(--_beat-line) 1px,
+      transparent       1px,
+      transparent       var(--beat-px)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent                              0px,
+      transparent                              calc(var(--lane-height, 48px) - 1px),
+      var(--border)                            calc(var(--lane-height, 48px) - 1px),
+      var(--border)                            var(--lane-height, 48px)
+    );
+  background-repeat: repeat;
+  background-size: 200px 200px, auto, auto, auto;
+  background-blend-mode: multiply, normal, normal, normal;
+}
