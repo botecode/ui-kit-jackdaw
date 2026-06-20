@@ -1,0 +1,157 @@
+/* src/components/AutomationButton/AutomationButton.module.css */
+
+/* ─── Toggle button (recessed well) ──────────────────────────────────────────── */
+
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--text-dim);
+
+  /* Slow decay — incandescent off */
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow       var(--dur-led-off) var(--ease-out),
+    color            var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Sizes ───────────────────────────────────────────────────────────────────── */
+
+.toggleBtn[data-size="md"] { width: 36px; height: 36px; }
+.toggleBtn[data-size="sm"] { width: 28px; height: 28px; }
+
+/* ─── Hover ───────────────────────────────────────────────────────────────────── */
+
+.toggleBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Pressed ─────────────────────────────────────────────────────────────────── */
+
+.toggleBtn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+/*
+  Preserve accent bloom on press — :active (0,3,0) beats [data-engaged] (0,2,0).
+  Mirrors the TransportButton [data-playing]:active pattern.
+*/
+.toggleBtn[data-engaged]:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--stage));
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+}
+
+/* ─── Engaged — accent LED bloom ─────────────────────────────────────────────── */
+/*
+  Automation isn't in the semantic-LED map (red=arm, green=play, cyan=FX,
+  yellow=solo), so the lit state uses --accent per KIT-LEAD §6:
+  "Generic toggles → the accent." This ensures every theme reskins correctly
+  without a dedicated --led-automation token.
+  Fast attack on engage / slow decay handled by the base .toggleBtn transition.
+*/
+
+.toggleBtn[data-engaged] {
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--stage));
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+  /* Fast attack */
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    color            var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Disabled ────────────────────────────────────────────────────────────────── */
+
+.toggleBtn:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Focus ring — accent identity ───────────────────────────────────────────── */
+
+.toggleBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Root (flex row — only rendered when caret is present) ───────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ─── Caret button ────────────────────────────────────────────────────────────── */
+
+.caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--text-dim);
+
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow       var(--dur-base) var(--ease-out);
+}
+
+.caret[data-size="md"] { width: 20px; height: 36px; }
+.caret[data-size="sm"] { width: 16px; height: 28px; }
+
+.caret:hover:not(:disabled) {
+  background-color: var(--stage-2);
+}
+
+.caret:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.caret:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.caret:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
