@@ -1,5 +1,5 @@
 // src/components/Playhead/Playhead.test.tsx
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { Playhead } from './Playhead'
 
