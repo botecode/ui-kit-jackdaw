@@ -1,0 +1,419 @@
+/* src/components/TransportBar/TransportBar.module.css */
+
+/* ─── Root (hardware strip) ──────────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-3);
+
+  background-color: var(--strip-bg);
+  border-bottom: 1px solid var(--border);
+
+  /* Top hairline highlight — the "raised rim" of the hardware panel */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-size="md"] {
+  min-height: 52px;
+}
+
+.root[data-size="sm"] {
+  min-height: 40px;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+}
+
+/* ─── Left transport cluster ─────────────────────────────────────────────────── */
+
+.transportCluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+}
+
+/* ─── Cluster divider (thin vertical rule between sub-groups) ────────────────── */
+
+.clusterDivider {
+  width: 1px;
+  align-self: stretch;
+  margin: var(--space-2) var(--space-1);
+  background-color: var(--border);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* ─── Skip (go-to-start / go-to-end) buttons ────────────────────────────────── */
+
+/*
+  Slightly narrower than the full TransportButton — they're navigational,
+  not primary actions. Same recessed-well + incandescent pattern so they
+  read as siblings in the strip.
+*/
+
+.skipBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--text-dim);
+
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow       var(--dur-led-off) var(--ease-out),
+    color            var(--dur-led-off) var(--ease-out);
+}
+
+.skipBtn[data-size="md"] { width: 28px; height: 36px; }
+.skipBtn[data-size="sm"] { width: 22px; height: 28px; }
+
+.skipBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.skipBtn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+.skipBtn:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.skipBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Clock zone (fills center, clock left-aligned) ─────────────────────────── */
+
+.clockZone {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Clamp so clock doesn't stretch to fill a very wide strip */
+  max-width: 220px;
+}
+
+/* ─── Right cluster ──────────────────────────────────────────────────────────── */
+
+.rightCluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.projectReadouts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ─── BPM readout well ───────────────────────────────────────────────────────── */
+
+/*
+  Recessed display well, same shadow recipe as Clock — so both read as
+  digital display surfaces rather than interactive buttons.
+  The ♩= label floats outside the pressable area so it reads as a unit label.
+*/
+
+.bpmReadout {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.bpmLabel {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--text-dim);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.bpmReadout[data-size="md"] .bpmLabel { font-size: var(--text-sm); }
+.bpmReadout[data-size="sm"] .bpmLabel { font-size: var(--text-xs); }
+
+/* Pressable number — looks like a readout surface, cursor-ns-resize signals drag */
+
+.bpmValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  border: none;
+  border-radius: var(--radius);
+  cursor: ns-resize;
+  outline: none;
+  padding: var(--space-1) var(--space-2);
+
+  background: var(--stage);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 1px var(--border),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+  color: var(--stage-text);
+
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-align: right;
+
+  transition:
+    box-shadow var(--dur-led-off) var(--ease-out),
+    filter     var(--dur-led-off) var(--ease-out);
+}
+
+.bpmValue[data-size="md"] {
+  min-width: 44px;
+  font-size: 18px;
+}
+
+.bpmValue[data-size="sm"] {
+  min-width: 34px;
+  font-size: 14px;
+}
+
+.bpmValue:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.bpmValue:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--border);
+}
+
+.bpmValue:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.bpmValue:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Inline edit input — same visual as the pressable surface */
+
+.bpmInput {
+  border: none;
+  border-radius: var(--radius);
+  outline: none;
+  padding: var(--space-1) var(--space-2);
+  text-align: right;
+
+  background: var(--stage);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
+  color: var(--stage-text);
+
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.bpmInput[data-size="md"] {
+  min-width: 44px;
+  font-size: 18px;
+}
+
+.bpmInput[data-size="sm"] {
+  min-width: 34px;
+  font-size: 14px;
+}
+
+/* ─── Time signature readout ─────────────────────────────────────────────────── */
+
+/*
+  Stacked numerator/denominator, each a small pressable number.
+  A thin hairline divides them — like a real time-signature engraving.
+*/
+
+.timeSigReadout {
+  display: inline-flex;
+  align-items: center;
+}
+
+.timeSigStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+
+  background: var(--stage);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 1px var(--border),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.timeSigPart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--stage-text);
+  line-height: 1;
+  width: 100%;
+}
+
+.timeSigPart[data-size="md"] {
+  font-size: 14px;
+  padding: 2px var(--space-2);
+}
+
+.timeSigPart[data-size="sm"] {
+  font-size: 11px;
+  padding: 1px var(--space-1);
+}
+
+.timeSigPart:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+.timeSigPart:active:not(:disabled) {
+  opacity: 0.7;
+}
+
+.timeSigPart:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.timeSigPart:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 1px;
+}
+
+.timeSigDivider {
+  height: 1px;
+  width: 100%;
+  background-color: var(--border-strong);
+  opacity: 0.5;
+}
+
+.timeSigInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  text-align: center;
+
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--stage-text);
+  line-height: 1;
+}
+
+.timeSigInput[data-size="md"] {
+  font-size: 14px;
+  padding: 2px var(--space-2);
+  width: 32px;
+}
+
+.timeSigInput[data-size="sm"] {
+  font-size: 11px;
+  padding: 1px var(--space-1);
+  width: 24px;
+}
+
+/* Accent ring while the time-sig stack has a focused input */
+.timeSigStack:focus-within {
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* ─── Secondary readouts ─────────────────────────────────────────────────────── */
+
+/*
+  Compact, dim, mono — supplementary information that should recede.
+  No interactive state; no well depth. Just text on the strip bg.
+*/
+
+.secondaryReadouts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.secondaryReadouts[data-size="sm"] {
+  gap: var(--space-2);
+}
+
+.secGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.secLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.secValue {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+.secondaryReadouts[data-size="md"] .secValue {
+  font-size: 10px;
+}
+
+.secondaryReadouts[data-size="sm"] .secValue {
+  font-size: 9px;
+}
+
+.secSep {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  opacity: 0.35;
+  font-size: 9px;
+}
