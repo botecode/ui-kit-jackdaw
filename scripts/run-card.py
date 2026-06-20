@@ -176,9 +176,25 @@ def resolve_page_id(arg):
     res = _req("POST", f"/databases/{BOARD_DB}/query",
                {"filter": {"property": "Name", "title": {"equals": arg}}, "page_size": 1})
     results = res.get("results", [])
-    if not results:
-        sys.exit(f"No card named {arg!r} on the board (try the Notion URL instead).")
-    return results[0]["id"]
+    if results:
+        return results[0]["id"]
+    # Fallback: caller passed a slug but the card's Name is prose. Match by slug(Name) == slug(arg).
+    target = slug(arg)
+    cursor = None
+    while True:
+        body = {"page_size": 100}
+        if cursor:
+            body["start_cursor"] = cursor
+        res = _req("POST", f"/databases/{BOARD_DB}/query", body)
+        for page in res.get("results", []):
+            title = page.get("properties", {}).get("Name", {}).get("title", [])
+            name = "".join(rt.get("plain_text", "") for rt in title)
+            if slug(name) == target:
+                return page["id"]
+        if not res.get("has_more"):
+            break
+        cursor = res.get("next_cursor")
+    sys.exit(f"No card matching {arg!r} on the board (by name or slug).")
 
 
 def all_blocks(page_id):

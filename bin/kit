@@ -1,19 +1,14 @@
 #!/usr/bin/env bash
 #
-# kit — the UI-kit build loop (single-role, no engine). Jackdaw's flow, minus the contract/engine split.
+# kit — the UI-kit build loop. ONE command builds a component and merges it to main, live.
 #
-#   kit next                grab the next "Next" kit card on the Build Board and build it.
-#   kit launch <name>       build one component headless on its own branch, gate (tsc+vitest), push, open PR.
-#   kit test   [name]       checkout the branch, run vitest, then launch the gallery (npm run dev).
-#   kit finish [name]       merge the PR to main + tear down the worktree/branch.
-#   kit open   [name]       push + open/refresh the PR (no merge).
-#   kit gallery             just run the gallery (npm run dev) on the current checkout.
+#   kit next            grab the next "Next" kit card, build it, gate, merge to main.
+#   kit launch <name>   build one component, gate (tsc+vitest), merge to main. No PR, no test step.
+#   kit gallery         run the gallery (npm run dev) on main — keep this open; merges hot-reload it.
 #
-# [name] defaults to the current branch (kit/<name>) for test/finish/open.
-#
-# Install on PATH (one time):
-#   ln -sf /Users/fernandofeitosa/dev/ui-jackdaw/bin/kit /usr/local/bin/kit
-# If you move the repo, set KIT_ROOT in your shell.
+# Cards live on the Build Board (Kind=kit), comment-only: the card's comment is the spec.
+# Install once:  ln -sf /Users/fernandofeitosa/dev/ui-jackdaw/bin/kit /usr/local/bin/kit
+# Move the repo? set KIT_ROOT in your shell.
 #
 set -euo pipefail
 
@@ -30,13 +25,8 @@ if gc="$(git -C "$PWD" rev-parse --git-common-dir 2>/dev/null)"; then
 fi
 [ "$in_repo" = "1" ] || cd "$R"
 
-# --- helpers ---------------------------------------------------------------
-current_feature() {  # infer the component name from the current branch (kit/<name>)
-  local b; b="$(git -C "$R" branch --show-current 2>/dev/null)" || return 1
-  case "$b" in kit/*) echo "${b#kit/}" ;; *) return 1 ;; esac
-}
-resolve_branch() { git -C "$R" rev-parse --verify --quiet "kit/$1" >/dev/null && echo "kit/$1"; }
-jdstatus() {  # move the Notion card; never fatal, but surface WHY if it can't (token/card/API)
+# Best-effort Build Board move; surfaces WHY it couldn't (token/card/API) instead of failing silently.
+jdstatus() {
   local out
   if out="$(python3 "$R/scripts/run-card.py" --set-status "$1" "$2" 2>&1)"; then
     echo "  · board: $1 → $2"
@@ -45,32 +35,34 @@ jdstatus() {  # move the Notion card; never fatal, but surface WHY if it can't (
   fi
 }
 
-# The core: one component, one branch, one headless agent, gate, push, PR.
-build() {
-  local name="$1" wt br spec prompt rc
+# Build one component on its own branch, gate it, and MERGE it into main in place — so the gallery
+# you have open on main hot-reloads and you see it live. No PR, no separate test step.
+ship() {
+  local name="$1" wt br spec prompt rc f cur
   br="kit/$name"; wt="$R/.worktrees/$name"
   [ -f "$ROLE_FILE" ] || { echo "Missing role preamble: $ROLE_FILE" >&2; return 1; }
 
-  # Spec: the card's comments (comment-only model); fall back to a committed spec file.
+  # We merge into main in place, so the primary checkout must be on a clean main.
+  cur="$(git -C "$R" rev-parse --abbrev-ref HEAD)"
+  [ "$cur" = main ] || { echo "Primary checkout is on '$cur', not 'main' — switch to main first (we merge there)." >&2; return 1; }
+  [ -z "$(git -C "$R" status --porcelain --untracked-files=no)" ] \
+    || { echo "main has uncommitted changes — commit/stash them first (we merge into main in place)." >&2; return 1; }
+
+  # Spec: the card's comments (comment-only); fall back to a committed spec file.
   spec="$(mktemp -t kit-"$name".XXXX.md)"
   python3 "$R/scripts/run-card.py" --instructions "$name" >"$spec" 2>/dev/null || true
   if [ ! -s "$spec" ]; then
-    local f; for f in "$R/docs/superpowers/specs/$name.md" "$R/docs/superpowers/plans/$name.md" "$R/prompts/$name.md"; do
+    for f in "$R/docs/superpowers/specs/$name.md" "$R/docs/superpowers/plans/$name.md" "$R/prompts/$name.md"; do
       [ -f "$f" ] && { cp "$f" "$spec"; break; }
     done
   fi
   [ -s "$spec" ] || { echo "No card comments and no spec file for '$name' — shape the card first." >&2; return 1; }
 
-  # Fresh worktree off origin/main.
-  git -C "$R" fetch -q origin || true
-  if [ -d "$wt" ]; then
-    echo "  · reusing worktree $wt"
-  else
-    git -C "$R" worktree add -B "$br" "$wt" origin/main 2>/dev/null \
-      || git -C "$R" worktree add "$wt" "$br"
-  fi
+  # Fresh worktree off the current main (wipe any stale one from a prior run).
+  [ -d "$wt" ] && git -C "$R" worktree remove --force "$wt" 2>/dev/null || true
+  git -C "$R" branch -D "$br" 2>/dev/null || true
+  git -C "$R" worktree add -B "$br" "$wt" main
 
-  # Compose the prompt: role preamble + the card spec.
   prompt="$wt/.agent-prompt.md"
   { cat "$ROLE_FILE"; printf '\n\n---\n\n# Your task (this card)\n\n'; cat "$spec"; } >"$prompt"
 
@@ -80,28 +72,32 @@ build() {
   rc=${PIPESTATUS[0]}
   [ "$rc" = 0 ] || { echo "✗ agent exited $rc — see $wt/.agent.log" >&2; return 1; }
 
-  # Anti-vacuum guards. A headless agent that stopped to ask leaves zero commits; one that only
-  # planned leaves no component. The full-suite gate passes either way, so check the work exists.
-  if ! git -C "$wt" rev-list -n1 "origin/main..HEAD" 2>/dev/null | grep -q .; then
+  # Anti-vacuum guards: a headless agent that stopped to ask leaves zero commits; one that only
+  # planned leaves no component. Don't let a vacuous run sail through a green full-suite gate.
+  if ! git -C "$wt" rev-list -n1 "main..HEAD" 2>/dev/null | grep -q .; then
     echo "✗ no new commits on $br — the agent built nothing (it likely stopped to ask). See $wt/.agent.log." >&2; return 1
   fi
-  if ! git -C "$wt" diff --name-only "origin/main..HEAD" -- src/components/ 2>/dev/null | grep -q '\.test\.'; then
+  if ! git -C "$wt" diff --name-only "main..HEAD" -- src/components/ 2>/dev/null | grep -q '\.test\.'; then
     echo "✗ no new component test under src/components/ on $br — the agent planned but didn't build. See $wt/.agent.log." >&2; return 1
   fi
 
   # Objective gate (don't trust the agent's self-report).
   echo "▶ gate: npm install + tsc + vitest"
   ( cd "$wt" && npm install --silent && npx tsc --noEmit && npx vitest run ) \
-    || { echo "✗ gate failed (tsc/vitest red) — branch $br left for inspection." >&2; return 1; }
+    || { echo "✗ gate failed (tsc/vitest red) — $br left for inspection, NOT merged." >&2; return 1; }
 
-  # Land = push the branch + open/refresh the PR (single role, so the branch IS the change).
-  git -C "$wt" push -u origin "$br"
-  ( cd "$wt" && gh pr create --fill --head "$br" --base main 2>/dev/null \
-      || gh pr view "$br" --json url -q .url 2>/dev/null || true )
-  echo "✓ $name built + gated on $br. Now:  kit test $name"
+  # Merge into main in place (ff if we can, else a merge commit), then push + tear down.
+  echo "▶ merging $br → main"
+  git -C "$R" merge --ff-only "$br" 2>/dev/null || git -C "$R" merge --no-edit "$br" \
+    || { echo "✗ merge into main failed — resolve in $R, then retry." >&2; return 1; }
+  git -C "$R" push origin main 2>/dev/null && echo "  · pushed origin main" \
+    || echo "  · (didn't push origin main — push manually to back it up)"
+  git -C "$R" worktree remove --force "$wt" 2>/dev/null || true
+  git -C "$R" branch -D "$br" 2>/dev/null || true
+
+  echo "✓ $name is on main — live in the gallery (run 'kit gallery' if it isn't open)."
 }
 
-# --- commands --------------------------------------------------------------
 cmd="${1:-}"; [ $# -gt 0 ] && shift || true
 case "$cmd" in
   next)
@@ -109,49 +105,17 @@ case "$cmd" in
     [ -n "$name" ] || { echo "No kit card in Next." >&2; exit 1; }
     echo "▶ next kit card → $name"
     jdstatus "$name" "In Progress"
-    build "$name" || { jdstatus "$name" "Next"; exit 1; } ;;
+    ship "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
 
-  launch|build)
+  launch|build|ship)
     name="${1:-}"; [ -n "$name" ] || { echo "usage: kit launch <name>" >&2; exit 1; }
     jdstatus "$name" "In Progress"
-    build "$name" || { jdstatus "$name" "Next"; exit 1; } ;;
-
-  open)
-    name="${1:-$(current_feature || true)}"; [ -n "$name" ] || { echo "usage: kit open <name> (or run from a kit/<name> branch)" >&2; exit 1; }
-    br="$(resolve_branch "$name")" || { echo "No branch kit/$name." >&2; exit 1; }
-    git -C "$R" push -u origin "$br"
-    gh pr create --fill --head "$br" --base main 2>/dev/null || gh pr view "$br" ;;
-
-  test)
-    name="${1:-$(current_feature || true)}"; [ -n "$name" ] || { echo "usage: kit test <name> (or run from a kit/<name> branch)" >&2; exit 1; }
-    br="$(resolve_branch "$name")" || { echo "No branch kit/$name." >&2; exit 1; }
-    if [ -n "$(git -C "$R" status --porcelain --untracked-files=no)" ]; then
-      echo "Working tree has uncommitted changes — commit/stash before checking out a branch to test." >&2; exit 1
-    fi
-    echo "▶ checking out $br"; git -C "$R" checkout "$br"
-    jdstatus "$name" "Testing"
-    echo "▶ vitest"; ( cd "$R" && npm install --silent && npx vitest run ) || echo "⚠ vitest failed — launching the gallery anyway so you can inspect."
-    echo "▶ launching the gallery (npm run dev). Ctrl-C to stop."
-    cd "$R"; exec npm run dev ;;
-
-  finish)
-    name="${1:-$(current_feature || true)}"; [ -n "$name" ] || { echo "usage: kit finish <name> (or run from a kit/<name> branch)" >&2; exit 1; }
-    br="$(resolve_branch "$name")" || { echo "No branch kit/$name." >&2; exit 1; }
-    echo "About to MERGE $br → main and delete the branch + worktree."
-    read -r -p "Proceed? [y/N] " a; case "$a" in y|Y|yes) : ;; *) echo "Aborted."; exit 1 ;; esac
-    # checkout main first so we're not on the branch being deleted
-    git -C "$R" checkout main 2>/dev/null || true
-    gh pr merge "$br" --merge --delete-branch || { echo "✗ merge failed (resolve on GitHub, then retry)." >&2; exit 1; }
-    git -C "$R" worktree remove --force "$R/.worktrees/$name" 2>/dev/null || true
-    git -C "$R" branch -D "$br" 2>/dev/null || true
-    git -C "$R" pull --ff-only origin main 2>/dev/null || true
-    jdstatus "$name" "Done"
-    echo "✓ $name merged to main + torn down." ;;
+    ship "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
 
   gallery)
     cd "$R"; exec npm run dev ;;
 
   ""|-h|--help|help)
-    sed -n '3,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   *) echo "Unknown command '$cmd'. Run: kit help" >&2; exit 1 ;;
 esac
