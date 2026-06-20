@@ -59,14 +59,14 @@ useEffect(() => {
   const el = rootRef.current
   if (!el) return
   const dpr = window.devicePixelRatio || 1
-  const x = Math.round(secondsToXRef.current(seconds) * dpr) / dpr
+  const x = Math.round(secondsToX(seconds) * dpr) / dpr
   el.style.transform = `translateX(${x}px)`
 }, [seconds, secondsToX])
 ```
 
 No `playing` guard — unlike Playhead, there is no rAF channel to suppress.
 
-Keep `secondsToXRef` current via a sync effect (same pattern as Playhead) so zoom changes are reflected on the next park without the effect restarting.
+**No `secondsToXRef`.** Playhead needed a ref so its live rAF loop could read the latest projection without restarting. EditCursor has no loop — `secondsToX` lives in deps and the effect calls it directly. Porting the ref here is inert scaffolding.
 
 ---
 
@@ -97,9 +97,11 @@ Drag is 1:1 with the pointer. No momentum. Any decorative settle-on-release puls
 
 All drag events **suppressed when `disabled`**.
 
+**Drag inverse projection.** On `pointerdown`, record `startClientX` and `startSeconds`. Derive `pxPerSecond = secondsToX(1) - secondsToX(0)` (two-point sample — cancels any scroll offset, assumes linearity only). On `pointermove`: `deltaSeconds = (e.clientX - startClientX) / pxPerSecond`, result `clamp(startSeconds + deltaSeconds, 0, max)`. This derives the scale from the projection passed in rather than hardcoding the caller's formula — preserving the "EditCursor never knows the projection's internals" contract.
+
 ### Clamp invariant
 
-Every path that calls `onSeek` clamps to `[0, max]` before calling. The drag inverse projection needs the caller's `secondsToX` to be invertible (linear) — EditCursor assumes the standard `s * pxPerBeat / beatSeconds` mapping.
+Every path that calls `onSeek` clamps to `[0, max]` before calling.
 
 ---
 
@@ -217,7 +219,7 @@ Controls: `TransportButton` Play/Stop, `Fader` for zoom, ruler click → `onSeek
 - **Structural focus-ring guard:** `handleWrap` carries `role="slider"` and is the focusable element; clipped `handle` child is `aria-hidden`. This pins the wrapper/clip-path separation against regression — moving `role`/`tabIndex` back onto the clipped element would re-clip the ring without breaking any other test.
 
 ### ARIA
-- `aria-valuemin=0`, `aria-valuemax=durationSeconds`, `aria-valuenow=seconds`, `aria-valuetext` (formatted string)
+- `aria-valuemin=0`, `aria-valuemax={durationSeconds ?? 3600}`, `aria-valuenow=seconds`, `aria-valuetext` (formatted string)
 - `aria-label` defaults to "Edit cursor"
 - With `durationSeconds` absent: `aria-valuemax=3600`, `End` key fires `onSeek(3600)`
 
@@ -235,7 +237,7 @@ Controls: `TransportButton` Play/Stop, `Fader` for zoom, ruler click → `onSeek
 
 ### Drag
 - `pointerdown` calls `setPointerCapture` (optional but cheap — verifies capture is wired)
-- `pointermove` fires `onSeek` with pointer-projected seconds
+- `pointermove` fires `onSeek` with seconds derived via two-point scale: `pxPerSecond = secondsToX(1) - secondsToX(0)`, `result = clamp(startSeconds + deltaPx / pxPerSecond, 0, max)`. Test asserts the value, not a hardcoded pixel constant, so the assertion stays honest when `secondsToX` changes.
 - `pointerup` stops `onSeek` calls
 - Result is clamped to `[0, max]`
 
