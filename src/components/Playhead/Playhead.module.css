@@ -1,0 +1,117 @@
+/* src/components/Playhead/Playhead.module.css */
+
+/* ─── Color tokens ───────────────────────────────────────────────────────────
+   Scoped variables isolate color state. data-recording flips all three slots.
+   --led-orange is the unclaimed warm LED tier (red=record, green=done, etc.).  */
+
+.root {
+  --ph-line: var(--led-orange);
+  --ph-cap:  var(--led-orange);
+  --ph-glow: var(--led-orange);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  overflow: visible;
+  pointer-events: none;
+  will-change: transform;
+  /* z-index band: above clip content (1–10), below FxChip (200), below Popovers (1000+) */
+  z-index: 50;
+}
+
+.root[data-recording] {
+  --ph-line: var(--led-red-core);
+  --ph-cap:  var(--led-red-core);
+  --ph-glow: var(--led-red);
+}
+
+/* ─── Line ───────────────────────────────────────────────────────────────────
+   1.5px at 2× DPR = 3 physical pixels (crisp). DPR-snapped translateX on
+   the root means the line never straddles a device pixel boundary.           */
+
+.line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1.5px;
+  transform: translateX(-50%);
+  background: var(--ph-line);
+  pointer-events: none;
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--ph-glow) 45%, transparent);
+  z-index: 1;
+}
+
+/* ─── Handle ─────────────────────────────────────────────────────────────────
+   Fader-cap family: vertical grooves (perpendicular to horizontal travel),
+   same drop shadow, same gloss. Center seam is ::after.                      */
+
+.handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 20px;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+
+  /* Vertical grip grooves — 90deg = perpendicular to horizontal travel.
+     Alpha values are byte-for-byte the fader cap's horizontal recipe.        */
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.22) 0px,
+      rgba(0, 0, 0, 0.22) 1px,
+      rgba(255, 255, 255, 0.07) 1px,
+      rgba(255, 255, 255, 0.07) 2px,
+      transparent 2px,
+      transparent 5px
+    ),
+    var(--ph-cap);
+
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Handle interactive: pointer-events only when onScrub is wired */
+.root[data-interactive] .handle {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+/* ─── Handle gloss ───────────────────────────────────────────────────────────
+   Identical to fader cap ::before. Direct material sibling.                  */
+
+.handle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 38% 28%, rgba(255, 255, 255, 0.22) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* ─── Center seam ────────────────────────────────────────────────────────────
+   Flush at bottom (meets the line re-emerging into lanes — the continuity
+   that matters). 15% inset at top (cap reads as capped, not ruled).
+   Width: 1.5px matches the line exactly. Center alignment is guaranteed by
+   geometry: line, handle, and seam all center on root left=0.                */
+
+.handle::after {
+  content: '';
+  position: absolute;
+  top: 15%;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.5px;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 1px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
