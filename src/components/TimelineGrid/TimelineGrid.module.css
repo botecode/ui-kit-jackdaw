@@ -35,27 +35,39 @@
   --_sub-w:  calc(var(--grid-line-weight, 1) * 1px);
 
   background-color: var(--arrange-bg);
+  /*
+    Each gradient tile splits the line width W across the tile boundary:
+    W/2 at the start + W/2 at the end. Adjacent tiles merge both halves
+    into a centered W-wide line at each period boundary (grows equally
+    left and right rather than only rightward from 0).
+  */
   background-image:
     repeating-linear-gradient(
       to right,
       var(--_bar-line)  0px,
-      var(--_bar-line)  var(--_bar-w),
-      transparent       var(--_bar-w),
-      transparent       calc(var(--beat-px) * var(--bar-beats))
+      var(--_bar-line)  calc(var(--_bar-w) / 2),
+      transparent       calc(var(--_bar-w) / 2),
+      transparent       calc(var(--beat-px) * var(--bar-beats) - var(--_bar-w) / 2),
+      var(--_bar-line)  calc(var(--beat-px) * var(--bar-beats) - var(--_bar-w) / 2),
+      var(--_bar-line)  calc(var(--beat-px) * var(--bar-beats))
     ),
     repeating-linear-gradient(
       to right,
       var(--_beat-line) 0px,
-      var(--_beat-line) var(--_beat-w),
-      transparent       var(--_beat-w),
-      transparent       var(--beat-px)
+      var(--_beat-line) calc(var(--_beat-w) / 2),
+      transparent       calc(var(--_beat-w) / 2),
+      transparent       calc(var(--beat-px) - var(--_beat-w) / 2),
+      var(--_beat-line) calc(var(--beat-px) - var(--_beat-w) / 2),
+      var(--_beat-line) var(--beat-px)
     ),
     repeating-linear-gradient(
       to right,
       var(--_sub-line)  0px,
-      var(--_sub-line)  var(--_sub-w),
-      transparent       var(--_sub-w),
-      transparent       var(--grid-div-px)
+      var(--_sub-line)  calc(var(--_sub-w) / 2),
+      transparent       calc(var(--_sub-w) / 2),
+      transparent       calc(var(--grid-div-px) - var(--_sub-w) / 2),
+      var(--_sub-line)  calc(var(--grid-div-px) - var(--_sub-w) / 2),
+      var(--_sub-line)  var(--grid-div-px)
     ),
     var(--texture-paper);
   background-repeat: repeat;
