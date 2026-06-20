@@ -95,7 +95,11 @@ callbacks = real intents — see the KICKOFF appendix) · **dogfood**: playgroun
 
 - **Lit state — accent or a specific color?** Generic toggles/checkboxes → the **accent**. Controls where
   color signals *state* → the **semantic LED**: **red** = arm/record · **green** = play/rolling (chosen so
-  play ≠ record) · **cyan** = FX chain active · **amber** = FX partial / attention · **yellow** = solo.
+  play ≠ record) · **cyan** = FX chain active · **amber** = FX partial / attention · **yellow** = solo ·
+  **blue** = phase-invert · **violet** = automation. The last two are the **production-mode pair** — they
+  sit side-by-side in the detail panel, so they're kept distinct in the cool range (cyan FX / blue phase /
+  violet automation are three clear steps). Define `--led-blue` / `--led-violet` (core→body→glow) and verify
+  both read on light (cream) AND dark themes.
 - **Where do I portal an overlay?** `usePortalTarget()`. Never `document.body`.
 - **Do I need a new overlay component?** No — compose the `Popover` shell (point or `anchorRef`).
 - **`userEvent` or `fireEvent`?** `fireEvent`.
