@@ -1,0 +1,303 @@
+/* src/components/FocusedTrackDetailPanel/FocusedTrackDetailPanel.module.css */
+
+/* ─── Root ───────────────────────────────────────────────────────────────────
+   Uses grid-template-rows: 0fr → 1fr for the open/close transition so we
+   animate a grid track size rather than layout height (no layout thrash).
+   --panel-height on .inner gives the actual pixel size that the grid expands to.
+   data-resizing removes the transition so resize drag is always 1:1 (functional).
+*/
+
+.root {
+  display: grid;
+  grid-template-rows: 0fr;
+  width: 100%;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 -4px 16px rgba(0, 0, 0, 0.18);
+  transition: grid-template-rows var(--dur-slow, 200ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.root[data-open] {
+  grid-template-rows: 1fr;
+}
+
+/* Resize in progress: remove transition so drag is 1:1 (functional motion). */
+.root[data-resizing] {
+  transition: none;
+}
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Open/close is decorative — snap it. Resize (functional) was never animated. */
+  .root {
+    transition: none;
+  }
+}
+
+/* ─── Inner wrapper ──────────────────────────────────────────────────────────
+   min-height: 0 is required for the 0fr collapse to work (otherwise the grid
+   row can't shrink below the child's min-content size).
+   height: var(--panel-height) is what the 1fr expands to fill.
+*/
+
+.inner {
+  min-height: 0;
+  overflow: hidden;
+  height: var(--panel-height, 280px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface);
+}
+
+/* ─── Divider (resize handle) ────────────────────────────────────────────────
+   Horizontal 8 px drag target at the top. Knurl dots provide a tactile drag
+   affordance without fake hardware texture.
+*/
+
+.divider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+  z-index: 10;
+  background-color: var(--stage);
+  border-bottom: 1px solid var(--border);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Knurl dots — 2 px circular pillars on the stage surface */
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+  background-size: 6px 6px;
+  background-position: center center;
+  transition: background-color var(--dur-base, 120ms);
+}
+
+.divider:hover {
+  background-color: color-mix(in srgb, var(--accent) 12%, var(--stage));
+}
+
+.divider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .divider { transition: none; }
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) 0 var(--space-5);
+  height: 40px;
+  min-height: 40px;
+  margin-top: 8px; /* clears the divider */
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Per-track color keyline — left edge of the header, matching TrackHeader spine */
+.keyline {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--track-color, var(--accent));
+  border-radius: 0 2px 2px 0;
+}
+
+.trackName {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius, 4px);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color var(--dur-base, 120ms), background-color var(--dur-base, 120ms);
+}
+
+.closeBtn:hover {
+  background-color: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.closeBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closeBtn { transition: none; }
+}
+
+/* ─── Body ───────────────────────────────────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+/* ─── Left column: Meter + clip lane + mixer strip ─────────────────────── */
+
+.leftCol {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Recessed well for the always-on stereo meter */
+.meterWell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  background-color: var(--stage);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius, 4px);
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+/* Scrollable clip canvas — TrackLane fills this */
+.laneArea {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--arrange-bg, var(--stage));
+  border-radius: var(--radius, 4px);
+  border: 1px solid var(--border);
+}
+
+.emptyLane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-4);
+}
+
+.emptyMsg {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Compact volume + pan strip */
+.mixerStrip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-1);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 4px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ─── Right column: FX chain + advanced slots ───────────────────────────── */
+
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 220px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  /* Thin scrollbar on stage */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ─── Advanced placeholder slots ─────────────────────────────────────────── */
+
+.advancedSlot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius, 4px);
+  background-color: color-mix(in srgb, var(--stage) 30%, var(--surface));
+  margin-bottom: var(--space-1);
+}
+
+.advancedSlot:last-child {
+  margin-bottom: 0;
+}
+
+.slotLabel {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  line-height: var(--leading-xs, 1.2);
+}
+
+.slotDesc {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, var(--text-muted) 60%, transparent);
+  line-height: var(--leading-sm, 1.3);
+}
