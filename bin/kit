@@ -4,6 +4,7 @@
 #
 #   kit next            grab the next "Next" kit card, build it, gate, merge to main.
 #   kit launch <name>   build one component, gate (tsc+vitest), merge to main. No PR, no test step.
+#   kit fix <name> "…"  modify an already-shipped component IN PLACE per "…", gate, merge to main.
 #   kit gallery         run the gallery (npm run dev) on main — keep this open; merges hot-reload it.
 #
 # Cards live on the Build Board (Kind=kit), comment-only: the card's comment is the spec.
@@ -38,7 +39,7 @@ jdstatus() {
 # Build one component on its own branch, gate it, and MERGE it into main in place — so the gallery
 # you have open on main hot-reloads and you see it live. No PR, no separate test step.
 ship() {
-  local name="$1" wt br spec prompt rc f cur
+  local name="$1" feedback="${2:-}" wt br spec prompt rc f cur msg ctx HARGS
   br="kit/$name"; wt="$R/.worktrees/$name"
   [ -f "$ROLE_FILE" ] || { echo "Missing role preamble: $ROLE_FILE" >&2; return 1; }
 
@@ -48,15 +49,22 @@ ship() {
   [ -z "$(git -C "$R" status --porcelain --untracked-files=no)" ] \
     || { echo "main has uncommitted changes — commit/stash them first (we merge into main in place)." >&2; return 1; }
 
-  # Spec: the card's comments (comment-only); fall back to a committed spec file.
   spec="$(mktemp -t kit-"$name".XXXX.md)"
-  python3 "$R/scripts/run-card.py" --instructions "$name" >"$spec" 2>/dev/null || true
-  if [ ! -s "$spec" ]; then
-    for f in "$R/docs/superpowers/specs/$name.md" "$R/docs/superpowers/plans/$name.md" "$R/prompts/$name.md"; do
-      [ -f "$f" ] && { cp "$f" "$spec"; break; }
-    done
+  if [ -n "$feedback" ]; then
+    # FIX mode: the change request IS the spec; append the original card spec as context if present.
+    printf '# Change requested for the existing `%s` component\n\n%s\n' "$name" "$feedback" >"$spec"
+    ctx="$(python3 "$R/scripts/run-card.py" --instructions "$name" 2>/dev/null || true)"
+    [ -n "$ctx" ] && printf '\n\n---\n# Original card spec (context — honor it, do not re-do it)\n\n%s\n' "$ctx" >>"$spec"
+  else
+    # BUILD mode: the card's comments (comment-only); fall back to a committed spec file.
+    python3 "$R/scripts/run-card.py" --instructions "$name" >"$spec" 2>/dev/null || true
+    if [ ! -s "$spec" ]; then
+      for f in "$R/docs/superpowers/specs/$name.md" "$R/docs/superpowers/plans/$name.md" "$R/prompts/$name.md"; do
+        [ -f "$f" ] && { cp "$f" "$spec"; break; }
+      done
+    fi
+    [ -s "$spec" ] || { echo "No card comments and no spec file for '$name' — shape the card first." >&2; rm -f "$spec"; return 1; }
   fi
-  [ -s "$spec" ] || { echo "No card comments and no spec file for '$name' — shape the card first." >&2; return 1; }
 
   # Fresh worktree off the current main (wipe any stale one from a prior run).
   [ -d "$wt" ] && git -C "$R" worktree remove --force "$wt" 2>/dev/null || true
@@ -64,11 +72,17 @@ ship() {
   git -C "$R" worktree add -B "$br" "$wt" main
 
   prompt="$wt/.agent-prompt.md"
-  { cat "$ROLE_FILE"; printf '\n\n---\n\n# Your task (this card)\n\n'; cat "$spec"; } >"$prompt"
-
-  echo "▶ building $name on $br (headless)…"
-  local HARGS="${CLAUDE_HEADLESS_ARGS:---permission-mode bypassPermissions --verbose}"
-  ( cd "$wt" && claude -p "Implement .agent-prompt.md end to end. You are running HEADLESS and NON-INTERACTIVE — there is NO human to reply, so do NOT ask questions, request approval, or pause to confirm a design choice (that just ends the run with nothing built). When something is ambiguous, decide it yourself using KIT-LEAD.md, pick the most Chroma-consistent option, record the decision and reasoning in your commit message, and keep going until the component is built, all its states are in the gallery demo, its own tests pass, and everything is committed. Drive the work with /superpowers (plan, spec, build)." $HARGS 2>&1 | tee "$wt/.agent.log" )
+  HARGS="${CLAUDE_HEADLESS_ARGS:---permission-mode bypassPermissions --verbose}"
+  if [ -n "$feedback" ]; then
+    { cat "$ROLE_FILE"; printf '\n\n---\n\n# Modify the EXISTING component (do NOT rebuild)\n\n'; cat "$spec"; } >"$prompt"
+    msg="Apply the change in .agent-prompt.md to the EXISTING $name component that is already in this repo — MODIFY it in place, do NOT rebuild it from scratch. You are HEADLESS and NON-INTERACTIVE — never ask questions; decide every choice via KIT-LEAD.md and proceed. Keep the change minimal + on-scope, update the demo + tests for what you change, keep everything green, and COMMIT. Drive with /superpowers."
+    echo "▶ fixing $name on $br (headless)…"
+  else
+    { cat "$ROLE_FILE"; printf '\n\n---\n\n# Your task (this card)\n\n'; cat "$spec"; } >"$prompt"
+    msg="Implement .agent-prompt.md end to end. You are running HEADLESS and NON-INTERACTIVE — there is NO human to reply, so do NOT ask questions, request approval, or pause to confirm a design choice (that just ends the run with nothing built). When something is ambiguous, decide it yourself using KIT-LEAD.md, pick the most Chroma-consistent option, record the decision and reasoning in your commit message, and keep going until the component is built, all its states are in the gallery demo, its own tests pass, and everything is committed. Drive the work with /superpowers (plan, spec, build)."
+    echo "▶ building $name on $br (headless)…"
+  fi
+  ( cd "$wt" && claude -p "$msg" $HARGS 2>&1 | tee "$wt/.agent.log" )
   rc=${PIPESTATUS[0]}
   [ "$rc" = 0 ] || { echo "✗ agent exited $rc — see $wt/.agent.log" >&2; return 1; }
 
@@ -77,8 +91,12 @@ ship() {
   if ! git -C "$wt" rev-list -n1 "main..HEAD" 2>/dev/null | grep -q .; then
     echo "✗ no new commits on $br — the agent built nothing (it likely stopped to ask). See $wt/.agent.log." >&2; return 1
   fi
-  if ! git -C "$wt" diff --name-only "main..HEAD" -- src/components/ 2>/dev/null | grep -q '\.test\.'; then
-    echo "✗ no new component test under src/components/ on $br — the agent planned but didn't build. See $wt/.agent.log." >&2; return 1
+  if [ -n "$feedback" ]; then
+    git -C "$wt" diff --name-only "main..HEAD" -- src/components/ 2>/dev/null | grep -q . \
+      || { echo "✗ nothing changed under src/components/ on $br — the fix didn't land. See $wt/.agent.log." >&2; return 1; }
+  else
+    git -C "$wt" diff --name-only "main..HEAD" -- src/components/ 2>/dev/null | grep -q '\.test\.' \
+      || { echo "✗ no new component test under src/components/ on $br — the agent planned but didn't build. See $wt/.agent.log." >&2; return 1; }
   fi
 
   # Objective gate (don't trust the agent's self-report).
@@ -112,10 +130,15 @@ case "$cmd" in
     jdstatus "$name" "In Progress"
     ship "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
 
+  fix)
+    name="${1:-}"; note="${2:-}"
+    [ -n "$name" ] && [ -n "$note" ] || { echo "usage: kit fix <name> \"<change to make>\"" >&2; exit 1; }
+    ship "$name" "$note" ;;
+
   gallery)
     cd "$R"; exec npm run dev ;;
 
   ""|-h|--help|help)
-    sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    sed -n '3,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   *) echo "Unknown command '$cmd'. Run: kit help" >&2; exit 1 ;;
 esac
