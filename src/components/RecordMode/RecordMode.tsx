@@ -57,8 +57,10 @@ export function RecordMode({
     // before this click event, closeMenu() set closeTimeRef — skip the reopen.
     // 300 ms is well beyond the mousedown→click window (<100 ms).
     if (Date.now() - closeTimeRef.current < 300) return
-    caretRef.current?.focus() // WebKit: mouse click doesn't focus <button>
-    const rect = caretRef.current!.getBoundingClientRect()
+    const el = caretRef.current
+    if (!el) return
+    el.focus() // WebKit: mouse click doesn't focus <button>
+    const rect = el.getBoundingClientRect()
     setMenuPos({ x: rect.left, y: rect.bottom + 2 })
     setMenuOpen(true)
   }

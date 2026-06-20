@@ -246,7 +246,7 @@ src/components/ContextMenu/ContextMenu.test.tsx  ← regression test for new fie
 6. `mode=normal` → no badge rendered
 7. `state=recording, mode=loop-punch` → label="Recording (loop-punch)"
 8. Record button click fires `onToggleRecord`
-9. Caret click → menu opens (`aria-expanded=true`), caret is focused
+9. Caret click → menu opens (`aria-expanded=true`), first `menuitemradio` is focused (ContextMenu auto-focuses first item; caret receives focus on close via focus-return)
 10. Escape → menu closes, focus returns to caret
 11. Item select → menu closes, focus returns to caret
 12. "Normal" click → `onSelectMode('normal')` called, menu closes

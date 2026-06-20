@@ -10,7 +10,7 @@ export const meta: DemoMeta = {
   name: 'RepeatToggle',
   group: 'Primitives',
   route: '/repeat-toggle',
-  order: 11,
+  order: 12,
 }
 
 // ── States grid ───────────────────────────────────────────────────────────────
