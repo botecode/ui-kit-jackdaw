@@ -76,7 +76,25 @@
   transition: opacity var(--dur-led-on) var(--ease-out);
 }
 
-/* ─── Checked: accent fill + LED bloom (no glyph — lit square reads as "on") ── */
+/* ─── Checked: accent fill + LED bloom + center dot ────────────────────────── */
+
+.input:checked + .box::after {
+  background: var(--accent-contrast);
+  border-radius: 50%;
+  opacity: 1;
+}
+
+.root[data-size="md"] .input:checked + .box::after {
+  width: 4px;
+  height: 4px;
+  transform: translate(-50%, -50%);
+}
+
+.root[data-size="sm"] .input:checked + .box::after {
+  width: 4px;
+  height: 4px;
+  transform: translate(-50%, -50%);
+}
 
 .input:checked + .box {
   background: var(--accent);
