@@ -299,3 +299,102 @@ describe('EditCursor disabled keyboard no-op', () => {
     expect(onSeek).not.toHaveBeenCalled()
   })
 })
+
+// ─── Drag interaction ─────────────────────────────────────────────────────────
+//
+// secondsToX = s => s * 20  →  pxPerSecond = secondsToX(1) - secondsToX(0) = 20
+// Move 40px right from startClientX=100 → deltaSeconds = 40/20 = 2
+// startSeconds=5 → result = 7
+
+describe('EditCursor drag', () => {
+  const secondsToX = (s: number) => s * 20  // 20 px/s; pxPerSecond = 20
+
+  beforeEach(() => {
+    // jsdom doesn't provide setPointerCapture on HTMLElement; mock it
+    if (!HTMLElement.prototype.setPointerCapture) {
+      HTMLElement.prototype.setPointerCapture = vi.fn()
+    }
+  })
+
+  it('pointerdown calls setPointerCapture with the pointerId', () => {
+    render(
+      <EditCursor seconds={5} secondsToX={secondsToX} onSeek={noop} durationSeconds={30} />
+    )
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    const captureSpy = vi.spyOn(wrap, 'setPointerCapture').mockImplementation(() => {})
+    fireEvent.pointerDown(wrap, { pointerId: 42, clientX: 100 })
+    expect(captureSpy).toHaveBeenCalledWith(42)
+  })
+
+  it('pointermove fires onSeek derived from two-point scale', () => {
+    const onSeek = vi.fn()
+    render(
+      <EditCursor seconds={5} secondsToX={secondsToX} onSeek={onSeek} durationSeconds={30} />
+    )
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    // pxPerSecond = 20(1) - 20(0) = 20; start=5, move 40px → +2s → 7
+    fireEvent.pointerDown(wrap, { clientX: 100 })
+    fireEvent.pointerMove(wrap, { clientX: 140 })
+    expect(onSeek).toHaveBeenCalledWith(7)
+  })
+
+  it('drag result clamps to max', () => {
+    const onSeek = vi.fn()
+    render(
+      // seconds=29, move 80px right → +4s = 33 → clamped to 30
+      <EditCursor seconds={29} secondsToX={secondsToX} onSeek={onSeek} durationSeconds={30} />
+    )
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    fireEvent.pointerDown(wrap, { clientX: 0 })
+    fireEvent.pointerMove(wrap, { clientX: 80 })
+    expect(onSeek).toHaveBeenCalledWith(30)
+  })
+
+  it('drag result clamps to 0', () => {
+    const onSeek = vi.fn()
+    render(
+      // seconds=1, move 60px left → -3s = -2 → clamped to 0
+      <EditCursor seconds={1} secondsToX={secondsToX} onSeek={onSeek} durationSeconds={30} />
+    )
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    fireEvent.pointerDown(wrap, { clientX: 100 })
+    fireEvent.pointerMove(wrap, { clientX: 40 })
+    expect(onSeek).toHaveBeenCalledWith(0)
+  })
+
+  it('pointerup stops onSeek calls', () => {
+    const onSeek = vi.fn()
+    render(
+      <EditCursor seconds={5} secondsToX={secondsToX} onSeek={onSeek} durationSeconds={30} />
+    )
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    fireEvent.pointerDown(wrap, { clientX: 100 })
+    fireEvent.pointerMove(wrap, { clientX: 140 })
+    expect(onSeek).toHaveBeenCalledTimes(1)
+
+    fireEvent.pointerUp(wrap)
+    fireEvent.pointerMove(wrap, { clientX: 180 })  // move after release — no new call
+    expect(onSeek).toHaveBeenCalledTimes(1)
+  })
+})
+
+// ─── Disabled — drag no-op ────────────────────────────────────────────────────
+
+describe('EditCursor disabled drag no-op', () => {
+  it('pointerDown + pointerMove fires no onSeek when disabled', () => {
+    const onSeek = vi.fn()
+    render(
+      <EditCursor
+        seconds={5}
+        secondsToX={s => s * 20}
+        onSeek={onSeek}
+        durationSeconds={30}
+        disabled
+      />
+    )
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    fireEvent.pointerDown(wrap, { clientX: 100 })
+    fireEvent.pointerMove(wrap, { clientX: 140 })
+    expect(onSeek).not.toHaveBeenCalled()
+  })
+})
