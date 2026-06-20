@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { EditCursor } from './EditCursor'
 
@@ -113,5 +113,51 @@ describe('EditCursor ARIA', () => {
     const wrap = screen.getByTestId('edit-cursor-handle-wrap')
     expect(wrap).toHaveAttribute('tabindex', '-1')
     expect(wrap).toHaveAttribute('aria-disabled', 'true')
+  })
+})
+
+// ─── Park channel ─────────────────────────────────────────────────────────────
+// DPR = 1 in jsdom so Math.round(x * 1) / 1 = x — no rounding complication.
+
+describe('EditCursor park channel', () => {
+  beforeEach(() => {
+    vi.stubGlobal('requestAnimationFrame', vi.fn())
+    vi.stubGlobal('cancelAnimationFrame',  vi.fn())
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('writes translateX on mount from seconds + secondsToX', () => {
+    render(<EditCursor seconds={5} secondsToX={s => s * 10} onSeek={noop} />)
+    const el = screen.getByTestId('edit-cursor-root') as HTMLElement
+    expect(el.style.transform).toBe('translateX(50px)')
+  })
+
+  it('re-parks when seconds prop changes', () => {
+    const { rerender } = render(
+      <EditCursor seconds={5} secondsToX={s => s * 10} onSeek={noop} />
+    )
+    const el = screen.getByTestId('edit-cursor-root') as HTMLElement
+    expect(el.style.transform).toBe('translateX(50px)')
+
+    rerender(<EditCursor seconds={12} secondsToX={s => s * 10} onSeek={noop} />)
+    expect(el.style.transform).toBe('translateX(120px)')
+  })
+
+  it('re-parks when secondsToX reference changes (zoom)', () => {
+    const { rerender } = render(
+      <EditCursor seconds={5} secondsToX={s => s * 10} onSeek={noop} />
+    )
+    const el = screen.getByTestId('edit-cursor-root') as HTMLElement
+    expect(el.style.transform).toBe('translateX(50px)')
+
+    rerender(<EditCursor seconds={5} secondsToX={s => s * 20} onSeek={noop} />)
+    expect(el.style.transform).toBe('translateX(100px)')
+  })
+
+  it('does not start a requestAnimationFrame loop', () => {
+    const rafSpy = vi.fn()
+    vi.stubGlobal('requestAnimationFrame', rafSpy)
+    render(<EditCursor seconds={5} secondsToX={s => s * 10} onSeek={noop} />)
+    expect(rafSpy).not.toHaveBeenCalled()
   })
 })
