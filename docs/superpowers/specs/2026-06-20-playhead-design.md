@@ -139,6 +139,13 @@ export interface PlayheadProps {
    * Reserved for scrub interaction — not wired until the split-cursor interaction
    * decision lands. When provided: handle becomes pointer-events: auto, cursor: grab.
    * When absent: handle is pointer-events: none (no dead affordance on un-wired interaction).
+   *
+   * NOTE: wiring onScrub also requires revisiting the aria model. The root is aria-hidden
+   * while non-interactive (correct today). An interactive handle inside aria-hidden is an
+   * a11y bug — the moment onScrub is provided, the root must exit aria-hidden and the
+   * handle must adopt the slider model: role="slider", aria-valuemin/max/now in seconds,
+   * arrow-key nudge → onScrub, :focus-visible ring on the handle. Do not ship scrub
+   * without the aria flip.
    */
   onScrub?: (seconds: number) => void
 }
