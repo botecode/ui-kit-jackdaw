@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { EditCursor } from './EditCursor'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { EditCursor, type EditCursorProps } from './EditCursor'
 
 const noop = () => {}
 const identity = (s: number) => s * 10
@@ -159,5 +159,143 @@ describe('EditCursor park channel', () => {
     vi.stubGlobal('requestAnimationFrame', rafSpy)
     render(<EditCursor seconds={5} secondsToX={s => s * 10} onSeek={noop} />)
     expect(rafSpy).not.toHaveBeenCalled()
+  })
+})
+
+// ─── Keyboard interaction ─────────────────────────────────────────────────────
+
+describe('EditCursor keyboard', () => {
+  function setup(seconds: number, opts: Partial<EditCursorProps> = {}) {
+    const onSeek = vi.fn()
+    render(
+      <EditCursor
+        seconds={seconds}
+        secondsToX={s => s * 10}
+        onSeek={onSeek}
+        durationSeconds={30}
+        step={1}
+        largeStep={5}
+        {...opts}
+      />
+    )
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    return { onSeek, wrap }
+  }
+
+  it('ArrowRight fires onSeek(seconds + step)', () => {
+    const { onSeek, wrap } = setup(10)
+    fireEvent.keyDown(wrap, { key: 'ArrowRight' })
+    expect(onSeek).toHaveBeenCalledWith(11)
+  })
+
+  it('ArrowLeft fires onSeek(seconds - step)', () => {
+    const { onSeek, wrap } = setup(10)
+    fireEvent.keyDown(wrap, { key: 'ArrowLeft' })
+    expect(onSeek).toHaveBeenCalledWith(9)
+  })
+
+  it('PageUp fires onSeek(seconds + largeStep)', () => {
+    const { onSeek, wrap } = setup(10)
+    fireEvent.keyDown(wrap, { key: 'PageUp' })
+    expect(onSeek).toHaveBeenCalledWith(15)
+  })
+
+  it('PageDown fires onSeek(seconds - largeStep)', () => {
+    const { onSeek, wrap } = setup(10)
+    fireEvent.keyDown(wrap, { key: 'PageDown' })
+    expect(onSeek).toHaveBeenCalledWith(5)
+  })
+
+  it('Home fires onSeek(0)', () => {
+    const { onSeek, wrap } = setup(10)
+    fireEvent.keyDown(wrap, { key: 'Home' })
+    expect(onSeek).toHaveBeenCalledWith(0)
+  })
+
+  it('End fires onSeek(durationSeconds)', () => {
+    const { onSeek, wrap } = setup(10)
+    fireEvent.keyDown(wrap, { key: 'End' })
+    expect(onSeek).toHaveBeenCalledWith(30)
+  })
+
+  it('End fires onSeek(3600) when durationSeconds absent', () => {
+    const onSeek = vi.fn()
+    render(<EditCursor seconds={0} secondsToX={s => s * 10} onSeek={onSeek} />)
+    const wrap = screen.getByTestId('edit-cursor-handle-wrap')
+    fireEvent.keyDown(wrap, { key: 'End' })
+    expect(onSeek).toHaveBeenCalledWith(3600)
+  })
+
+  it('ArrowRight clamps to max at upper boundary', () => {
+    const { onSeek, wrap } = setup(29)   // 29 + 1 = 30 = max
+    fireEvent.keyDown(wrap, { key: 'ArrowRight' })
+    expect(onSeek).toHaveBeenCalledWith(30)
+  })
+
+  it('ArrowRight stays at max when already at boundary', () => {
+    // At max, ArrowRight stays at max
+    const { onSeek, wrap } = setup(30)
+    fireEvent.keyDown(wrap, { key: 'ArrowRight' })
+    expect(onSeek).toHaveBeenCalledWith(30)
+  })
+
+  it('ArrowLeft clamps to 0 at lower boundary', () => {
+    const { onSeek, wrap } = setup(0)
+    fireEvent.keyDown(wrap, { key: 'ArrowLeft' })
+    expect(onSeek).toHaveBeenCalledWith(0)
+  })
+
+  it('PageUp clamps to max', () => {
+    const { onSeek, wrap } = setup(28)  // 28 + 5 = 33 → clamped to 30
+    fireEvent.keyDown(wrap, { key: 'PageUp' })
+    expect(onSeek).toHaveBeenCalledWith(30)
+  })
+
+  it('PageDown clamps to 0', () => {
+    const { onSeek, wrap } = setup(2)   // 2 - 5 = -3 → clamped to 0
+    fireEvent.keyDown(wrap, { key: 'PageDown' })
+    expect(onSeek).toHaveBeenCalledWith(0)
+  })
+})
+
+// ─── Disabled — keyboard no-op ────────────────────────────────────────────────
+
+describe('EditCursor disabled keyboard no-op', () => {
+  function setupDisabled() {
+    const onSeek = vi.fn()
+    render(
+      <EditCursor
+        seconds={10}
+        secondsToX={s => s * 10}
+        onSeek={onSeek}
+        durationSeconds={30}
+        disabled
+      />
+    )
+    return { onSeek, wrap: screen.getByTestId('edit-cursor-handle-wrap') }
+  }
+
+  it('ArrowRight fires no onSeek when disabled', () => {
+    const { onSeek, wrap } = setupDisabled()
+    fireEvent.keyDown(wrap, { key: 'ArrowRight' })
+    expect(onSeek).not.toHaveBeenCalled()
+  })
+
+  it('PageUp fires no onSeek when disabled', () => {
+    const { onSeek, wrap } = setupDisabled()
+    fireEvent.keyDown(wrap, { key: 'PageUp' })
+    expect(onSeek).not.toHaveBeenCalled()
+  })
+
+  it('Home fires no onSeek when disabled', () => {
+    const { onSeek, wrap } = setupDisabled()
+    fireEvent.keyDown(wrap, { key: 'Home' })
+    expect(onSeek).not.toHaveBeenCalled()
+  })
+
+  it('End fires no onSeek when disabled', () => {
+    const { onSeek, wrap } = setupDisabled()
+    fireEvent.keyDown(wrap, { key: 'End' })
+    expect(onSeek).not.toHaveBeenCalled()
   })
 })
