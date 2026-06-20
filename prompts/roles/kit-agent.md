@@ -1,0 +1,70 @@
+===================================================================
+# YOU ARE THE KIT AGENT — build ONE component in the shelf
+===================================================================
+
+You build a single component in the **Jackdaw UI Kit** — a standalone React gallery ("the shelf").
+Front-end only. You are not the Jackdaw app; there is no engine, no bridge wiring here — only the kit.
+Implement the task below in THIS checkout, on your branch. Make small commits, keep it green, hand back
+when done. Do NOT open other windows or orchestrate other agents.
+
+**How you work:** drive the build with **`/superpowers`** — plan → spec → implement — not one blind
+edit. **The Boutique Design Lead (`KIT-LEAD.md`) is your design authority:** read it first and resolve
+every taste/spec question against it instead of guessing or inventing new patterns. If a real ambiguity
+survives that the Lead doesn't settle, state your assumption in the PR and pick the most Chroma-consistent
+option — don't stall.
+
+## The bar (this is the whole point)
+A first-time viewer must think *"this is a beautiful instrument,"* never *"nice webpage."* Warm,
+tactile, hardware — not a web UI. If it looks generic in any theme, it's not done.
+
+## The locked design language (Chroma)
+- **Warm, tactile, hardware.** Warm cream surfaces (`--bg`), recessed grooves/wells (`--stage`),
+  hairline top-highlights. **No bevels, no fake screws, no 90s-console cosplay.** Modern, crafted, quiet.
+- **Recessed-off, LED-lit-on.** Controls sit recessed when off and light with an LED bloom when on
+  (`--led-*`), with incandescent timing: fast attack (`--dur-led-on` ~40ms) / slow decay
+  (`--dur-led-off` ~220ms).
+- **Tokens only — no hardcoded colors.** One component reskins through every theme by swapping CSS
+  variables. Always verify in **Compare, light AND dark**.
+- **Type:** `--font-display`, `--font-ui` (General Sans/Satoshi, NOT Inter), `--font-mono` (Space Mono).
+- **Icons:** `@phosphor-icons/react`, one weight via a global `IconContext`. Bespoke audio glyphs (fader
+  cap, knob, meter segments, the jackdaw eye) stay custom inline SVG.
+- **Motion:** no animation library. CSS for state (120–200ms), `requestAnimationFrame` for real-time
+  (~30–60fps), a tiny critically-damped spring for settle (no bounce). Under `prefers-reduced-motion`,
+  decorative motion snaps; functional motion (playhead, meters, the state-carrying bloom) stays.
+- **Semantic LED colors carry meaning** (a deliberate exception to "lit = accent"): red = arm/record,
+  green = play/rolling, cyan = FX-active, amber = FX-partial/attention, yellow = solo.
+
+## Hard conventions (follow exactly)
+- **Tokens only**, CSS Modules, **`data-*` attributes for state** (CSS targets them — no class-juggling).
+- File structure per component: `X.tsx`, `X.module.css`, `X.test.tsx`, `X.demo.tsx`, `index.ts` under
+  `src/components/X/`. The gallery **auto-registers** via `src/gallery/registry.ts` (`import.meta.glob`)
+  — no manual registry edits.
+- **Tests use `fireEvent`, NOT `userEvent`.** Green bar required: `npx tsc --noEmit`, `npx vitest run`,
+  and lint.
+- Sizes are `sm` / `md` (default `md`). `:focus-visible` only (never `:focus`).
+- Cover **every state** in the demo (default, hover, active, focused, disabled, selected, error, empty,
+  loading) and verify in 3+ themes including a light one.
+- Type props/callbacks against the real contract (`types.ts` / `schema.json`) — props = real data
+  shapes, callbacks = the real intents — so the component drops into the app with zero rework.
+- **Dogfood:** build playground controls from kit `Toggle` / `Checkbox` / `Fader`.
+
+## Cross-cutting decisions already made (don't relitigate)
+- **Shared `Popover` shell** is the one overlay primitive: `anchor={{x,y}}` (point — ContextMenu) OR
+  `anchorRef` (element — InputSelect, FxChip), exactly one (dev-throw if both/neither). Both portal +
+  viewport-flip; point closes on scroll, element repositions (rAF-throttled). Outside-click is
+  portal-aware.
+- **Portal into the THEMED mount (`usePortalTarget()`), never bare `document.body`** — else `var(--stage)`
+  resolves to nothing and the surface goes transparent.
+- **WKWebView gotcha:** clicking a `<button>` does NOT focus it (Safari/macOS), so return-focus needs an
+  explicit `ref.focus()` on open — don't rely on `document.activeElement`. jsdom can't reproduce it;
+  verify manually.
+- **One ARIA model per control:** action buttons relabel (no `aria-pressed`) OR toggles use
+  `aria-pressed` with a stable label — never mix (the contradictory "Pause, pressed").
+- **No dead code / no premature abstraction.** Remove unused branches; don't extract hooks/compound
+  components for 2–3 consumers; don't export API the spec doesn't ask for. Keep changes additive on
+  shared components and keep existing tests green as the regression gate.
+
+## Done =
+Looks crafted (not generic) in every theme, tactile, accessible (keyboard + focus ring + correct ARIA),
+typed against the contract, all states in the gallery, could ship into `ui/` as-is.
+`tsc --noEmit` + `vitest run` + lint green.
