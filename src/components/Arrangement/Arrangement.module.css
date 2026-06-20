@@ -1,0 +1,215 @@
+/* src/components/Arrangement/Arrangement.module.css */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────────
+   Two-column flex layout: fixed header strip | scrollable timeline pane.
+   Height must be set by the parent (fill available space). Never a webpage—
+   this is an instrument surface: warm --arrange-bg behind the lanes, --strip-bg
+   in the header column, the same recessed-groove feel as the rest of the kit.
+*/
+
+.root {
+  --header-width: 200px;
+  --ruler-height: 32px;
+  --track-height: 88px;
+
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-height: 200px;
+  overflow: hidden;
+  background: var(--arrange-bg);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.42;
+}
+
+/* ─── Headers column ───────────────────────────────────────────────────────────
+   Fixed-width strip of TrackHeaders. Vertically scrolled in sync with the
+   timeline pane via JS (headersScroll.scrollTop = scrollBox.scrollTop).
+*/
+
+.headersColumn {
+  flex-shrink: 0;
+  width: var(--header-width);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--strip-bg);
+  /* Sits above the scrollable timeline so its border reads as a gutter edge */
+  border-right: 1px solid var(--border-strong);
+  z-index: 5;
+}
+
+/* Spacer above the header list — height-matches the ruler row for vertical
+   alignment of the first track header with the first track lane. */
+.rulerSpacer {
+  flex-shrink: 0;
+  height: var(--ruler-height);
+  background: var(--rail-bg);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+/* overflow-y: scroll + hidden scrollbar = JS can set scrollTop; user cannot
+   directly scroll. Prevents double scrollbar while keeping sync reliable. */
+.headersScroll {
+  flex: 1;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.headersScroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
+
+/* Each header row is exactly trackHeight tall (set inline). overflow:hidden
+   clips any TrackHeader that wants more height at a given zoom level. */
+.headerRow {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+
+/* TrackHeader fills the row vertically */
+.headerRow > * {
+  height: 100%;
+}
+
+/* ─── Timeline area ─────────────────────────────────────────────────────────── */
+
+.timelineArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Main scroll box — handles both axes. Ruler inside is position:sticky so it
+   stays visible on vertical scroll; width tracks the full timeline duration. */
+.scrollBox {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  /* Thin scrollbars on the main pane */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.scrollBox::-webkit-scrollbar {
+  height: 6px;
+  width:  6px;
+}
+
+.scrollBox::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollBox::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+/* Scroll content: width set inline (totalWidth px). min-height:100% prevents
+   a gap in the scroll area when there are only a few short tracks. */
+.scrollContent {
+  position: relative;
+  min-height: 100%;
+}
+
+/* ─── Ruler row ────────────────────────────────────────────────────────────────
+   Sticky: stays at the top of the viewport while scrolling down through lanes.
+   Scrolls horizontally together with the content (same scroll container).
+   Hairline bottom border connects ruler to the track stack below.
+*/
+.stickyRuler {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--ruler-height);
+  background: var(--rail-bg);
+  border-bottom: 1px solid var(--border-strong);
+  /* TimelineRuler sets its own width inline; the sticky row clips to it */
+  overflow: hidden;
+}
+
+/* Let the TimelineRuler fill the full ruler height */
+.stickyRuler > * {
+  height: 100%;
+}
+
+/* ─── Lanes region ─────────────────────────────────────────────────────────────
+   Stacking context for the overlayLayer (Playhead / EditCursor / TimeSelection).
+   TrackLane rows are direct children; overlayLayer is position:absolute inside.
+*/
+.lanesRegion {
+  position: relative;
+  width: 100%;
+}
+
+/* ─── Overlay layer ────────────────────────────────────────────────────────────
+   A single full-area positioning context for all shared arrangement overlays.
+   pointer-events:none at this level; individual overlays opt in via their own CSS
+   (EditCursor handle, TimeSelection handles and band use pointer-events:auto).
+   z-index:20 within lanesRegion. Playhead's own z-index:50 stacks above clips
+   within this stacking context.
+*/
+.overlayLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 20;
+  overflow: visible;
+}
+
+/* Ensure interactive overlay children can receive pointer events */
+.overlayLayer > * {
+  pointer-events: auto;
+}
+
+/* ─── Empty state ───────────────────────────────────────────────────────────── */
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: var(--space-10);
+}
+
+.emptyMessage {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-normal);
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Detail panel slot ─────────────────────────────────────────────────────── */
+
+.detailSlot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-strong);
+  background: var(--panel-bg);
+}
+
+/* ─── Reduced-motion ───────────────────────────────────────────────────────────
+   Decorative CSS transitions snap. Functional motion (Playhead rAF loop,
+   EditCursor drag) stays — controlled by each component directly.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .root * {
+    transition-duration: 0ms !important;
+    animation-duration:  0ms !important;
+  }
+}

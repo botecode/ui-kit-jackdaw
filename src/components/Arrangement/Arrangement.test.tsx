@@ -1,0 +1,259 @@
+// src/components/Arrangement/Arrangement.test.tsx
+import { describe, it, expect, vi, beforeAll } from 'vitest'
+import { render, fireEvent, screen } from '@testing-library/react'
+import { Arrangement } from './Arrangement'
+import type { ArrangementProps, ArrangementTrack } from './Arrangement'
+import type { SelectionRange } from '../TimeSelection'
+
+// ─── Environment stubs ────────────────────────────────────────────────────────
+
+beforeAll(() => {
+  // ResizeObserver — used inside Clip (rendered by TrackLane inside Arrangement)
+  ;(globalThis as unknown as Record<string, unknown>).ResizeObserver = class {
+    observe()    {}
+    unobserve()  {}
+    disconnect() {}
+  }
+  // setPointerCapture — not in jsdom; used by TrackLane, EditCursor, TimeSelection
+  HTMLDivElement.prototype.setPointerCapture   = vi.fn()
+  HTMLDivElement.prototype.releasePointerCapture = vi.fn()
+  HTMLElement.prototype.setPointerCapture       = vi.fn()
+  HTMLElement.prototype.releasePointerCapture   = vi.fn()
+})
+
+// ─── Fixtures ─────────────────────────────────────────────────────────────────
+
+const PEAKS = [0.3, 0.7, 0.5, 0.9]
+const BPM   = 120
+const PPB   = 48
+
+const noop = () => {}
+
+function makeTrack(id: string, name: string, color: string): ArrangementTrack {
+  return {
+    id,
+    name,
+    color,
+    type:         'audio',
+    armed:        false,
+    muted:        false,
+    soloed:       false,
+    volumeDb:     -6,
+    pan:          0,
+    inputId:      null,
+    plugins:      [],
+    chainEnabled: true,
+    clips: [
+      { clipId: `${id}-c1`, start: 0, length: 2, peaks: PEAKS, color },
+    ],
+  }
+}
+
+const TRACK_A = makeTrack('t1', 'Guitar', 'var(--chroma-blue)')
+const TRACK_B = makeTrack('t2', 'Bass',   'var(--chroma-green)')
+const TRACK_C = makeTrack('t3', 'Keys',   'var(--chroma-purple)')
+
+const SELECTION: SelectionRange = { start: 1, end: 3 }
+
+const BASE: ArrangementProps = {
+  tracks:             [],
+  bpm:                BPM,
+  numerator:          4,
+  denominator:        4,
+  pxPerBeat:          PPB,
+  division:           '1/4',
+  durationSeconds:    60,
+  playheadSeconds:    0,
+  getPlayheadSeconds: () => 0,
+  playing:            false,
+  cursorSeconds:      0,
+  selection:          null,
+  focusedTrackId:     null,
+  inputOptions:       [],
+  onSelectTrack:      noop,
+  onSeek:             noop,
+  onSelectRange:      noop,
+  onClearSelection:   noop,
+  onRenameTrack:      noop,
+  onArmTrack:         noop,
+  onMuteTrack:        noop,
+  onSoloTrack:        noop,
+  onVolumeTrack:      noop,
+  onPanTrack:         noop,
+  onSelectInput:      noop,
+  onToggleChain:      noop,
+  onTogglePlugin:     noop,
+  onReorderPlugin:    noop,
+  onRemovePlugin:     noop,
+  onAddPlugin:        noop,
+  onOpenPlugin:       noop,
+}
+
+function arrangement(overrides: Partial<ArrangementProps> = {}) {
+  return render(<Arrangement {...BASE} {...overrides} />)
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+
+describe('Arrangement — empty state', () => {
+  it('renders root with data-empty when tracks is empty', () => {
+    const { getByTestId } = arrangement()
+    expect(getByTestId('arrangement-root')).toHaveAttribute('data-empty')
+  })
+
+  it('shows empty message text', () => {
+    arrangement()
+    expect(screen.getByText('No tracks')).toBeInTheDocument()
+  })
+
+  it('has region role with accessible label', () => {
+    arrangement()
+    expect(screen.getByRole('region', { name: 'Arrangement' })).toBeInTheDocument()
+  })
+})
+
+// ─── Track rendering ──────────────────────────────────────────────────────────
+
+describe('Arrangement — track rendering', () => {
+  it('renders one TrackLane per track', () => {
+    const { getAllByTestId } = arrangement({ tracks: [TRACK_A, TRACK_B, TRACK_C] })
+    expect(getAllByTestId('track-lane')).toHaveLength(3)
+  })
+
+  it('renders one TrackHeader group per track (by track name)', () => {
+    arrangement({ tracks: [TRACK_A, TRACK_B] })
+    expect(screen.getByRole('group', { name: 'Guitar' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Bass' })).toBeInTheDocument()
+  })
+
+  it('root does NOT have data-empty when tracks are present', () => {
+    const { getByTestId } = arrangement({ tracks: [TRACK_A] })
+    expect(getByTestId('arrangement-root')).not.toHaveAttribute('data-empty')
+  })
+})
+
+// ─── Track focus ──────────────────────────────────────────────────────────────
+
+describe('Arrangement — focus', () => {
+  it('focused TrackLane has data-selected', () => {
+    const { getAllByTestId } = arrangement({
+      tracks:         [TRACK_A, TRACK_B],
+      focusedTrackId: 't1',
+    })
+    const lanes = getAllByTestId('track-lane')
+    expect(lanes[0]).toHaveAttribute('data-selected')
+    expect(lanes[1]).not.toHaveAttribute('data-selected')
+  })
+
+  it('no tracks are selected when focusedTrackId is null', () => {
+    const { getAllByTestId } = arrangement({
+      tracks:         [TRACK_A, TRACK_B],
+      focusedTrackId: null,
+    })
+    getAllByTestId('track-lane').forEach(lane =>
+      expect(lane).not.toHaveAttribute('data-selected')
+    )
+  })
+})
+
+// ─── onSelectTrack callback ───────────────────────────────────────────────────
+
+describe('Arrangement — onSelectTrack', () => {
+  it('fires onSelectTrack with the track id when its header is clicked', () => {
+    const onSelectTrack = vi.fn()
+    arrangement({ tracks: [TRACK_A, TRACK_B], onSelectTrack })
+    // TrackHeader root has onClick={onSelect} wired to onSelectTrack
+    fireEvent.click(screen.getByRole('group', { name: 'Guitar' }))
+    expect(onSelectTrack).toHaveBeenCalledWith('t1')
+  })
+})
+
+// ─── Overlays ─────────────────────────────────────────────────────────────────
+
+describe('Arrangement — shared overlays', () => {
+  const withTracks = { tracks: [TRACK_A] }
+
+  it('renders Playhead', () => {
+    const { getByTestId } = arrangement(withTracks)
+    expect(getByTestId('playhead-root')).toBeInTheDocument()
+  })
+
+  it('Playhead has data-playing when playing=true', () => {
+    const { getByTestId } = arrangement({ ...withTracks, playing: true })
+    expect(getByTestId('playhead-root')).toHaveAttribute('data-playing')
+  })
+
+  it('renders EditCursor', () => {
+    const { getByTestId } = arrangement(withTracks)
+    expect(getByTestId('edit-cursor-root')).toBeInTheDocument()
+  })
+
+  it('renders TimeSelection root (empty range → data-empty)', () => {
+    const { getByTestId } = arrangement({ ...withTracks, selection: null })
+    expect(getByTestId('time-selection-root')).toBeInTheDocument()
+  })
+
+  it('renders TimeSelection with selection range', () => {
+    const { getByTestId } = arrangement({ ...withTracks, selection: SELECTION })
+    const root = getByTestId('time-selection-root')
+    // When a range is provided, data-empty is absent
+    expect(root).not.toHaveAttribute('data-empty')
+  })
+})
+
+// ─── Seek from lane click ─────────────────────────────────────────────────────
+
+describe('Arrangement — seek + select from lane', () => {
+  it('fires onSeek when clicking empty lane space', () => {
+    const onSeek = vi.fn()
+    // Clip spans 0-2s, so there is empty space beyond x=96 (2s × 48px/beat × 2bpm beats/s)
+    const { getAllByTestId } = arrangement({
+      tracks: [{ ...TRACK_A, clips: [] }],
+      onSeek,
+    })
+    const [lane] = getAllByTestId('track-lane')
+    // Simulate click on the lane (no clip at this point)
+    Object.defineProperty(lane, 'getBoundingClientRect', { value: () => ({ left: 0, top: 0 }) })
+    fireEvent.pointerDown(lane, { clientX: 0, clientY: 0 })
+    expect(onSeek).toHaveBeenCalled()
+  })
+
+  it('fires onSelectTrack when clicking empty lane space', () => {
+    const onSelectTrack = vi.fn()
+    const { getAllByTestId } = arrangement({
+      tracks: [{ ...TRACK_A, clips: [] }],
+      onSelectTrack,
+    })
+    const [lane] = getAllByTestId('track-lane')
+    Object.defineProperty(lane, 'getBoundingClientRect', { value: () => ({ left: 0, top: 0 }) })
+    fireEvent.pointerDown(lane, { clientX: 0, clientY: 0 })
+    expect(onSelectTrack).toHaveBeenCalledWith('t1')
+  })
+})
+
+// ─── Detail panel slot ────────────────────────────────────────────────────────
+
+describe('Arrangement — detailPanel slot', () => {
+  it('renders detailPanel content in the slot', () => {
+    arrangement({
+      tracks:      [TRACK_A],
+      detailPanel: <div data-testid="detail-content">Detail</div>,
+    })
+    expect(screen.getByTestId('arrangement-detail-slot')).toBeInTheDocument()
+    expect(screen.getByTestId('detail-content')).toBeInTheDocument()
+  })
+
+  it('does not render detail slot when detailPanel is absent', () => {
+    const { queryByTestId } = arrangement({ tracks: [TRACK_A] })
+    expect(queryByTestId('arrangement-detail-slot')).toBeNull()
+  })
+})
+
+// ─── Disabled state ───────────────────────────────────────────────────────────
+
+describe('Arrangement — disabled', () => {
+  it('root has data-disabled when disabled=true', () => {
+    const { getByTestId } = arrangement({ tracks: [TRACK_A], disabled: true })
+    expect(getByTestId('arrangement-root')).toHaveAttribute('data-disabled')
+  })
+})
