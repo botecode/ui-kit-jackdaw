@@ -88,6 +88,7 @@ export function RecordMode({
   return (
     <div className={styles.root} data-size={size}>
       <button
+        type="button"
         className={styles.recordBtn}
         data-state={state}
         data-size={size}
@@ -105,6 +106,7 @@ export function RecordMode({
       </button>
       <button
         ref={caretRef}
+        type="button"
         className={styles.caret}
         data-size={size}
         aria-haspopup="menu"
