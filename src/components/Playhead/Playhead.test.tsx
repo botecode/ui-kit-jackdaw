@@ -1,10 +1,11 @@
 // src/components/Playhead/Playhead.test.tsx
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { Playhead } from './Playhead'
 
 const noop = () => {}
 const getSecondsStub = () => 0
+const getSecondsNoop = () => 0
 const identity = (s: number) => s * 10
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
@@ -89,5 +90,75 @@ describe('Playhead state attributes', () => {
     )
     const root = container.querySelector('[data-testid="playhead-root"]') as HTMLElement
     expect(root.dataset.interactive).toBeDefined()
+  })
+})
+
+// ─── Park channel ─────────────────────────────────────────────────────────────
+// DPR is 1 in jsdom, so Math.round(x * 1) / 1 = x. No rounding complication.
+
+describe('Playhead park channel', () => {
+  beforeEach(() => {
+    // Suppress rAF during park-only tests — park path must not start a loop
+    vi.stubGlobal('requestAnimationFrame', vi.fn())
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('writes translateX on mount from seconds + secondsToX', () => {
+    const { container } = render(
+      <Playhead seconds={5} getSeconds={getSecondsNoop} secondsToX={s => s * 10} />
+    )
+    const el = container.querySelector('[data-testid="playhead-root"]') as HTMLElement
+    expect(el.style.transform).toBe('translateX(50px)')
+  })
+
+  it('re-parks when seconds prop changes while stopped', () => {
+    const { container, rerender } = render(
+      <Playhead seconds={5} getSeconds={getSecondsNoop} secondsToX={s => s * 10} />
+    )
+    const el = container.querySelector('[data-testid="playhead-root"]') as HTMLElement
+    expect(el.style.transform).toBe('translateX(50px)')
+
+    rerender(<Playhead seconds={12} getSeconds={getSecondsNoop} secondsToX={s => s * 10} />)
+    expect(el.style.transform).toBe('translateX(120px)')
+  })
+
+  it('re-parks when secondsToX reference changes while stopped (zoom)', () => {
+    const { container, rerender } = render(
+      <Playhead seconds={5} getSeconds={getSecondsNoop} secondsToX={s => s * 10} />
+    )
+    const el = container.querySelector('[data-testid="playhead-root"]') as HTMLElement
+    expect(el.style.transform).toBe('translateX(50px)')
+
+    // New secondsToX reference (caller used useCallback, zoom changed)
+    rerender(<Playhead seconds={5} getSeconds={getSecondsNoop} secondsToX={s => s * 20} />)
+    expect(el.style.transform).toBe('translateX(100px)')
+  })
+})
+
+// ─── Channel separation ───────────────────────────────────────────────────────
+
+describe('Playhead channel separation', () => {
+  beforeEach(() => {
+    vi.stubGlobal('requestAnimationFrame', vi.fn())
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('getSeconds is NOT called while playing=false', () => {
+    const getSeconds = vi.fn(() => 99)
+    render(<Playhead seconds={5} getSeconds={getSeconds} secondsToX={s => s * 10} />)
+    expect(getSeconds).not.toHaveBeenCalled()
+  })
+
+  it('park does not start a rAF loop', () => {
+    const rafSpy = vi.fn()
+    vi.stubGlobal('requestAnimationFrame', rafSpy)
+    render(<Playhead seconds={5} getSeconds={getSecondsNoop} secondsToX={s => s * 10} />)
+    expect(rafSpy).not.toHaveBeenCalled()
   })
 })
