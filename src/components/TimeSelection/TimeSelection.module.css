@@ -1,0 +1,172 @@
+/* ─── Root ───────────────────────────────────────────────────────────────────
+   Same footprint as Playhead: position:absolute left:0 inside the timeline
+   container, width:0, overflow:visible. Descendants position via secondsToX.
+   z-index 40 → below Playhead (50), above clip content (1–10).              */
+
+.root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* ─── Shaded band ────────────────────────────────────────────────────────────
+   Token tint over the lane area. Positioned via inline left+width.
+   Top/bottom hairlines at accent/28% mark the boundary without boxing it in.  */
+
+.band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: auto;
+  cursor: grab;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-top:    1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background var(--dur-100, 100ms) ease;
+}
+
+.band:hover {
+  background: color-mix(in srgb, var(--accent) 17%, transparent);
+}
+
+.band[data-dragging] {
+  cursor: grabbing;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.root[data-disabled] .band {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* ─── ARIA group wrapper ─────────────────────────────────────────────────────
+   Semantic container for the two slider handles. No visual output.           */
+
+.group {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ─── Bracket handle ─────────────────────────────────────────────────────────
+   14 px hit zone, centered on the time position (translateX -50%).
+   Both handles use the same layout; .bracket::before cap differentiates them. */
+
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  cursor: ew-resize;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: visible;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.root[data-disabled] .handle {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.handle[data-dragging] {
+  cursor: grabbing;
+}
+
+/* ─── Bracket line ───────────────────────────────────────────────────────────
+   2 px vertical bar in accent color. Centered in the 14 px hit zone.
+   Glow matches Playhead line style — same LED-bloom recipe.                  */
+
+.bracket {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--accent) 36%, transparent);
+  transition: box-shadow var(--dur-led-off, 220ms) ease;
+}
+
+/* ─── Cap (inward-pointing tab into the selection) ───────────────────────────
+   ::before = cap at the ruler end (top). Height matches ruler strip height
+   so the cap reads as a physical bracket stop in the ruler.
+   Size is driven by CSS vars set on root per size variant.                   */
+
+.bracket::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: var(--_cap-h, 20px);
+  width:  var(--_cap-w, 10px);
+  background: var(--accent);
+}
+
+.root[data-size='md'] { --_cap-h: 20px; --_cap-w: 10px; }
+.root[data-size='sm'] { --_cap-h: 16px; --_cap-w: 8px;  }
+
+/* Start: cap extends right (inward toward the selection band) */
+.handle[data-side='start'] .bracket::before {
+  left: 0;
+  border-radius: 0 2px 2px 0;
+}
+
+/* End: cap extends left (inward toward the selection band) */
+.handle[data-side='end'] .bracket::before {
+  right: 0;
+  left: auto;
+  border-radius: 2px 0 0 2px;
+}
+
+/* ─── Hover / drag — bracket glow intensifies ────────────────────────────────
+   Fast on (incandescent attack), slow off (decay). Matches LED timing.       */
+
+.handle:hover .bracket,
+.handle[data-dragging] .bracket {
+  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition: box-shadow var(--dur-led-on, 40ms) ease;
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────────
+   :focus-visible only. Outline on the bracket itself — not the invisible hit
+   zone — so the ring appears exactly at the physical mark.                   */
+
+.handle:focus-visible .bracket {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--accent),
+    0 0 10px 2px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition: box-shadow var(--dur-led-on, 40ms) ease;
+}
+
+/* ─── Disabled opacity ───────────────────────────────────────────────────────
+   Bracket dims with handle; band already handled above.                      */
+
+.root[data-disabled] .bracket {
+  opacity: 0.45;
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────────
+   Position is functional (follows drag); transitions are decorative → snap.
+   The bracket glow is decorative; band transition is decorative.             */
+
+@media (prefers-reduced-motion: reduce) {
+  .band       { transition: none; }
+  .bracket    { transition: none; }
+}
