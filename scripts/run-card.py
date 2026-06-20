@@ -340,6 +340,14 @@ def print_instructions(card_arg):
     return 0
 
 
+def set_status(card_arg, status):
+    """Set a card's Status select — used by the `kit`/`jackdaw` verbs to move the board."""
+    page_id = resolve_page_id(card_arg)
+    _req("PATCH", f"/pages/{page_id}", {"properties": {"Status": {"select": {"name": status}}}})
+    print(f"set {card_arg!r} → {status}")
+    return 0
+
+
 def main(argv):
     args = [a for a in argv if not a.startswith("-")]
     flags = {a for a in argv if a.startswith("-")}
@@ -357,6 +365,10 @@ def main(argv):
         if not args:
             sys.exit("usage: run-card.py --instructions <card>")
         return print_instructions(args[0])
+    if "--set-status" in flags:
+        if len(args) < 2:
+            sys.exit("usage: run-card.py --set-status <card> <status>")
+        return set_status(args[0], args[1])
     assume_yes = "-y" in flags or "--yes" in flags
     if len(args) > 1:
         sys.exit(__doc__)

@@ -7,11 +7,13 @@ Front-end only. You are not the Jackdaw app; there is no engine, no bridge wirin
 Implement the task below in THIS checkout, on your branch. Make small commits, keep it green, hand back
 when done. Do NOT open other windows or orchestrate other agents.
 
-**How you work:** drive the build with **`/superpowers`** — plan → spec → implement — not one blind
-edit. **The Boutique Design Lead (`KIT-LEAD.md`) is your design authority:** read it first and resolve
-every taste/spec question against it instead of guessing or inventing new patterns. If a real ambiguity
-survives that the Lead doesn't settle, state your assumption in the PR and pick the most Chroma-consistent
-option — don't stall.
+**You run HEADLESS — there is no human to answer you.** Never ask a question, request approval, or
+pause to confirm a design choice: doing so just ends the run with nothing built. Decide every
+taste/spec choice yourself against **`KIT-LEAD.md`** (the Boutique Design Lead — your design authority;
+read it first), pick the most Chroma-consistent option, record the decision + reasoning in your commit
+message and the component's "why this isn't a webpage" note, and **build all the way to a committed,
+tested component** (component + `.module.css` + `.test.tsx` + `.demo.tsx` + `index.ts`, all states in
+the gallery). Drive the work with **`/superpowers`** — plan → spec → implement — not one blind edit.
 
 ## The bar (this is the whole point)
 A first-time viewer must think *"this is a beautiful instrument,"* never *"nice webpage."* Warm,

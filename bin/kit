@@ -36,8 +36,13 @@ current_feature() {  # infer the component name from the current branch (kit/<na
   case "$b" in kit/*) echo "${b#kit/}" ;; *) return 1 ;; esac
 }
 resolve_branch() { git -C "$R" rev-parse --verify --quiet "kit/$1" >/dev/null && echo "kit/$1"; }
-jdstatus() {  # move the Notion card; never fatal (board is a convenience, not a gate)
-  python3 "$R/scripts/run-card.py" --set-status "$1" "$2" >/dev/null 2>&1 && echo "  · board: $1 → $2" || true
+jdstatus() {  # move the Notion card; never fatal, but surface WHY if it can't (token/card/API)
+  local out
+  if out="$(python3 "$R/scripts/run-card.py" --set-status "$1" "$2" 2>&1)"; then
+    echo "  · board: $1 → $2"
+  else
+    echo "  · board: couldn't set $1 → $2 — ${out##*$'\n'}" >&2
+  fi
 }
 
 # The core: one component, one branch, one headless agent, gate, push, PR.
@@ -71,9 +76,18 @@ build() {
 
   echo "▶ building $name on $br (headless)…"
   local HARGS="${CLAUDE_HEADLESS_ARGS:---permission-mode bypassPermissions --verbose}"
-  ( cd "$wt" && claude -p "Implement .agent-prompt.md. Use /superpowers (plan → spec → build). Commit your work." $HARGS 2>&1 | tee "$wt/.agent.log" )
+  ( cd "$wt" && claude -p "Implement .agent-prompt.md end to end. You are running HEADLESS and NON-INTERACTIVE — there is NO human to reply, so do NOT ask questions, request approval, or pause to confirm a design choice (that just ends the run with nothing built). When something is ambiguous, decide it yourself using KIT-LEAD.md, pick the most Chroma-consistent option, record the decision and reasoning in your commit message, and keep going until the component is built, all its states are in the gallery demo, its own tests pass, and everything is committed. Drive the work with /superpowers (plan, spec, build)." $HARGS 2>&1 | tee "$wt/.agent.log" )
   rc=${PIPESTATUS[0]}
   [ "$rc" = 0 ] || { echo "✗ agent exited $rc — see $wt/.agent.log" >&2; return 1; }
+
+  # Anti-vacuum guards. A headless agent that stopped to ask leaves zero commits; one that only
+  # planned leaves no component. The full-suite gate passes either way, so check the work exists.
+  if ! git -C "$wt" rev-list -n1 "origin/main..HEAD" 2>/dev/null | grep -q .; then
+    echo "✗ no new commits on $br — the agent built nothing (it likely stopped to ask). See $wt/.agent.log." >&2; return 1
+  fi
+  if ! git -C "$wt" diff --name-only "origin/main..HEAD" -- src/components/ 2>/dev/null | grep -q '\.test\.'; then
+    echo "✗ no new component test under src/components/ on $br — the agent planned but didn't build. See $wt/.agent.log." >&2; return 1
+  fi
 
   # Objective gate (don't trust the agent's self-report).
   echo "▶ gate: npm install + tsc + vitest"
