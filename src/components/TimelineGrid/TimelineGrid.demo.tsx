@@ -213,11 +213,12 @@ function DivisionPicker({
 // ─── Playground ───────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [division,  setDivision]  = useState<Division>('1/4')
-  const [pxPerBeat, setPxPerBeat] = useState(48)
-  const [bpm,       setBpm]       = useState(120)
-  const [numerator, setNumerator] = useState(4)
-  const [showRuler, setShowRuler] = useState(true)
+  const [division,   setDivision]   = useState<Division>('1/4')
+  const [pxPerBeat,  setPxPerBeat]  = useState(48)
+  const [bpm,        setBpm]        = useState(120)
+  const [numerator,  setNumerator]  = useState(4)
+  const [lineWeight, setLineWeight] = useState(1)
+  const [showRuler,  setShowRuler]  = useState(true)
 
   const DURATION   = 8
   const totalWidth = secondsToX(DURATION, pxPerBeat, bpm)
@@ -270,6 +271,7 @@ function PlaygroundDemo() {
               bpm={bpm}
               numerator={numerator}
               denominator={4}
+              lineWeight={lineWeight}
             />
 
             {/* Fake clip — proves coordinate alignment with ruler */}
@@ -310,6 +312,19 @@ function PlaygroundDemo() {
             division
           </div>
           <DivisionPicker value={division} onChange={setDivision} />
+
+          <label style={labelStyle}>
+            line weight ({lineWeight.toFixed(1)}×)
+            <Fader
+              value={lineWeight}
+              onChange={v => setLineWeight(Math.round(v * 10) / 10)}
+              min={0.5}
+              max={4}
+              orientation="horizontal"
+              size="sm"
+              aria-label="Line weight"
+            />
+          </label>
 
           <label style={labelStyle}>
             px/beat ({pxPerBeat})

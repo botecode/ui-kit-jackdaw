@@ -120,4 +120,21 @@ describe('TimelineGrid rendering', () => {
     rerender(<TimelineGrid {...BASE} pxPerBeat={32} division="1/4" />)
     expect(getByTestId('timeline-grid').style.getPropertyValue('--grid-div-px')).toBe('32px')
   })
+
+  it('sets --grid-line-weight to "1" by default', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--grid-line-weight')).toBe('1')
+  })
+
+  it('sets --grid-line-weight from lineWeight prop', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} lineWeight={2.5} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--grid-line-weight')).toBe('2.5')
+  })
+
+  it('updates --grid-line-weight when lineWeight changes', () => {
+    const { getByTestId, rerender } = render(<TimelineGrid {...BASE} lineWeight={1} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--grid-line-weight')).toBe('1')
+    rerender(<TimelineGrid {...BASE} lineWeight={3} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--grid-line-weight')).toBe('3')
+  })
 })

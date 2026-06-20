@@ -14,6 +14,12 @@ export interface TimelineGridProps {
   numerator: number
   /** Time signature denominator (beat note value: 4 = quarter, 8 = eighth, …). */
   denominator: number
+  /**
+   * Line thickness multiplier. 1 = default (bar 1.5px, beat/sub 1px).
+   * Values above 1 make lines heavier; useful when the grid is hard to see.
+   * @default 1
+   */
+  lineWeight?: number
 }
 
 /**
@@ -27,6 +33,7 @@ export function TimelineGrid({
   pxPerBeat,
   numerator,
   denominator,
+  lineWeight = 1,
 }: TimelineGridProps) {
   const divPx = divisionToPx(division, pxPerBeat, numerator, denominator)
 
@@ -37,9 +44,10 @@ export function TimelineGrid({
       data-division={division}
       aria-hidden="true"
       style={{
-        '--beat-px':     `${pxPerBeat}px`,
-        '--bar-beats':   String(numerator),
-        '--grid-div-px': `${divPx}px`,
+        '--beat-px':          `${pxPerBeat}px`,
+        '--bar-beats':        String(numerator),
+        '--grid-div-px':      `${divPx}px`,
+        '--grid-line-weight': String(lineWeight),
       } as React.CSSProperties}
     />
   )

@@ -29,27 +29,32 @@
   --_beat-line: var(--grid-line-beat, var(--border));
   --_sub-line:  var(--grid-line-sub,  color-mix(in srgb, var(--border) 55%, transparent));
 
+  /* Line thickness derived from --grid-line-weight (set by prop, default 1) */
+  --_bar-w:  calc(var(--grid-line-weight, 1) * 1.5px);
+  --_beat-w: calc(var(--grid-line-weight, 1) * 1px);
+  --_sub-w:  calc(var(--grid-line-weight, 1) * 1px);
+
   background-color: var(--arrange-bg);
   background-image:
     repeating-linear-gradient(
       to right,
       var(--_bar-line)  0px,
-      var(--_bar-line)  1.5px,
-      transparent       1.5px,
+      var(--_bar-line)  var(--_bar-w),
+      transparent       var(--_bar-w),
       transparent       calc(var(--beat-px) * var(--bar-beats))
     ),
     repeating-linear-gradient(
       to right,
       var(--_beat-line) 0px,
-      var(--_beat-line) 1px,
-      transparent       1px,
+      var(--_beat-line) var(--_beat-w),
+      transparent       var(--_beat-w),
       transparent       var(--beat-px)
     ),
     repeating-linear-gradient(
       to right,
       var(--_sub-line)  0px,
-      var(--_sub-line)  1px,
-      transparent       1px,
+      var(--_sub-line)  var(--_sub-w),
+      transparent       var(--_sub-w),
       transparent       var(--grid-div-px)
     ),
     var(--texture-paper);
