@@ -1,2 +1,163 @@
 /* src/components/FolderTrackHeader/FolderTrackHeader.module.css */
-.root {}
+
+/* ── Root ─────────────────────────────────────────────────────────────────── */
+
+.root {
+  container-type: inline-size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--strip-bg) 88%, black);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: default;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Keyline — always 6px (folder visual identity) ───────────────────────── */
+
+.keyline {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: color-mix(in srgb, var(--track-color, var(--accent)) 70%, transparent);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+/* ── TopBar ───────────────────────────────────────────────────────────────── */
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2) var(--space-1) calc(var(--space-3) + 6px);
+  min-height: 28px;
+}
+
+.glyph {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  padding: 1px 2px;
+  border-radius: 2px;
+  cursor: default;
+}
+
+.name:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.nameInput {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--stage-text);
+  background: var(--stage);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 1px var(--space-1);
+  outline: none;
+}
+
+.disclosure {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: none;
+  border: none;
+  border-radius: 2px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.disclosure[data-open] {
+  transform: rotate(90deg);
+}
+
+.disclosure:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.disclosure:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cornerChips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+/* ── ControlStrip ─────────────────────────────────────────────────────────── */
+
+.controlStrip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-2) calc(var(--space-3) + 6px);
+}
+
+/* ── States ───────────────────────────────────────────────────────────────── */
+
+.root[data-selected] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.root[data-selected] .keyline {
+  background: var(--track-color, var(--accent));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--track-color, var(--accent)) 70%, transparent);
+}
+
+.root[data-muted] .controlStrip {
+  opacity: 0.7;
+}
+
+.root[data-soloed] .keyline {
+  box-shadow: 0 0 6px var(--led-yellow);
+}
+
+.root[data-disabled] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Reduced-motion: snap disclosure rotation (decorative) ───────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure {
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+}
