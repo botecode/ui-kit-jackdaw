@@ -44,6 +44,7 @@ export function TimelineRuler({
   const onSeekRef    = useRef(onSeek)
   const seekRef      = useRef(0)
   const durationRef  = useRef(durationSeconds)
+  const draggingRef  = useRef(false)
 
   useEffect(() => { bpmRef.current = bpm })
   useEffect(() => { pxPerBeatRef.current = pxPerBeat })
@@ -69,16 +70,18 @@ export function TimelineRuler({
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture?.(e.pointerId)
+    draggingRef.current = true
     setDragging(true)
     seekFromClientX(e.clientX)
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!dragging) return
+    if (!draggingRef.current) return
     seekFromClientX(e.clientX)
   }
 
   function handlePointerUp() {
+    draggingRef.current = false
     setDragging(false)
   }
 
