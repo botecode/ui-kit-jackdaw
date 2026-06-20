@@ -1,0 +1,222 @@
+/* src/components/RecordMode/RecordMode.module.css */
+
+/*
+  --_rec-glow-base / --_rec-glow-peak are scoped to .recordBtn so the static
+  [data-state="recording"] box-shadow and @keyframes 0%/100% share the exact
+  same value — no visual jump when the pulse animation starts.
+  --_rec-glow-peak drives the 50% keyframe and the reduced-motion steady state.
+*/
+
+/* ─── Root (flex row) ──────────────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ─── Record button ────────────────────────────────────────────────────────── */
+
+.recordBtn {
+  --_rec-glow-base:
+    0 0 0 2px var(--led-red),
+    0 0 8px 3px color-mix(in srgb, var(--led-red) 40%, transparent);
+  --_rec-glow-peak:
+    0 0 0 2px var(--led-red),
+    0 0 16px 6px color-mix(in srgb, var(--led-red) 60%, transparent),
+    0 0 28px 10px color-mix(in srgb, var(--led-red) 25%, transparent);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* Idle: recessed well, dim ring, warm-red icon */
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1.5px var(--text-dim);
+  color: var(--led-red);
+
+  /* Slow decay — incandescent off */
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow       var(--dur-led-off) var(--ease-out),
+    color            var(--dur-led-off) var(--ease-out);
+}
+
+/* ─── Record button sizes ──────────────────────────────────────────────────── */
+
+.recordBtn[data-size="md"] { width: 36px; height: 36px; }
+.recordBtn[data-size="sm"] { width: 28px; height: 28px; }
+
+/* ─── Armed: matte-red fill, 2 px red ring, white icon — "ready" ───────────── */
+
+/*
+  Flat matte-red surface. The icon switches to --text (white) to contrast against
+  the deep-red fill. No outer glow — the bloom only activates at recording.
+  Armed vs recording: matte flat vs bloom pulsing.
+*/
+.recordBtn[data-state="armed"] {
+  background-color: var(--led-red-deep);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 0 0 2px var(--led-red);
+  color: var(--text);
+  /* Fast attack — overrides decay from base rule */
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    color            var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Recording: same fill + pulsing bloom — "rolling" ─────────────────────── */
+
+/*
+  @keyframes 0%/100% box-shadow = this rule's static value — no jump on start.
+  Armed→recording: the 2 px ring in --_rec-glow-base matches the armed ring,
+  so the transition adds the outer glow smoothly without the ring flickering.
+*/
+.recordBtn[data-state="recording"] {
+  background-color: var(--led-red-deep);
+  box-shadow: var(--_rec-glow-base);
+  color: var(--text);
+  animation: rec-btn-pulse 2s ease-in-out infinite;
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    color            var(--dur-led-on) var(--ease-out);
+}
+
+@keyframes rec-btn-pulse {
+  0%, 100% { box-shadow: var(--_rec-glow-base); }
+  50%       { box-shadow: var(--_rec-glow-peak); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recordBtn[data-state="recording"] {
+    animation: none;
+    /* Hold peak bloom — the bloom (not the pulse) is the armed vs recording signal */
+    box-shadow: var(--_rec-glow-peak);
+  }
+}
+
+/* ─── Hover ────────────────────────────────────────────────────────────────── */
+
+.recordBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Pressed ──────────────────────────────────────────────────────────────── */
+
+.recordBtn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Preserve red context during press (specificity: 0,3,0 beats [data-state] 0,2,0) */
+.recordBtn[data-state="armed"]:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--led-red-deep) 90%, black);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 2px var(--led-red);
+  color: var(--text);
+}
+
+.recordBtn[data-state="recording"]:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--led-red-deep) 90%, black);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    var(--_rec-glow-base);
+  color: var(--text);
+}
+
+/* ─── Disabled ─────────────────────────────────────────────────────────────── */
+
+.recordBtn:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Focus ring — record-red identity ────────────────────────────────────── */
+
+.recordBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-red) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Loop-punch badge ─────────────────────────────────────────────────────── */
+
+/*
+  Visible only when mode=loop-punch (rendered conditionally in TSX).
+  --text (near-white) contrasts on both the dark idle background and the red
+  armed/recording fill. aria-hidden; mode is communicated via aria-label.
+*/
+.badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* ─── Caret button ─────────────────────────────────────────────────────────── */
+
+.caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--text-dim);
+
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow       var(--dur-base) var(--ease-out);
+}
+
+.caret[data-size="md"] { width: 20px; height: 36px; }
+.caret[data-size="sm"] { width: 16px; height: 28px; }
+
+.caret:hover:not(:disabled) {
+  background-color: var(--stage-2);
+}
+
+.caret:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.caret:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.caret:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-red) 70%, transparent);
+  outline-offset: 2px;
+}
