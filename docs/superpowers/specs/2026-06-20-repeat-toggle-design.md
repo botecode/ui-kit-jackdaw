@@ -11,6 +11,8 @@
 
 The transport bar's loop on/off toggle. Pairs with `transport.setLoopEnabled` — when lit, playback will loop the loop region. Sibling of `TransportButton` in both hardware family and visual language: same recessed well, same LED bloom construction, same size tokens, same fast-attack/slow-decay timing. Distinct from `Toggle` (pill switch, `role="switch"`) and all other boolean controls.
 
+**Contract mapping:** write side — `onToggle(next)` → `transport.setLoopEnabled(next)` (toggles looping without resetting the stored loop range; do not wire to `transport.setLoop`, which sets the range). Read side — the `repeating` prop is driven by `transport.loop.enabled` from the discrete `transport.loop` event; it is **not** read from `engine.frame` (the ~30Hz playhead stream, which does not carry loop state).
+
 ---
 
 ## 2. Structure
