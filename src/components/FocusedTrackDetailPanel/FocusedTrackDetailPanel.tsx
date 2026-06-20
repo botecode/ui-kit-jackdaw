@@ -12,6 +12,7 @@ import { Fader, dbScale } from '../Fader'
 import { ArmButton } from '../ArmButton'
 import { MuteSoloToggle } from '../MuteSoloToggle'
 import { PanKnob } from '../PanKnob'
+import { PhaseInvert } from '../PhaseInvert'
 import styles from './FocusedTrackDetailPanel.module.css'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ export interface FocusedTrackDetailPanelProps {
     soloed: boolean
     volumeDb: number
     pan: number
+    phaseInverted?: boolean
   }
   clips: ClipInfo[]
   plugins: FxPlugin[]
@@ -61,6 +63,7 @@ export interface FocusedTrackDetailPanelProps {
   onRemovePlugin: (id: string) => void
   onAddPlugin: () => void
   onOpenPlugin: (id: string) => void
+  onTogglePhase?: (next: boolean) => void
   anySoloActive?: boolean
   disabled?: boolean
 }
@@ -112,6 +115,7 @@ export function FocusedTrackDetailPanel({
   onOpenPlugin,
   anySoloActive = false,
   disabled = false,
+  onTogglePhase,
 }: FocusedTrackDetailPanelProps) {
   const dragRef   = useRef<{ startY: number; startH: number } | null>(null)
   const [resizing, setResizing] = useState(false)
@@ -308,10 +312,15 @@ export function FocusedTrackDetailPanel({
                 label="Sidechain"
                 description="Route a sidechain source to this track's compressors"
               />
-              <AdvancedSlot
-                label="Phase / Polarity"
-                description="Invert signal polarity per channel"
-              />
+              <div className={`${styles.advancedSlot} ${styles.advancedPhaseRow}`}>
+                <span className={styles.slotLabel}>Phase</span>
+                <PhaseInvert
+                  inverted={track.phaseInverted ?? false}
+                  onToggle={onTogglePhase ?? (() => {})}
+                  size="sm"
+                  disabled={disabled}
+                />
+              </div>
               <AdvancedSlot
                 label="Automation"
                 description="Write and read automation lanes for this track"
