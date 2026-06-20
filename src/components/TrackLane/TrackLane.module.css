@@ -1,0 +1,126 @@
+/* src/components/TrackLane/TrackLane.module.css */
+
+/* ─── Lane root ───────────────────────────────────────────────────────────────
+   The lane does not set its own background — TimelineGrid fills the slot and
+   already composites --arrange-bg + --texture-paper + the beat/bar gradients.
+   Clips sit on top; their translucent bodies let the paper + grid show through.
+*/
+
+.root {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  /* Ledger rule separates lanes in the arrangement stack. */
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+/* Focused/selected track: left accent keyline + faint tint overlay. */
+
+.root[data-selected] {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.root[data-selected]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* While any clip is being dragged, lock cursor for the whole lane. */
+
+.root[data-dragging] {
+  cursor: grabbing;
+}
+
+/* Disabled: no interaction, visually dimmed. */
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.42;
+}
+
+/* ─── Grid layer ──────────────────────────────────────────────────────────────
+   Fills the entire lane behind clips. TimelineGrid renders --arrange-bg,
+   --texture-paper, and the beat/bar gradient lines as one background stack.
+*/
+
+.gridLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ─── Clip slot ───────────────────────────────────────────────────────────────
+   Absolute positioned vessel for one clip. Width + left are set inline from
+   secondsToX; top/bottom provide a small vertical inset so the lane ledger
+   rule and any arrangement-level overlays have breathing room.
+   Position is already set inline; only interaction + state styles here.
+*/
+
+.clipSlot {
+  z-index: 2;
+  cursor: grab;
+  outline: none;
+  border-radius: 3px;
+}
+
+.clipSlot:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Clip being actively dragged: lift above siblings, grabbing cursor. */
+
+.clipSlot[data-dragging] {
+  cursor: grabbing;
+  z-index: 10;
+  filter: drop-shadow(0 3px 8px color-mix(in srgb, black 28%, transparent));
+}
+
+/* ─── Trim handles ────────────────────────────────────────────────────────────
+   Invisible 8 px hit-zones at each clip edge. Show a hairline accent mark on
+   hover so the user knows trimming is available. No visible border at rest —
+   the clip's own edge styling handles that.
+*/
+
+.trimHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 3;
+}
+
+.trimHandle[data-trim='start'] { left:  0; }
+.trimHandle[data-trim='end']   { right: 0; }
+
+/* Hairline accent mark on hover — visible feedback without visual noise. */
+
+.trimHandle::after {
+  content: '';
+  position: absolute;
+  top:    2px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--dur-state, 120ms) ease;
+  border-radius: 1px;
+}
+
+.trimHandle[data-trim='start']::after { left:  3px; }
+.trimHandle[data-trim='end']::after   { right: 3px; }
+
+.trimHandle:hover::after {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trimHandle::after { transition: none; }
+}
