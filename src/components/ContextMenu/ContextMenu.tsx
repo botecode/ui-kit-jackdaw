@@ -1,7 +1,9 @@
 // src/components/ContextMenu/ContextMenu.tsx
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import styles from './ContextMenu.module.css'
 import { Popover } from '../Popover'
+import { usePortalTarget } from '../../theme/ThemeProvider'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -48,21 +50,24 @@ const MARGIN = 4                 // viewport gap, matches Popover
 const SUBMENU_OPEN_DELAY  = 120  // hover-intent: dwell before a flyout opens
 const SUBMENU_CLOSE_DELAY = 220  // grace period to cross the gap into the flyout
 
-// Sub-panel position: flush to the parent item's right edge, flipping to the left
-// side when there isn't room, then clamped to the viewport on both axes.
+// Sub-panel position: flush to the parent item's right edge, top aligned with the
+// parent menu box (not the hovered row) so both panels share the same top edge and
+// feel like a side-by-side extension. Flips left when near the right viewport edge,
+// then clamps to the viewport on both axes.
 function computeSubmenuPosition(
-  parentRect: DOMRect,
-  subW:       number,
-  subH:       number,
+  parentItemRect: DOMRect,
+  parentMenuRect: DOMRect,
+  subW:           number,
+  subH:           number,
 ): { left: number; top: number } {
   const vw = window.innerWidth
   const vh = window.innerHeight
 
-  let left = parentRect.right - 2   // slight overlap so there's no dead gap
-  let top  = parentRect.top - 4     // offset up by the menu's own top padding
+  let left = parentItemRect.right + 4   // 4px gap between parent menu and submenu
+  let top  = parentMenuRect.top         // align with the parent menu's top edge
 
-  if (left + subW + MARGIN > vw) left = parentRect.left - subW + 2  // flip left
-  if (top  + subH + MARGIN > vh) top  = vh - subH - MARGIN          // shift up
+  if (left + subW + MARGIN > vw) left = parentItemRect.left - subW - 4  // flip left
+  if (top  + subH + MARGIN > vh) top  = vh - subH - MARGIN              // shift up
 
   left = Math.max(MARGIN, Math.min(left, vw - subW - MARGIN))
   top  = Math.max(MARGIN, top)
@@ -156,21 +161,26 @@ function Submenu({
   items, parentItem, autoFocus, ariaLabel,
   onCloseSubmenu, onCloseAll, onPointerEnter, onPointerLeave,
 }: SubmenuProps) {
-  const ulRef    = useRef<HTMLUListElement>(null)
-  const itemRefs = useRef<Record<string, HTMLLIElement | null>>({})
+  const ulRef       = useRef<HTMLUListElement>(null)
+  const itemRefs    = useRef<Record<string, HTMLLIElement | null>>({})
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const portalTarget  = usePortalTarget()
 
   // Leaf-only: a one-level flyout never renders carets for deeper submenus.
   const focusable = items.filter((e): e is MenuItem => !isSeparator(e))
 
   // Measure self + parent, position with viewport flip (two-pass: hidden → shown).
+  // Must portal out of Popover's shell: the shell has a CSS animation that applies
+  // transform:translateY(0), which creates a containing block for position:fixed
+  // descendants and breaks viewport-relative coordinate math.
   useLayoutEffect(() => {
     const ul = ulRef.current
     if (!ul) return
-    const self = ul.getBoundingClientRect()
-    const par  = parentItem.getBoundingClientRect()
-    setPos(computeSubmenuPosition(par, self.width, self.height))
+    const self     = ul.getBoundingClientRect()
+    const itemRect = parentItem.getBoundingClientRect()
+    const menuRect = (parentItem.parentElement as HTMLUListElement | null)?.getBoundingClientRect() ?? itemRect
+    setPos(computeSubmenuPosition(itemRect, menuRect, self.width, self.height))
   }, [parentItem])
 
   // Keyboard entry (→ / Enter) lands focus on the first item; hover does not steal it.
@@ -243,7 +253,7 @@ function Submenu({
     ? { position: 'fixed', left: pos.left, top: pos.top, visibility: 'visible' }
     : { position: 'fixed', left: 0, top: 0, visibility: 'hidden' }
 
-  return (
+  return createPortal(
     <ul
       role="menu"
       aria-label={ariaLabel}
@@ -276,7 +286,8 @@ function Submenu({
           />
         )
       )}
-    </ul>
+    </ul>,
+    portalTarget ?? document.body,
   )
 }
 
