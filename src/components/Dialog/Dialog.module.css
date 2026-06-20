@@ -1,0 +1,103 @@
+/* src/components/Dialog/Dialog.module.css */
+
+/* ─── Scrim ───────────────────────────────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  /* Entry animation. --dur-base is zeroed under prefers-reduced-motion, so snaps. */
+  animation: scrim-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Dialog panel (Panel surface treatment — outlined tone) ──────────────────── */
+
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  width: 480px;
+
+  background-color: var(--surface);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    var(--shadow-lg);
+
+  /* Programmatically focused; visible ring handled via :focus-visible */
+  outline: none;
+
+  animation: dialog-in var(--dur-base) var(--ease-out) both;
+}
+
+.dialog[data-size="sm"] {
+  width: 360px;
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────────────── */
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  min-height: 44px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  line-height: var(--leading-base);
+}
+
+/* ─── Body (scrolls for long content) ────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  line-height: var(--leading-base);
+  min-height: 48px;
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────────────────── */
+
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+}
