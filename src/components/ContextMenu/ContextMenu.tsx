@@ -12,6 +12,7 @@ export interface MenuItem {
   shortcut?: string
   disabled?: boolean
   checked?:  boolean
+  role?:     'menuitemradio'
   danger?:   boolean
   onSelect?: () => void
   submenu?:  MenuEntry[]   // one-level flyout — leaf submenus ignore their own .submenu
@@ -106,7 +107,7 @@ function MenuRow({
 }: MenuRowProps) {
   return (
     <li
-      role={item.checked !== undefined ? 'menuitemcheckbox' : 'menuitem'}
+      role={item.role ?? (item.checked !== undefined ? 'menuitemcheckbox' : 'menuitem')}
       aria-disabled={item.disabled || undefined}
       aria-checked={item.checked ?? undefined}
       aria-haspopup={withSubmenu ? 'menu' : undefined}

@@ -372,3 +372,30 @@ describe('ContextMenu — useContextMenu hook', () => {
     expect(screen.getByTestId('coords').textContent).toBe('42,88')
   })
 })
+
+describe('ContextMenu — menuitemradio extension', () => {
+  it('item with role="menuitemradio" renders as menuitemradio', () => {
+    const items: MenuEntry[] = [
+      { id: 'a', label: 'Normal',     role: 'menuitemradio', checked: true  },
+      { id: 'b', label: 'Loop/punch', role: 'menuitemradio', checked: false },
+    ]
+    render(<ContextMenu {...BASE} items={items} />)
+    const radios = screen.getAllByRole('menuitemradio')
+    expect(radios).toHaveLength(2)
+    expect(radios[0]).toHaveAttribute('aria-checked', 'true')
+    expect(radios[1]).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('existing items without role field are unaffected', () => {
+    // Regular item still menuitem
+    render(<ContextMenu {...BASE} items={[{ id: 'x', label: 'Cut' }]} />)
+    expect(screen.getByRole('menuitem', { name: 'Cut' })).toBeInTheDocument()
+
+    // Checked item without role field still menuitemcheckbox
+    render(<ContextMenu
+      {...BASE}
+      items={[{ id: 'y', label: 'Show Grid', checked: true }]}
+    />)
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Show Grid' })).toBeInTheDocument()
+  })
+})
