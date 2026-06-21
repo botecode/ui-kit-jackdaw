@@ -39,7 +39,7 @@ jdstatus() {
 # Build one component on its own branch, gate it, and MERGE it into main in place — so the gallery
 # you have open on main hot-reloads and you see it live. No PR, no separate test step.
 ship() {
-  local name="$1" feedback="${2:-}" wt br spec prompt rc f cur msg ctx HARGS
+  local name="$1" feedback="${2:-}" nocontext="${3:-}" wt br spec prompt rc f cur msg ctx HARGS
   br="kit/$name"; wt="$R/.worktrees/$name"
   [ -f "$ROLE_FILE" ] || { echo "Missing role preamble: $ROLE_FILE" >&2; return 1; }
 
@@ -51,10 +51,14 @@ ship() {
 
   spec="$(mktemp -t kit-"$name".XXXX.md)"
   if [ -n "$feedback" ]; then
-    # FIX mode: the change request IS the spec; append the original card spec as context if present.
-    printf '# Change requested for the existing `%s` component\n\n%s\n' "$name" "$feedback" >"$spec"
-    ctx="$(python3 "$R/scripts/run-card.py" --instructions "$name" 2>/dev/null || true)"
-    [ -n "$ctx" ] && printf '\n\n---\n# Original card spec (context — honor it, do not re-do it)\n\n%s\n' "$ctx" >>"$spec"
+    # FIX mode: the change request IS the spec (modify in place, don't rebuild).
+    printf '# Change requested for the existing `%s` component (modify in place, do NOT rebuild)\n\n%s\n' "$name" "$feedback" >"$spec"
+    # Ad-hoc `kit fix <name> "note"` → append the component's original card spec as context.
+    # A fix CARD (nocontext=1) already passed the card comment AS the feedback — don't append it twice.
+    if [ -z "$nocontext" ]; then
+      ctx="$(python3 "$R/scripts/run-card.py" --instructions "$name" 2>/dev/null || true)"
+      [ -n "$ctx" ] && printf '\n\n---\n# Original card spec (context — honor it, do not re-do it)\n\n%s\n' "$ctx" >>"$spec"
+    fi
   else
     # BUILD mode: the card's comments (comment-only); fall back to a committed spec file.
     python3 "$R/scripts/run-card.py" --instructions "$name" >"$spec" 2>/dev/null || true
@@ -116,6 +120,22 @@ ship() {
   echo "✓ $name is on main — live in the gallery (run 'kit gallery' if it isn't open)."
 }
 
+# Build OR fix a card based on its Kind: Kind=fix → modify the existing component in place, using the
+# card's comment as the change request; otherwise build a new component. (Kit cards are picked by
+# Roles=kit, so a fix card is Kind=fix + Roles=["kit"].)
+ship_card() {
+  local name="$1" kind fb
+  kind="$(python3 "$R/scripts/run-card.py" --meta "$name" 2>/dev/null | awk '{print $1}')"
+  if [ "$kind" = fix ]; then
+    fb="$(python3 "$R/scripts/run-card.py" --instructions "$name" 2>/dev/null || true)"
+    [ -n "$fb" ] || { echo "✗ fix card '$name' has no comment describing the fix — shape it first." >&2; return 1; }
+    echo "  · '$name' is a fix card → modifying the existing component in place"
+    ship "$name" "$fb" 1
+  else
+    ship "$name"
+  fi
+}
+
 cmd="${1:-}"; [ $# -gt 0 ] && shift || true
 case "$cmd" in
   next)
@@ -123,12 +143,12 @@ case "$cmd" in
     [ -n "$name" ] || { echo "No kit card in Next." >&2; exit 1; }
     echo "▶ next kit card → $name"
     jdstatus "$name" "In Progress"
-    ship "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
+    ship_card "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
 
   launch|build|ship)
     name="${1:-}"; [ -n "$name" ] || { echo "usage: kit launch <name>" >&2; exit 1; }
     jdstatus "$name" "In Progress"
-    ship "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
+    ship_card "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
 
   fix)
     name="${1:-}"; note="${2:-}"

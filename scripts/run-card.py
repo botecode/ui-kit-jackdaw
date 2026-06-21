@@ -297,13 +297,14 @@ def slug(name):
 
 
 def print_next():
-    """Print the slug of the next non-kit card in 'Next' (for `jackdaw next`).
-    Slug -> stdout (for capture); the human-readable line -> stderr."""
-    kind_filter, _ = KIND_FILTERS["ui"]  # Kind == kit (this is the UI-kit repo)
+    """Print the slug of the next kit card in 'Next' (for `kit next`).
+    Kit work is marked by Roles=["kit"] — NOT Kind, because Kind=fix is shared with DAW fixes. This
+    grabs both new-component (Kind=kit) and kit-fix (Kind=fix) cards; bin/kit reads Kind to pick
+    build vs fix. Slug -> stdout (for capture); the human-readable line -> stderr."""
     res = _req("POST", f"/databases/{BOARD_DB}/query", {
         "filter": {"and": [
             {"property": "Status", "select": {"equals": "Next"}},
-            kind_filter,
+            {"property": "Roles", "multi_select": {"contains": "kit"}},
         ]},
         "sorts": [{"timestamp": "created_time", "direction": "ascending"}],
         "page_size": 1,

@@ -1,0 +1,305 @@
+/* src/components/AutomationLane/AutomationLane.module.css
+   Violet = automation: uses --led-purple tokens (same hue; existing across all themes).
+   Design: recessed stage canvas, violet tab strip, editable SVG curve. */
+
+/* ─── Collapsed tab ──────────────────────────────────────────────────────────── */
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 20px;
+  padding: 0 var(--space-2);
+  background: color-mix(in srgb, var(--led-purple) 12%, var(--stage));
+  border-top: 1px solid color-mix(in srgb, var(--led-purple) 35%, transparent);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--led-purple) 20%, var(--stage));
+}
+
+.tab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-purple) 70%, transparent);
+  outline-offset: -2px;
+}
+
+.tabIcon {
+  color: color-mix(in srgb, var(--led-purple-core) 80%, transparent);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.tabLabel {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: color-mix(in srgb, var(--led-purple-core) 90%, var(--stage-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tabCaret {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--led-purple-core) 70%, transparent);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+}
+
+.tabCaret:hover {
+  color: var(--led-purple-core);
+}
+
+.tabCaret:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-purple) 70%, transparent);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* ─── Envelope lane wrapper ───────────────────────────────────────────────────── */
+
+.laneRow {
+  display: flex;
+  align-items: stretch;
+  height: 80px;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+.laneRow[data-bypassed] {
+  opacity: 0.5;
+}
+
+/* ─── Lane header (left column) ──────────────────────────────────────────────── */
+
+.laneHeader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  width: 88px;
+  flex-shrink: 0;
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.laneHeaderTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.activeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--led-purple) 60%, var(--stage));
+  transition: background-color var(--dur-led-on) var(--ease-out);
+}
+
+.activeDot[data-active] {
+  background: var(--led-purple);
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--led-purple) 50%, transparent);
+  transition: background-color var(--dur-led-on) var(--ease-out),
+              box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.paramName {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.gearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 3px;
+  outline: none;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.gearBtn:hover {
+  color: var(--text-muted);
+  background: var(--surface-2);
+}
+
+.gearBtn:active {
+  color: var(--text);
+}
+
+.gearBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 1px;
+}
+
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--led-purple) 60%, transparent);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 3px;
+  outline: none;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.collapseBtn:hover {
+  color: var(--led-purple);
+}
+
+.collapseBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 1px;
+}
+
+/* ─── SVG canvas (center) ─────────────────────────────────────────────────────── */
+
+.laneCanvas {
+  flex: 1;
+  position: relative;
+  background: var(--stage);
+  overflow: hidden;
+  /* Crosshair only when not dragging — [data-dragging] overrides via JS style prop */
+  cursor: crosshair;
+}
+
+.laneCanvas[data-dragging] {
+  cursor: grabbing;
+}
+
+.canvasSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ─── Value readout (right column) ───────────────────────────────────────────── */
+
+.laneReadout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+.readoutValue {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: color-mix(in srgb, var(--led-purple-core) 90%, var(--text));
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+.readoutValue[data-dim] {
+  color: var(--text-dim);
+}
+
+/* ─── Envelope curve (SVG elements via className on <g>) ─────────────────────── */
+
+.ghostWaveform {
+  opacity: 0.13;
+}
+
+.envLine {
+  fill: none;
+  stroke: var(--led-purple);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.envLineExtend {
+  fill: none;
+  stroke: var(--led-purple);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.4;
+}
+
+.envPoint {
+  cursor: grab;
+  fill: var(--led-purple);
+  stroke: var(--led-purple-core);
+  stroke-width: 1.5;
+  transition: r var(--dur-fast) var(--ease-out),
+              fill var(--dur-fast) var(--ease-out);
+}
+
+.envPoint:focus {
+  outline: none;
+}
+
+.envPoint[data-selected] {
+  fill: var(--led-purple-core);
+  stroke: var(--led-purple-core);
+  r: 6;
+}
+
+.envPoint[data-dragging] {
+  cursor: grabbing;
+  r: 6;
+}
+
+.playheadLine {
+  stroke: var(--led-green);
+  stroke-width: 1;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ─── Disabled ────────────────────────────────────────────────────────────────── */
+
+.laneRow[data-disabled] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.tab[data-disabled] {
+  pointer-events: none;
+  opacity: 0.4;
+}
