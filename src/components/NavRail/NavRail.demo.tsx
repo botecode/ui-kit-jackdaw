@@ -155,6 +155,34 @@ function StatesDemo() {
           />
         </RailWrap>
       </State>
+
+      <State label="Mixer toggle — closed (right edge, side=left)">
+        <RailWrap>
+          <NavRail
+            items={PRIMARY_ITEMS}
+            footerItems={FOOTER_ITEMS}
+            active="arrange"
+            onSelect={() => {}}
+            side="left"
+            mixerOpen={false}
+            onToggleMixer={() => {}}
+          />
+        </RailWrap>
+      </State>
+
+      <State label="Mixer toggle — open (LED-lit)">
+        <RailWrap>
+          <NavRail
+            items={PRIMARY_ITEMS}
+            footerItems={FOOTER_ITEMS}
+            active="arrange"
+            onSelect={() => {}}
+            side="left"
+            mixerOpen={true}
+            onToggleMixer={() => {}}
+          />
+        </RailWrap>
+      </State>
     </StatesGrid>
   )
 }
@@ -162,9 +190,11 @@ function StatesDemo() {
 // ── Playground ─────────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [active,    setActive]    = useState('write')
-  const [collapsed, setCollapsed] = useState(false)
-  const [withBadge, setWithBadge] = useState(true)
+  const [active,     setActive]     = useState('write')
+  const [collapsed,  setCollapsed]  = useState(false)
+  const [withBadge,  setWithBadge]  = useState(true)
+  const [mixerOpen,  setMixerOpen]  = useState(false)
+  const [withMixer,  setWithMixer]  = useState(true)
 
   const items: NavRailItem[] = PRIMARY_ITEMS.map(item =>
     item.id === 'comments' && withBadge ? { ...item, badge: 3 } : item,
@@ -180,22 +210,17 @@ function PlaygroundDemo() {
             active={active}
             onSelect={setActive}
             collapsed={collapsed}
+            side="left"
+            mixerOpen={withMixer ? mixerOpen : undefined}
+            onToggleMixer={withMixer ? setMixerOpen : undefined}
           />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', paddingTop: 'var(--space-2)' }}>
-          <Toggle
-            checked={collapsed}
-            onChange={v => setCollapsed(v)}
-            size="sm"
-            label="collapsed"
-          />
-          <Toggle
-            checked={withBadge}
-            onChange={v => setWithBadge(v)}
-            size="sm"
-            label="badge on Comments"
-          />
+          <Toggle checked={collapsed}  onChange={setCollapsed}  size="sm" label="collapsed" />
+          <Toggle checked={withBadge}  onChange={setWithBadge}  size="sm" label="badge on Comments" />
+          <Toggle checked={withMixer}  onChange={setWithMixer}  size="sm" label="show mixer toggle" />
+          <Toggle checked={mixerOpen}  onChange={setMixerOpen}  size="sm" label="mixer open" />
           <div style={{
             fontFamily: 'var(--font-ui)',
             fontSize:   'var(--text-sm)',

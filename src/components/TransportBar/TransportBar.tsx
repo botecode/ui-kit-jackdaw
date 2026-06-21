@@ -1,6 +1,6 @@
 // src/components/TransportBar/TransportBar.tsx
 import { useState, useRef } from 'react'
-import { SkipBack, SkipForward, SlidersHorizontal } from '@phosphor-icons/react'
+import { SkipBack, SkipForward } from '@phosphor-icons/react'
 import styles from './TransportBar.module.css'
 import { TransportButton } from '../TransportButton'
 import { RecordMode } from '../RecordMode'
@@ -230,7 +230,7 @@ function TimeSigReadout({ numerator, denominator, onChange, size, disabled }: Ti
             {numerator}
           </button>
         )}
-        <div className={styles.timeSigDivider} aria-hidden />
+        <span className={styles.timeSigSlash} aria-hidden="true">/</span>
         {editField === 'den' ? (
           <input
             ref={inputRef}
@@ -357,9 +357,6 @@ export interface TransportBarProps {
   size?: 'sm' | 'md'
   disabled?: boolean
 
-  /** Faders toggle — when provided, a SlidersHorizontal button appears in the right cluster */
-  mixerOpen?: boolean
-  onToggleMixer?: (open: boolean) => void
 }
 
 function resolveClockState(playing: boolean, recording: boolean): 'stopped' | 'playing' | 'recording' {
@@ -396,8 +393,6 @@ export function TransportBar({
   onSetTimeSignature,
   size = 'md',
   disabled,
-  mixerOpen,
-  onToggleMixer,
 }: TransportBarProps) {
   const clockState = resolveClockState(playing, recording)
 
@@ -478,23 +473,6 @@ export function TransportBar({
           rate={rate}
           size={size}
         />
-        {onToggleMixer !== undefined && (
-          <>
-            <div className={styles.clusterDivider} aria-hidden />
-            <button
-              type="button"
-              className={styles.fadersToggle}
-              data-size={size}
-              data-active={mixerOpen || undefined}
-              aria-pressed={mixerOpen ?? false}
-              aria-label="Toggle mixer"
-              onClick={() => onToggleMixer(!mixerOpen)}
-              disabled={disabled}
-            >
-              <SlidersHorizontal aria-hidden size={size === 'sm' ? 14 : 16} />
-            </button>
-          </>
-        )}
       </div>
     </div>
   )
