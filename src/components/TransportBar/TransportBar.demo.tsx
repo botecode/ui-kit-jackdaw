@@ -173,6 +173,7 @@ function PlaygroundDemo() {
   const [recordMode, setRecordMode]         = useState<'normal' | 'loop-punch'>('normal')
   const [loopEnabled, setLoopEnabled]       = useState(false)
   const [clockMode, setClockMode]           = useState<'bars' | 'time'>('bars')
+  const [clockPrecision, setClockPrecision] = useState<1 | 2 | 3>(3)
   const [bpm, setBpm]                       = useState(120)
   const [numerator, setNumerator]           = useState(4)
   const [denominator, setDenominator]       = useState(4)
@@ -241,6 +242,7 @@ function PlaygroundDemo() {
           rate={1.0}
           clockMode={clockMode}
           onClockModeChange={setClockMode}
+          clockPrecision={clockPrecision}
           onPlay={handlePlay}
           onStop={handleStop}
           onGoToStart={() => setSeconds(0)}
@@ -301,6 +303,18 @@ function PlaygroundDemo() {
               size="sm"
               label="clock: time mode"
             />
+            <label style={labelStyle}>
+              clock precision
+              <select
+                value={clockPrecision}
+                onChange={e => setClockPrecision(Number(e.target.value) as 1 | 2 | 3)}
+                style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)' }}
+              >
+                <option value={3}>3 — full</option>
+                <option value={2}>2 — mid</option>
+                <option value={1}>1 — coarse</option>
+              </select>
+            </label>
           </div>
         </div>
       </div>

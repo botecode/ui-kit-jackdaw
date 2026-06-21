@@ -205,3 +205,66 @@ describe('Clock aria-label', () => {
     expect(label).toContain('bars')
   })
 })
+
+// ─── precision ───────────────────────────────────────────────────────────────
+
+describe('Clock precision', () => {
+  it('data-precision defaults to "3"', () => {
+    const { getByRole } = render(<Clock {...defaults} />)
+    expect(getByRole('button').getAttribute('data-precision')).toBe('3')
+  })
+
+  it('data-precision reflects precision prop', () => {
+    const { getByRole } = render(<Clock {...defaults} precision={2} />)
+    expect(getByRole('button').getAttribute('data-precision')).toBe('2')
+  })
+
+  it('bars mode precision=3 shows full bar.beat.tick', () => {
+    const { getByRole } = render(<Clock {...defaults} seconds={0} mode="bars" precision={3} />)
+    expect(getByRole('button').textContent).toContain('1.1.00')
+  })
+
+  it('bars mode precision=2 shows bar.beat only', () => {
+    const { getByRole } = render(<Clock {...defaults} seconds={0} mode="bars" precision={2} />)
+    expect(getByRole('button').textContent).toContain('1.1')
+    expect(getByRole('button').textContent).not.toContain('1.1.')
+  })
+
+  it('bars mode precision=1 shows bar only', () => {
+    const { getByRole } = render(
+      <Clock {...defaults} seconds={2} mode="bars" precision={1} />
+    )
+    // 2 seconds at 120 BPM 4/4 → bar 2
+    expect(getByRole('button').textContent).toContain('2')
+    expect(getByRole('button').textContent).not.toContain('2.')
+  })
+
+  it('time mode precision=3 shows full m:ss.mmm', () => {
+    const { getByRole } = render(<Clock {...defaults} seconds={0} mode="time" precision={3} />)
+    expect(getByRole('button').textContent).toContain('0:00.000')
+  })
+
+  it('time mode precision=2 shows m:ss only', () => {
+    const { getByRole } = render(<Clock {...defaults} seconds={0} mode="time" precision={2} />)
+    expect(getByRole('button').textContent).toContain('0:00')
+    expect(getByRole('button').textContent).not.toContain('0:00.')
+  })
+
+  it('time mode precision=1 shows minutes only', () => {
+    const { getByRole } = render(<Clock {...defaults} seconds={65} mode="time" precision={1} />)
+    // 65 seconds → 1 minute
+    expect(getByRole('button').textContent).toContain('1')
+    expect(getByRole('button').textContent).not.toContain('1:')
+  })
+
+  it('bars fallback precision=2 shows short form when bpm is 0', () => {
+    const { getByRole } = render(<Clock {...defaults} bpm={0} mode="bars" precision={2} />)
+    expect(getByRole('button').textContent).toContain('-.-')
+  })
+
+  it('bars fallback precision=1 shows "-" when bpm is 0', () => {
+    const { getByRole } = render(<Clock {...defaults} bpm={0} mode="bars" precision={1} />)
+    expect(getByRole('button').textContent).toContain('-')
+    expect(getByRole('button').textContent).not.toContain('-.')
+  })
+})
