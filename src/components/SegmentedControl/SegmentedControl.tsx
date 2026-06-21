@@ -28,11 +28,16 @@ export function SegmentedControl({
 }: SegmentedControlProps) {
   const segmentRefs = useRef<(HTMLButtonElement | null)[]>([])
 
+  // Roving tabindex: if value matches an option, that one is active;
+  // otherwise fall back to the first so the group is always reachable by Tab.
+  const selectedIdx = options.findIndex(o => o.value === value)
+  const activeIdx = selectedIdx >= 0 ? selectedIdx : 0
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, index: number) {
     const last = options.length - 1
     let next = index
-    if (e.key === 'ArrowRight') next = index < last ? index + 1 : 0
-    else if (e.key === 'ArrowLeft') next = index > 0 ? index - 1 : last
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = index < last ? index + 1 : 0
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = index > 0 ? index - 1 : last
     else if (e.key === 'Home') next = 0
     else if (e.key === 'End') next = last
     else return
@@ -59,10 +64,10 @@ export function SegmentedControl({
             role="radio"
             aria-checked={selected}
             data-selected={selected || undefined}
-            tabIndex={selected ? 0 : -1}
+            tabIndex={i === activeIdx ? 0 : -1}
             className={styles.segment}
             disabled={disabled}
-            autoFocus={autoFocus && selected}
+            autoFocus={autoFocus && i === activeIdx}
             onClick={() => { if (!disabled) onChange(opt.value) }}
             onKeyDown={e => handleKeyDown(e, i)}
           >
