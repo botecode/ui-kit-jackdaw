@@ -403,57 +403,61 @@ export function TransportBar({
       role="toolbar"
       aria-label="Transport"
     >
-      {/* Left: skip + play/stop + record + loop */}
-      <div className={styles.transportCluster}>
-        <SkipButton direction="start" onClick={onGoToStart} size={size} disabled={disabled} />
-        <SkipButton direction="end" onClick={onGoToEnd} size={size} disabled={disabled} />
-        <div className={styles.clusterDivider} aria-hidden />
-        <TransportButton
-          variant="play"
-          playing={playing}
-          onClick={() => onPlay()}
-          size={size}
-          disabled={disabled}
-        />
-        <TransportButton
-          variant="stop"
-          onClick={() => onStop()}
-          size={size}
-          disabled={disabled}
-        />
-        <div className={styles.clusterDivider} aria-hidden />
-        <RecordMode
-          state={recordState}
-          mode={recordMode}
-          onToggleRecord={() => onToggleRecord()}
-          onSelectMode={onSelectRecordMode}
-          size={size}
-          disabled={disabled}
-        />
-        <RepeatToggle
-          repeating={loopEnabled}
-          onToggle={onToggleLoop}
-          size={size}
-          disabled={disabled}
-        />
+      {/* Zone 1: left spacer — mirrors right cluster so center stays optically centered */}
+      <div className={styles.leftSpacer} aria-hidden />
+
+      {/* Zone 2: center — transport commands + clock read together */}
+      <div className={styles.centerCluster}>
+        <div className={styles.transportCluster}>
+          <SkipButton direction="start" onClick={onGoToStart} size={size} disabled={disabled} />
+          <SkipButton direction="end" onClick={onGoToEnd} size={size} disabled={disabled} />
+          <div className={styles.clusterDivider} aria-hidden />
+          <TransportButton
+            variant="play"
+            playing={playing}
+            onClick={() => onPlay()}
+            size={size}
+            disabled={disabled}
+          />
+          <TransportButton
+            variant="stop"
+            onClick={() => onStop()}
+            size={size}
+            disabled={disabled}
+          />
+          <div className={styles.clusterDivider} aria-hidden />
+          <RecordMode
+            state={recordState}
+            mode={recordMode}
+            onToggleRecord={() => onToggleRecord()}
+            onSelectMode={onSelectRecordMode}
+            size={size}
+            disabled={disabled}
+          />
+          <RepeatToggle
+            repeating={loopEnabled}
+            onToggle={onToggleLoop}
+            size={size}
+            disabled={disabled}
+          />
+        </div>
+
+        <div className={styles.clockZone}>
+          <Clock
+            seconds={seconds}
+            bpm={bpm}
+            numerator={numerator}
+            denominator={denominator}
+            state={clockState}
+            mode={clockMode}
+            onModeChange={onClockModeChange}
+            precision={clockPrecision}
+            size={size}
+          />
+        </div>
       </div>
 
-      {/* Center: clock (grows to fill, content left-aligned after transport) */}
-      <div className={styles.clockZone}>
-        <Clock
-          seconds={seconds}
-          bpm={bpm}
-          numerator={numerator}
-          denominator={denominator}
-          state={clockState}
-          mode={clockMode}
-          onModeChange={onClockModeChange}
-          precision={clockPrecision}
-          size={size}
-        />
-      </div>
-
-      {/* Right: tempo + time-sig, then secondary readouts */}
+      {/* Zone 3: right — tempo + time-sig + secondary readouts */}
       <div className={styles.rightCluster}>
         <div className={styles.projectReadouts}>
           <BpmReadout bpm={bpm} onChange={onSetTempo} size={size} disabled={disabled} />

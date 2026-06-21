@@ -3,7 +3,8 @@
 /* ─── Root (hardware strip) ──────────────────────────────────────────────────── */
 
 .root {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--space-3);
   padding: 0 var(--space-3);
@@ -28,7 +29,26 @@
   padding: 0 var(--space-2);
 }
 
-/* ─── Left transport cluster ─────────────────────────────────────────────────── */
+/* ─── Left spacer — empty zone that mirrors right cluster width ──────────────── */
+
+.leftSpacer {
+  /* intentionally empty; 1fr grid column keeps center optically centered */
+}
+
+/* ─── Center cluster (transport + clock travel together) ─────────────────────── */
+
+.centerCluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.root[data-size="sm"] .centerCluster {
+  gap: var(--space-2);
+}
+
+/* ─── Transport cluster ──────────────────────────────────────────────────────── */
 
 .transportCluster {
   display: flex;
@@ -106,15 +126,11 @@
   outline-offset: 2px;
 }
 
-/* ─── Clock zone (fills center, clock left-aligned) ─────────────────────────── */
+/* ─── Clock zone (sits beside transport cluster in center zone) ──────────────── */
 
 .clockZone {
-  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  /* Clamp so clock doesn't stretch to fill a very wide strip */
-  max-width: 220px;
 }
 
 /* ─── Right cluster ──────────────────────────────────────────────────────────── */
@@ -123,8 +139,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex: 0 0 auto;
-  margin-left: auto;
+  justify-self: end;
 }
 
 .projectReadouts {
