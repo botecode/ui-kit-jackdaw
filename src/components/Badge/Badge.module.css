@@ -1,0 +1,100 @@
+/* src/components/Badge/Badge.module.css */
+
+/* ─── Root ───────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* default tone — recessed subtle pill */
+  background: color-mix(in srgb, var(--stage) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  color: var(--text-muted);
+  border-radius: 3px;
+}
+
+/* ─── label variant: ui font instead of mono ────────────────────────────────── */
+
+.root[data-variant="label"] {
+  font-family: var(--font-ui);
+  font-weight: var(--weight-medium);
+}
+
+/* ─── dot: circle, no text ──────────────────────────────────────────────────── */
+
+.root[data-variant="dot"] {
+  border-radius: 50%;
+  padding: 0;
+}
+
+/* ─── Sizes ──────────────────────────────────────────────────────────────────── */
+
+/* md — count / label */
+.root[data-size="md"]:not([data-variant="dot"]) {
+  height: 16px;
+  min-width: 16px;
+  padding: 0 4px;
+}
+
+/* md — dot */
+.root[data-size="md"][data-variant="dot"] {
+  width:  8px;
+  height: 8px;
+}
+
+/* sm — count / label */
+.root[data-size="sm"]:not([data-variant="dot"]) {
+  height: 12px;
+  min-width: 12px;
+  padding: 0 3px;
+  font-size: 9px; /* sub-xs for compact collapsed-row context */
+}
+
+/* sm — dot */
+.root[data-size="sm"][data-variant="dot"] {
+  width:  6px;
+  height: 6px;
+}
+
+/* ─── Tones ──────────────────────────────────────────────────────────────────── */
+
+/* accent — uses theme accent as background with contrast text */
+.root[data-tone="accent"] {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 80%, black);
+  color: var(--accent-contrast);
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* red — arm/record semantic (LED red family) */
+.root[data-tone="red"] {
+  background: var(--led-red-deep);
+  border-color: var(--led-red);
+  color: var(--led-red-core);
+  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--led-red) 35%, transparent);
+}
+
+/* amber — attention/partial semantic (LED orange family) */
+.root[data-tone="amber"] {
+  background: var(--led-orange-deep);
+  border-color: var(--led-orange);
+  color: var(--led-orange-core);
+  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--led-orange) 35%, transparent);
+}
+
+/* green — play/rolling semantic (LED green family) */
+.root[data-tone="green"] {
+  background: var(--led-green-deep);
+  border-color: var(--led-green);
+  color: var(--led-green-core);
+  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--led-green) 35%, transparent);
+}
