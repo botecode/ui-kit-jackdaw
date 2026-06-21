@@ -130,17 +130,48 @@
 */
 
 .commentCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  background: color-mix(in srgb, var(--surface) 60%, var(--stage) 40%);
+  /* Seat on --stage with a very subtle author-accent tint (5 %) */
+  background: color-mix(
+    in srgb,
+    var(--_author-accent, transparent) 5%,
+    color-mix(in srgb, var(--surface) 65%, var(--stage) 35%)
+  );
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* Hairline top-highlight for seated-card warmth */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
   transition:
     opacity var(--dur-slow) var(--ease-out),
     background var(--dur-slow) var(--ease-out);
+}
+
+/* Author-accent spine — pseudo-element stays inside the radius */
+.commentCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--_author-accent, transparent);
+  border-radius: var(--radius) 0 0 var(--radius);
+  pointer-events: none;
+}
+
+/* Own comment: slightly stronger tint (8 % vs 5 %) so "mine" reads at a glance */
+.commentCard[data-own] {
+  background: color-mix(
+    in srgb,
+    var(--_author-accent, transparent) 8%,
+    color-mix(in srgb, var(--surface) 65%, var(--stage) 35%)
+  );
 }
 
 .commentCard[data-resolved] {
@@ -208,8 +239,8 @@
 
 .authorName {
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--text);
+  font-weight: var(--weight-bold);
+  color: var(--_author-accent, var(--text));
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -383,13 +414,29 @@
   /* Indent under avatar (28px) + gap (var(--space-2) = 8px) = 36px */
   margin-left: calc(28px + var(--space-2));
   padding-left: var(--space-3);
-  border-left: 2px solid var(--border);
+  /* Thread connector in the parent author's accent */
+  border-left: 1px solid var(--_reply-accent, var(--border));
 }
 
 .replyCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  padding-left: var(--space-2);
+}
+
+/* Each reply's own author-accent spine — hairline so it reads within the thread */
+.replyCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--_author-accent, transparent);
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 .replyHeader {

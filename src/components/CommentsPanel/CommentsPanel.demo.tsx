@@ -17,6 +17,10 @@ export const meta: DemoMeta = {
 
 // ── Fixture authors ───────────────────────────────────────────────────────────
 
+// ME = the current user; accent comes from --accent (not author palette)
+const ME: CommentAuthor = {
+  id: 'me', name: 'You', initials: 'ME',
+}
 const ALICE: CommentAuthor = {
   id: 'a1', name: 'Alice Chen', initials: 'AC',
   color: 'var(--track-color-1)',
@@ -28,6 +32,10 @@ const BOB: CommentAuthor = {
 const CARA: CommentAuthor = {
   id: 'c1', name: 'Cara Osei', initials: 'CO',
   color: 'var(--track-color-4)',
+}
+const DANI: CommentAuthor = {
+  id: 'd1', name: 'Dani Kim', initials: 'DK',
+  // no color set → derived deterministically from palette via hashAuthorId
 }
 
 // ── Stub audio fixtures ───────────────────────────────────────────────────────
@@ -48,13 +56,35 @@ const TEXT_THREAD: Comment[] = [
     id: 'c1', author: ALICE, time: Date.now() - 600_000,
     text: 'Can we push the chorus a little harder? The reverb tail is washing it out.',
     replies: [
-      { id: 'r1', author: BOB, time: Date.now() - 540_000, text: "Agreed — I'll tighten the pre-delay." },
-      { id: 'r2', author: CARA, time: Date.now() - 480_000, text: 'Also try pulling the high-shelf down 2dB.' },
+      { id: 'r1', author: BOB,  time: Date.now() - 540_000, text: "Agreed — I'll tighten the pre-delay." },
+      { id: 'r2', author: CARA, time: Date.now() - 480_000, text: 'Also try pulling the high-shelf down 2 dB.' },
     ],
   },
   {
     id: 'c2', author: BOB, time: Date.now() - 300_000,
     text: 'The verse vocal is a touch flat around bar 12.',
+  },
+]
+
+const ME_VS_OTHERS: Comment[] = [
+  {
+    id: 'mv1', author: ALICE, time: Date.now() - 800_000,
+    text: 'The bridge arrangement feels busy — maybe thin it out?',
+  },
+  {
+    id: 'mv2', author: ME, time: Date.now() - 600_000,
+    text: "Good call. I'll pull the rhythm guitar and see if it breathes more.",
+    replies: [
+      { id: 'mv2r1', author: ALICE, time: Date.now() - 500_000, text: 'Perfect, that would help a lot.' },
+    ],
+  },
+  {
+    id: 'mv3', author: CARA, time: Date.now() - 200_000,
+    text: 'Snare feels a bit thin in the outro — try layering a rim shot.',
+  },
+  {
+    id: 'mv4', author: ME, time: Date.now() - 60_000,
+    text: 'On it.',
   },
 ]
 
@@ -95,16 +125,35 @@ const ANCHORED_COMMENTS: Comment[] = [
   },
 ]
 
+const LONG_TEXT: Comment[] = [
+  {
+    id: 'lt1', author: DANI, time: Date.now() - 500_000,
+    text: "I've been listening to the final mix and I think the overall balance is close but the low-mids around 250 Hz are getting congested — piano, bass, and guitar are all stacking there. A bit of cut on the piano and guitar around that frequency might open things up considerably. Also, the room reverb on the overhead mics is creating some build-up in the 1–2 kHz range that's softening the transients. Worth trying a shorter pre-delay or pulling the wet signal back slightly.",
+  },
+  {
+    id: 'lt2', author: ME, time: Date.now() - 200_000,
+    text: 'Great notes — I hear it. Will notch the piano first and see how much headroom that frees before touching the overheads.',
+  },
+]
+
+const SINGLE_COMMENT: Comment[] = [
+  {
+    id: 'sc1', author: BOB, time: Date.now() - 120_000,
+    text: 'This is perfect as-is.',
+  },
+]
+
 // ── State card helper ─────────────────────────────────────────────────────────
 
 interface StatePanelProps {
   label: string
   comments: Comment[]
+  currentUserId?: string
   showJumpTo?: boolean
   showRecord?: boolean
 }
 
-function StatePanel({ label, comments, showJumpTo, showRecord }: StatePanelProps) {
+function StatePanel({ label, comments, currentUserId, showJumpTo, showRecord }: StatePanelProps) {
   const [localComments, setLocalComments] = useState(comments)
   const [log, setLog] = useState<string | null>(null)
 
@@ -115,7 +164,7 @@ function StatePanel({ label, comments, showJumpTo, showRecord }: StatePanelProps
       ...cs,
       {
         id,
-        author: ALICE,
+        author: ME,
         time: Date.now(),
         text: isAudio ? undefined : (content as string),
         audio: isAudio ? (content as AudioRef) : undefined,
@@ -138,6 +187,7 @@ function StatePanel({ label, comments, showJumpTo, showRecord }: StatePanelProps
       <div style={{ width: 300, height: 420, display: 'flex', flexDirection: 'column' }}>
         <CommentsPanel
           comments={localComments}
+          currentUserId={currentUserId}
           onPost={handlePost}
           onReply={handleReply}
           onResolve={handleResolve}
@@ -164,15 +214,24 @@ function StatePanel({ label, comments, showJumpTo, showRecord }: StatePanelProps
 function StatesDemo() {
   return (
     <StatesGrid>
-      <StatePanel label="empty — no comments" comments={[]} />
-      <StatePanel label="text thread with replies" comments={TEXT_THREAD} />
-      <StatePanel label="audio comments (play chip)" comments={AUDIO_COMMENTS} />
-      <StatePanel label="resolved comment" comments={RESOLVED_COMMENTS} />
-      <StatePanel label="timeline-anchored (jump to)" comments={ANCHORED_COMMENTS} showJumpTo />
-      <StatePanel label="composing with voice record" comments={[]} showRecord />
+      <StatePanel label="empty — no comments" comments={[]} currentUserId="me" />
+      <StatePanel label="single comment" comments={SINGLE_COMMENT} currentUserId="me" />
+      <StatePanel label="text thread with replies" comments={TEXT_THREAD} currentUserId="me" />
+      <StatePanel label="me vs others (current-user identity)" comments={ME_VS_OTHERS} currentUserId="me" />
+      <StatePanel label="audio comments (play chip)" comments={AUDIO_COMMENTS} currentUserId="me" />
+      <StatePanel label="resolved comment" comments={RESOLVED_COMMENTS} currentUserId="me" />
+      <StatePanel label="timeline-anchored (jump to)" comments={ANCHORED_COMMENTS} showJumpTo currentUserId="me" />
+      <StatePanel label="long text + palette author (no color set)" comments={LONG_TEXT} currentUserId="me" />
+      <StatePanel label="composing with voice record" comments={[]} showRecord currentUserId="me" />
       <StatePanel
         label="full panel — all features"
-        comments={[...TEXT_THREAD, ...AUDIO_COMMENTS.slice(0, 1), ...ANCHORED_COMMENTS.slice(0, 1), ...RESOLVED_COMMENTS.slice(0, 1)]}
+        comments={[
+          ...ME_VS_OTHERS.slice(0, 2),
+          ...AUDIO_COMMENTS.slice(0, 1),
+          ...ANCHORED_COMMENTS.slice(0, 1),
+          ...RESOLVED_COMMENTS.slice(0, 1),
+        ]}
+        currentUserId="me"
         showJumpTo
         showRecord
       />
@@ -189,14 +248,19 @@ function PlaygroundDemo() {
       text: 'Love the opening riff — very strong.',
     },
     {
-      id: 'p2', author: BOB, time: Date.now() - 120_000,
+      id: 'p2', author: ME, time: Date.now() - 240_000,
+      text: 'Thanks! I layered a clean and dirty signal — glad it reads.',
+    },
+    {
+      id: 'p3', author: BOB, time: Date.now() - 120_000,
       audio: STUB_AUDIO,
     },
     {
-      id: 'p3', author: CARA, time: Date.now() - 60_000,
+      id: 'p4', author: CARA, time: Date.now() - 60_000,
       text: 'Snare feels a bit thin in the bridge.',
       replies: [
-        { id: 'p3-r1', author: ALICE, time: Date.now() - 30_000, text: 'Agreed — layering a rim shot should help.' },
+        { id: 'p4-r1', author: ME,    time: Date.now() - 40_000, text: 'Agreed — layering a rim shot should help.' },
+        { id: 'p4-r2', author: ALICE, time: Date.now() - 20_000, text: '+1' },
       ],
     },
   ])
@@ -216,7 +280,7 @@ function PlaygroundDemo() {
       ...cs,
       {
         id,
-        author: CARA,
+        author: ME,
         time: Date.now(),
         text: isAudio ? undefined : (content as string),
         audio: isAudio ? (content as AudioRef) : undefined,
@@ -235,7 +299,7 @@ function PlaygroundDemo() {
           ...(c.replies ?? []),
           {
             id: `r${Date.now()}`,
-            author: BOB,
+            author: ME,
             time: Date.now(),
             text: isAudio ? undefined : (content as string),
             audio: isAudio ? (content as AudioRef) : undefined,
@@ -258,6 +322,7 @@ function PlaygroundDemo() {
         <div style={{ width: 300, height: 520, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
           <CommentsPanel
             comments={displayComments}
+            currentUserId="me"
             onPost={handlePost}
             onReply={handleReply}
             onResolve={handleResolve}
