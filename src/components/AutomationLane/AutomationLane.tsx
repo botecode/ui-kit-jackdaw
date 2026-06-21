@@ -333,6 +333,19 @@ export function EnvelopeLane({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [laneHeight, onPointAdd, onPointMove])
 
+  // ── Context menu: right-click on a point deletes it ───────────────────────
+
+  function handleContextMenu(e: React.MouseEvent<HTMLDivElement>) {
+    if (disabled) return
+    const pos    = toSvg(e.clientX, e.clientY)
+    const hitIdx = hitTestPoint(pos.x, pos.y, envelope.points, pxPerBeat, bpm, laneHeight)
+    if (hitIdx >= 0) {
+      e.preventDefault()
+      onPointDelete?.(hitIdx)
+      if (selectedIdx === hitIdx) setSelectedIdx(null)
+    }
+  }
+
   // ── Keyboard: Delete focused point ─────────────────────────────────────────
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -478,6 +491,7 @@ export function EnvelopeLane({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onContextMenu={handleContextMenu}
       >
         <svg
           className={styles.canvasSvg}

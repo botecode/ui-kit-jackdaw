@@ -472,7 +472,8 @@ function PlaygroundDemo() {
           }}>
             click canvas → add point{'\n'}
             drag point → move{'\n'}
-            focus + Delete → remove
+            focus + Delete → remove{'\n'}
+            right-click point → remove
           </div>
         </div>
       </div>

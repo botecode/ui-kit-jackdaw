@@ -490,6 +490,39 @@ describe('EnvelopeLane keyboard delete', () => {
   })
 })
 
+// ─── EnvelopeLane — right-click delete ───────────────────────────────────────
+
+describe('EnvelopeLane right-click delete', () => {
+  it('right-click on a point calls onPointDelete and prevents default', () => {
+    const onPointDelete = vi.fn()
+    envLane({ onPointDelete })
+
+    const canvas = screen.getByTestId('envelope-canvas-volume')
+    // VOL_ENV point[1] is at t=1s (x=96), value=0.75 (y=20)
+    const event = new MouseEvent('contextmenu', {
+      bubbles:    true,
+      cancelable: true,
+      clientX:    96,
+      clientY:    20,
+    })
+    fireEvent(canvas, event)
+
+    expect(onPointDelete).toHaveBeenCalledWith(1)
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  it('right-click on empty canvas does NOT call onPointDelete', () => {
+    const onPointDelete = vi.fn()
+    envLane({ onPointDelete })
+
+    const canvas = screen.getByTestId('envelope-canvas-volume')
+    // Far from any point
+    fireEvent.contextMenu(canvas, { clientX: 400, clientY: 40 })
+
+    expect(onPointDelete).not.toHaveBeenCalled()
+  })
+})
+
 // ─── EnvelopeLane — value readout ─────────────────────────────────────────────
 
 describe('EnvelopeLane value readout', () => {
