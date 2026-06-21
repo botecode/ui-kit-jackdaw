@@ -34,6 +34,8 @@ export interface ExportDialogProps {
   onRender: () => void
   onReveal: () => void
   onCancel: () => void
+  /** When provided, a Share button appears in the done state to trigger the macOS share sheet. */
+  onShare?: () => void
 }
 
 // ── Static option sets ────────────────────────────────────────────────────────
@@ -107,6 +109,20 @@ function SegControl({ value, onChange, options, 'aria-label': ariaLabel }: SegCo
   )
 }
 
+// ── Share glyph — macOS-style upload/share arrow ─────────────────────────────
+// Custom inline SVG per kit convention (bespoke glyph, not Phosphor).
+// Box tray + upward arrow. 14×14 at 1.5px stroke.
+
+function ShareIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M7 8.5V1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4.5 4L7 1.5L9.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 7.5V11.5H12V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 // ── ExportDialog ──────────────────────────────────────────────────────────────
 
 export function ExportDialog({
@@ -123,6 +139,7 @@ export function ExportDialog({
   onRender,
   onReveal,
   onCancel,
+  onShare,
 }: ExportDialogProps) {
   const modeHint = MODE_OPTIONS.find(o => o.value === mode)?.hint ?? ''
 
@@ -150,6 +167,12 @@ export function ExportDialog({
       {status === 'idle' && (
         <button className={styles.btnPrimary} onClick={onRender}>
           Render
+        </button>
+      )}
+      {status === 'done' && onShare && (
+        <button className={styles.btnShare} onClick={onShare}>
+          <ShareIcon />
+          Share
         </button>
       )}
       {status === 'done' && (

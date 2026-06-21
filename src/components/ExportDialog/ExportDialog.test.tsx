@@ -97,6 +97,16 @@ describe('ExportDialog — rendering', () => {
     expect(screen.getByRole('button', { name: 'Reveal in Finder' })).toBeInTheDocument()
   })
 
+  it('done: renders Share button when onShare is provided', () => {
+    render(<ExportDialog {...BASE} status="done" onShare={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument()
+  })
+
+  it('done: does not render Share button when onShare is not provided', () => {
+    render(<ExportDialog {...BASE} status="done" />)
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument()
+  })
+
   it('error: renders Retry button', () => {
     render(<ExportDialog {...BASE} status="error" />)
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
@@ -149,6 +159,13 @@ describe('ExportDialog — callbacks', () => {
     render(<ExportDialog {...BASE} status="error" onRender={onRender} />)
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(onRender).toHaveBeenCalledTimes(1)
+  })
+
+  it('Share button calls onShare', () => {
+    const onShare = vi.fn()
+    render(<ExportDialog {...BASE} status="done" onShare={onShare} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Share' }))
+    expect(onShare).toHaveBeenCalledTimes(1)
   })
 
   it('clicking Master option calls onModeChange("master")', () => {
