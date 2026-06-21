@@ -8,6 +8,9 @@ import styles from './IdeasLibrary.module.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type IdeaKind   = 'clip' | 'voice' | 'lyric'
+export type IdeaOrigin = 'project' | 'app'
+
 export interface Idea {
   id: string
   name: string
@@ -21,8 +24,8 @@ export interface Idea {
   /** Normalised amplitude values [0, 1] for the waveform preview */
   peaks?: number[]
   // New fields
-  kind?: 'clip' | 'voice' | 'lyric'   // defaults to 'clip' when absent
-  origin?: 'project' | 'app'          // defaults to 'project' when absent
+  kind?: IdeaKind    // defaults to 'clip' when absent
+  origin?: IdeaOrigin // defaults to 'project' when absent
   durationSec?: number                 // voice recordings only
   text?: string                        // lyric ideas only
 }
