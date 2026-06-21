@@ -1,0 +1,74 @@
+/* src/components/Kbd/Kbd.module.css */
+
+/* ── Wrapper: inline flex row of caps ───────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+/* ── Sizes via custom properties on root ───────────────────────────────── */
+
+.root[data-size="md"] {
+  --_pad-v:  3px;
+  --_pad-h:  5px;
+  --_font:   var(--text-xs);   /* 10px */
+  --_min-w:  1.6em;
+  --_radius: 3px;
+}
+
+.root[data-size="sm"] {
+  --_pad-v:  1px;
+  --_pad-h:  4px;
+  --_font:   9px;
+  --_min-w:  1.4em;
+  --_radius: 2px;
+}
+
+/* ── Individual key cap ──────────────────────────────────────────────────── */
+
+/*
+  Raised-hardware look: --surface for the key face (lighter than --stage),
+  border with heavier bottom edge, top highlight catchlight, drop shadow
+  below — key reads as sitting above the panel surface. Tokens only so it
+  works in every theme (Chroma cream, Ink near-black, etc.) by CSS variable
+  swap.
+*/
+
+.cap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--_min-w);
+  padding: var(--_pad-v) var(--_pad-h);
+
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--_radius);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 1px 0 rgba(0, 0, 0, 0.35);
+
+  font-family: var(--font-mono);
+  font-size: var(--_font);
+  font-style: normal;
+  font-weight: var(--weight-normal);
+  color: var(--text);
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Unbound indicator ───────────────────────────────────────────────────── */
+
+.unbound {
+  font-family: var(--font-mono);
+  font-size: var(--_font);
+  color: var(--text-dim);
+  line-height: 1;
+}
