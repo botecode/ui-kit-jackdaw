@@ -1,8 +1,8 @@
 // src/gallery/planned.ts
 import type { DemoMeta } from './registry'
 
-// Items planned but not yet built. Rendered as dimmed non-links in the sidebar.
-// Remove an item here when its .demo.tsx file lands — it will auto-appear via glob.
+// Items planned but not yet built. Do NOT prune by hand — subtractBuilt() drops any
+// name that appears in the registry, so this list stays accurate automatically.
 export const PLANNED: Array<Pick<DemoMeta, 'name' | 'group' | 'route'>> = [
   { name: 'MuteSoloToggle',           group: 'Primitives',  route: '/mute-solo' },
   { name: 'TransportBar',             group: 'Primitives',  route: '/transport' },
@@ -17,3 +17,11 @@ export const PLANNED: Array<Pick<DemoMeta, 'name' | 'group' | 'route'>> = [
   { name: 'ThemeSwitcher',            group: 'Composites',  route: '/theme-switcher' },
   { name: 'ProjectPicker',            group: 'Composites',  route: '/project-picker' },
 ]
+
+/** Returns planned items whose names are NOT in `builtNames`. Pure — no imports from registry. */
+export function subtractBuilt<T extends { name: string }>(
+  planned: T[],
+  builtNames: ReadonlySet<string>,
+): T[] {
+  return planned.filter(p => !builtNames.has(p.name))
+}
