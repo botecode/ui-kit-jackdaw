@@ -50,6 +50,27 @@ const IDEA_3: Idea = {
 
 const IDEAS = [IDEA_1, IDEA_2, IDEA_3]
 
+const VOICE_IDEA: Idea = {
+  id: 'voice-1',
+  name: 'Morning Idea',
+  kind: 'voice',
+  origin: 'app',
+  durationSec: 37,
+  peaks: PEAKS,
+}
+
+const LYRIC_IDEA: Idea = {
+  id: 'lyric-1',
+  name: 'Bridge Verse',
+  kind: 'lyric',
+  origin: 'app',
+  text: 'The light falls through the window\nSoft and warm and slow\nLike everything I remember\nEverything I know',
+}
+
+const MIXED_IDEAS = [IDEA_1, VOICE_IDEA, LYRIC_IDEA]
+
+const APP_SYNC_URL = 'https://jackdaw.app/get'
+
 const NOOP = {
   onPlay: vi.fn(),
   onDragToProject: vi.fn(),
@@ -58,7 +79,7 @@ const NOOP = {
 }
 
 function renderLibrary(ideas: Idea[] = IDEAS, overrides = {}) {
-  return render(<IdeasLibrary ideas={ideas} {...NOOP} {...overrides} />)
+  return render(<IdeasLibrary ideas={ideas} {...NOOP} appSyncUrl={APP_SYNC_URL} {...overrides} />)
 }
 
 // ─── Initial render ───────────────────────────────────────────────────────────
@@ -119,7 +140,8 @@ describe('IdeasLibrary — initial render', () => {
 
   it('"All" BPM band is selected by default', () => {
     renderLibrary()
-    expect(screen.getByRole('radio', { name: 'All' })).toHaveAttribute('aria-checked', 'true')
+    const bpmGroup = screen.getByRole('radiogroup', { name: 'BPM filter' })
+    expect(bpmGroup.querySelector('[role="radio"][aria-checked="true"]')).toHaveTextContent('All')
   })
 })
 
@@ -228,7 +250,9 @@ describe('IdeasLibrary — BPM filter', () => {
   it('clicking the active band again shows all (All band)', () => {
     renderLibrary()
     fireEvent.click(screen.getByRole('radio', { name: '< 80' }))
-    fireEvent.click(screen.getByRole('radio', { name: 'All' }))
+    const bpmGroup = screen.getByRole('radiogroup', { name: 'BPM filter' })
+    const allBtn = Array.from(bpmGroup.querySelectorAll('[role="radio"]')).find(b => b.textContent?.trim() === 'All')!
+    fireEvent.click(allBtn)
     expect(screen.getByText('Dusty Rhodes Intro')).toBeInTheDocument()
     expect(screen.getByText('Pulse Engine')).toBeInTheDocument()
     expect(screen.getByText('Breakbeat Loop')).toBeInTheDocument()
@@ -238,7 +262,9 @@ describe('IdeasLibrary — BPM filter', () => {
     renderLibrary()
     fireEvent.click(screen.getByRole('radio', { name: '80–130' }))
     expect(screen.getByRole('radio', { name: '80–130' })).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByRole('radio', { name: 'All' })).toHaveAttribute('aria-checked', 'false')
+    const bpmGroup = screen.getByRole('radiogroup', { name: 'BPM filter' })
+    const allBtn = bpmGroup.querySelector('[role="radio"][aria-checked="false"]')
+    expect(allBtn).not.toBeNull()
   })
 })
 
@@ -442,5 +468,164 @@ describe('IdeasLibrary — search + BPM filter together', () => {
     fireEvent.click(screen.getByRole('radio', { name: '130+' }))
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'guitar' } })
     expect(screen.getByTestId('empty-search')).toBeInTheDocument()
+  })
+})
+
+// ─── Kind segmented control ───────────────────────────────────────────────────
+
+describe('IdeasLibrary — kind segmented control', () => {
+  it('renders the Kind radiogroup', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.getByRole('radiogroup', { name: 'Kind filter' })).toBeInTheDocument()
+  })
+
+  it('"All" kind is selected by default', () => {
+    renderLibrary(MIXED_IDEAS)
+    const kindGroup = screen.getByRole('radiogroup', { name: 'Kind filter' })
+    expect(kindGroup.querySelector('[role="radio"][aria-checked="true"]')).toHaveTextContent('All')
+  })
+
+  it('selecting "Voice recordings" shows only voice ideas', () => {
+    renderLibrary(MIXED_IDEAS)
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    expect(screen.getByText('Morning Idea')).toBeInTheDocument()
+    expect(screen.queryByText('Dusty Rhodes Intro')).not.toBeInTheDocument()
+  })
+
+  it('selecting "Lyrics" shows only lyric ideas', () => {
+    renderLibrary(MIXED_IDEAS)
+    fireEvent.click(screen.getByRole('radio', { name: 'Lyrics' }))
+    expect(screen.getByText('Bridge Verse')).toBeInTheDocument()
+    expect(screen.queryByText('Dusty Rhodes Intro')).not.toBeInTheDocument()
+  })
+
+  it('selecting "Clips" shows only clip ideas', () => {
+    renderLibrary(MIXED_IDEAS)
+    fireEvent.click(screen.getByRole('radio', { name: 'Clips' }))
+    expect(screen.getByText('Dusty Rhodes Intro')).toBeInTheDocument()
+    expect(screen.queryByText('Morning Idea')).not.toBeInTheDocument()
+  })
+
+  it('BPM filter hidden when Voice selected', () => {
+    renderLibrary(MIXED_IDEAS)
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    expect(screen.queryByRole('radiogroup', { name: 'BPM filter' })).not.toBeInTheDocument()
+  })
+
+  it('BPM filter hidden when Lyrics selected', () => {
+    renderLibrary(MIXED_IDEAS)
+    fireEvent.click(screen.getByRole('radio', { name: 'Lyrics' }))
+    expect(screen.queryByRole('radiogroup', { name: 'BPM filter' })).not.toBeInTheDocument()
+  })
+
+  it('BPM filter visible when All selected', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.getByRole('radiogroup', { name: 'BPM filter' })).toBeInTheDocument()
+  })
+
+  it('BPM filter visible when Clips selected', () => {
+    renderLibrary(MIXED_IDEAS)
+    fireEvent.click(screen.getByRole('radio', { name: 'Clips' }))
+    expect(screen.getByRole('radiogroup', { name: 'BPM filter' })).toBeInTheDocument()
+  })
+})
+
+// ─── Voice card ───────────────────────────────────────────────────────────────
+
+describe('IdeasLibrary — voice card', () => {
+  it('renders voice idea name', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.getByText('Morning Idea')).toBeInTheDocument()
+  })
+
+  it('renders duration in mm:ss', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.getByText('0:37')).toBeInTheDocument()
+  })
+
+  it('voice card has play button', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.getByRole('button', { name: 'Play Morning Idea' })).toBeInTheDocument()
+  })
+
+  it('voice card shows "From app" tag when origin is app', () => {
+    renderLibrary(MIXED_IDEAS)
+    const voiceCard = screen.getByText('Morning Idea').closest('article')!
+    expect(voiceCard.querySelector('[data-testid="app-tag"]')).toBeInTheDocument()
+  })
+})
+
+// ─── Lyric card ───────────────────────────────────────────────────────────────
+
+describe('IdeasLibrary — lyric card', () => {
+  it('renders lyric idea name', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.getByText('Bridge Verse')).toBeInTheDocument()
+  })
+
+  it('renders lyric text excerpt', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.getByText(/The light falls through the window/)).toBeInTheDocument()
+  })
+
+  it('lyric card has no play button', () => {
+    renderLibrary(MIXED_IDEAS)
+    expect(screen.queryByRole('button', { name: 'Play Bridge Verse' })).not.toBeInTheDocument()
+  })
+
+  it('lyric card shows "From app" tag when origin is app', () => {
+    renderLibrary(MIXED_IDEAS)
+    const lyricCard = screen.getByText('Bridge Verse').closest('article')!
+    expect(lyricCard.querySelector('[data-testid="app-tag"]')).toBeInTheDocument()
+  })
+})
+
+// ─── QR empty states ──────────────────────────────────────────────────────────
+
+describe('IdeasLibrary — QR empty state', () => {
+  it('shows QR panel when Voice selected and no voice ideas', () => {
+    renderLibrary([IDEA_1]) // only clips
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    expect(screen.getByTestId('qr-empty-voice')).toBeInTheDocument()
+  })
+
+  it('shows QR panel when Lyrics selected and no lyric ideas', () => {
+    renderLibrary([IDEA_1]) // only clips
+    fireEvent.click(screen.getByRole('radio', { name: 'Lyrics' }))
+    expect(screen.getByTestId('qr-empty-lyric')).toBeInTheDocument()
+  })
+
+  it('QR panel has correct copy for voice', () => {
+    renderLibrary([IDEA_1])
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    expect(screen.getByText(/Capture voice memos on the go/)).toBeInTheDocument()
+  })
+
+  it('QR panel has correct copy for lyrics', () => {
+    renderLibrary([IDEA_1])
+    fireEvent.click(screen.getByRole('radio', { name: 'Lyrics' }))
+    expect(screen.getByText(/Capture lyrics on the go/)).toBeInTheDocument()
+  })
+
+  it('QR panel shows SVG with aria-label', () => {
+    renderLibrary([IDEA_1])
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    expect(screen.getByRole('img', { name: 'Scan QR code to get the app' })).toBeInTheDocument()
+  })
+
+  it('onGetApp callback fires when "Get the app" clicked', () => {
+    const onGetApp = vi.fn()
+    renderLibrary([IDEA_1], { onGetApp })
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Get the app' }))
+    expect(onGetApp).toHaveBeenCalledOnce()
+  })
+
+  it('shows no-match when searching within empty voice kind', () => {
+    renderLibrary([IDEA_1])
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'something' } })
+    expect(screen.getByTestId('empty-search')).toBeInTheDocument()
+    expect(screen.queryByTestId('qr-empty-voice')).not.toBeInTheDocument()
   })
 })

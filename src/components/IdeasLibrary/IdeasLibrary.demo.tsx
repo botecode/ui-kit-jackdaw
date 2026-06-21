@@ -103,6 +103,44 @@ const MANY_IDEAS: Idea[] = [
   },
 ]
 
+const VOICE_IDEAS: Idea[] = [
+  { id: 'v-1', name: 'Morning Hook', kind: 'voice', origin: 'app', durationSec: 37, peaks: PK_A },
+  { id: 'v-2', name: 'Bridge Idea', kind: 'voice', origin: 'app', durationSec: 92, peaks: PK_B },
+]
+
+const LYRIC_IDEAS: Idea[] = [
+  {
+    id: 'l-1',
+    name: 'Verse One Draft',
+    kind: 'lyric',
+    origin: 'app',
+    text: 'The light falls through the window\nSoft and warm and slow\nLike everything I remember\nEverything I know',
+  },
+  {
+    id: 'l-2',
+    name: 'Chorus Fragment',
+    kind: 'lyric',
+    origin: 'app',
+    text: 'We were burning like the sun\nBefore the world went cold\nNow we carry what was done\nIn stories never told',
+  },
+]
+
+const LONG_LYRIC_IDEA: Idea = {
+  id: 'l-long',
+  name: 'Long Verse',
+  kind: 'lyric',
+  origin: 'app',
+  text: 'Line one of the verse\nLine two continues\nLine three goes longer still\nLine four overflows the card and gets clamped here at the end',
+}
+
+const MIXED_IDEAS: Idea[] = [
+  ...FEW_IDEAS,
+  ...VOICE_IDEAS,
+  ...LYRIC_IDEAS,
+]
+
+const APP_SYNC_URL = 'https://jackdaw.app/get'
+
 const NOOP = {
   onPlay:          () => {},
   onDragToProject: () => {},
@@ -125,7 +163,7 @@ function EmptyCard() {
   return (
     <State label="empty — no ideas yet">
       <div style={PANEL}>
-        <IdeasLibrary ideas={[]} {...NOOP} />
+        <IdeasLibrary ideas={[]} {...NOOP} appSyncUrl={APP_SYNC_URL} />
       </div>
     </State>
   )
@@ -135,7 +173,7 @@ function FewIdeasCard() {
   return (
     <State label="default — a few ideas">
       <div style={PANEL}>
-        <IdeasLibrary ideas={FEW_IDEAS} {...NOOP} />
+        <IdeasLibrary ideas={FEW_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
       </div>
     </State>
   )
@@ -145,7 +183,7 @@ function ManyIdeasCard() {
   return (
     <State label="many ideas — scroll">
       <div style={PANEL}>
-        <IdeasLibrary ideas={MANY_IDEAS} {...NOOP} />
+        <IdeasLibrary ideas={MANY_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
       </div>
     </State>
   )
@@ -159,6 +197,7 @@ function SearchingCard() {
         <IdeasLibrary
           ideas={ideas}
           {...NOOP}
+          appSyncUrl={APP_SYNC_URL}
           onDelete={id => setIdeas(prev => prev.filter(i => i.id !== id))}
         />
       </div>
@@ -168,15 +207,13 @@ function SearchingCard() {
 
 function PreviewingCard() {
   const [playingId, setPlayingId] = useState<string | null>('idea-2')
-  // Show "previewing" by rendering with a playing indicator in the gallery;
-  // actual play state is managed by IdeasLibrary internally on user interaction.
-  // Here we just note which idea is "active" via the story label.
   return (
     <State label="hovered / previewing — press Play on a card">
       <div style={PANEL}>
         <IdeasLibrary
           ideas={FEW_IDEAS}
           {...NOOP}
+          appSyncUrl={APP_SYNC_URL}
           onPlay={id => setPlayingId(id)}
         />
       </div>
@@ -201,6 +238,7 @@ function DraggingCard() {
         <IdeasLibrary
           ideas={FEW_IDEAS}
           {...NOOP}
+          appSyncUrl={APP_SYNC_URL}
           onDragToProject={id => {
             const idea = FEW_IDEAS.find(i => i.id === id)
             if (idea) console.info(`[Ideas] drag to project: ${idea.name}`)
@@ -215,7 +253,7 @@ function EmptySearchCard() {
   return (
     <State label="no matches — filtered empty">
       <div style={{ ...PANEL, height: 300 }}>
-        <IdeasLibrary ideas={FEW_IDEAS} {...NOOP} />
+        <IdeasLibrary ideas={FEW_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
       </div>
       <span style={{
         marginTop: 4,
@@ -225,6 +263,92 @@ function EmptySearchCard() {
       }}>
         Try "xyznotfound" in search
       </span>
+    </State>
+  )
+}
+
+function VoiceWithItemsCard() {
+  return (
+    <State label="voice — with recordings">
+      <div style={PANEL}>
+        <IdeasLibrary ideas={VOICE_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
+      </div>
+    </State>
+  )
+}
+
+function VoiceEmptyQrCard() {
+  return (
+    <State label="voice — empty QR state">
+      <div style={PANEL}>
+        <IdeasLibrary
+          ideas={FEW_IDEAS}
+          {...NOOP}
+          appSyncUrl={APP_SYNC_URL}
+          onGetApp={() => console.info('[Ideas] Get the app clicked')}
+        />
+      </div>
+      <span style={{
+        marginTop: 4,
+        fontFamily: 'var(--font-ui)',
+        fontSize: 'var(--text-xs)',
+        color: 'var(--text-dim)',
+      }}>
+        Select "Voice recordings" to see QR
+      </span>
+    </State>
+  )
+}
+
+function LyricsWithItemsCard() {
+  return (
+    <State label="lyrics — with items">
+      <div style={PANEL}>
+        <IdeasLibrary ideas={LYRIC_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
+      </div>
+    </State>
+  )
+}
+
+function LyricsEmptyQrCard() {
+  return (
+    <State label="lyrics — empty QR state">
+      <div style={PANEL}>
+        <IdeasLibrary
+          ideas={FEW_IDEAS}
+          {...NOOP}
+          appSyncUrl={APP_SYNC_URL}
+          onGetApp={() => console.info('[Ideas] Get the app clicked')}
+        />
+      </div>
+      <span style={{
+        marginTop: 4,
+        fontFamily: 'var(--font-ui)',
+        fontSize: 'var(--text-xs)',
+        color: 'var(--text-dim)',
+      }}>
+        Select "Lyrics" to see QR
+      </span>
+    </State>
+  )
+}
+
+function LongLyricCard() {
+  return (
+    <State label="lyric — long text clamped">
+      <div style={PANEL}>
+        <IdeasLibrary ideas={[LONG_LYRIC_IDEA]} {...NOOP} appSyncUrl={APP_SYNC_URL} />
+      </div>
+    </State>
+  )
+}
+
+function MixedFromAppCard() {
+  return (
+    <State label="mixed — all kinds with app tags">
+      <div style={{ ...PANEL, height: 520 }}>
+        <IdeasLibrary ideas={MIXED_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
+      </div>
     </State>
   )
 }
@@ -241,6 +365,12 @@ function StatesDemo() {
       <PreviewingCard />
       <DraggingCard />
       <EmptySearchCard />
+      <VoiceWithItemsCard />
+      <VoiceEmptyQrCard />
+      <LyricsWithItemsCard />
+      <LyricsEmptyQrCard />
+      <LongLyricCard />
+      <MixedFromAppCard />
     </StatesGrid>
   )
 }
@@ -252,7 +382,7 @@ function PlaygroundDemo() {
   const [ideas,      setIdeas]      = useState(FEW_IDEAS)
   const [lastAction, setLastAction] = useState<string | null>(null)
 
-  const allIdeas = useMany ? MANY_IDEAS : FEW_IDEAS
+  const allIdeas = useMany ? MIXED_IDEAS : FEW_IDEAS
 
   // Keep deletions in local state, reset when toggling many/few
   const [deleted, setDeleted] = useState<Set<string>>(new Set())
@@ -273,6 +403,8 @@ function PlaygroundDemo() {
         <div style={{ width: 400, height: 480, display: 'flex', flexDirection: 'column' }}>
           <IdeasLibrary
             ideas={displayedIdeas}
+            appSyncUrl={APP_SYNC_URL}
+            onGetApp={() => setLastAction('📱 Get the app clicked')}
             onPlay={id => {
               const idea = allIdeas.find(i => i.id === id)
               setLastAction(`▶ Play: ${idea?.name ?? id}`)
@@ -298,7 +430,7 @@ function PlaygroundDemo() {
             checked={useMany}
             onChange={handleUseManyChange}
             size="sm"
-            label="many ideas (8)"
+            label="mixed ideas (clips + voice + lyrics)"
           />
 
           {deleted.size > 0 && (
