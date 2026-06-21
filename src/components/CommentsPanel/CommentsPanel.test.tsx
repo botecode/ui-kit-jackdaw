@@ -1,6 +1,6 @@
 // src/components/CommentsPanel/CommentsPanel.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { CommentsPanel } from './CommentsPanel'
 import type { Comment, CommentAuthor, CommentsPanelProps } from './CommentsPanel'
 
@@ -291,7 +291,7 @@ describe('CommentsPanel — record button', () => {
     expect(btn).toHaveAttribute('data-recording')
     // After resolve: audio draft replaces the record button
     resolveRecord({ url: 'blob:x', durationMs: 1000 })
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getByRole('button', { name: /post audio/i })).toBeInTheDocument()
     })
   })
@@ -302,7 +302,7 @@ describe('CommentsPanel — record button', () => {
     const onPost = vi.fn()
     render(<CommentsPanel {...makeProps({ onRecord, onPost })} />)
     fireEvent.click(screen.getByRole('button', { name: /record audio/i }))
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getByRole('button', { name: /post audio/i })).toBeInTheDocument()
     })
     fireEvent.click(screen.getByRole('button', { name: /post audio/i }))
@@ -314,7 +314,7 @@ describe('CommentsPanel — record button', () => {
     const onRecord = vi.fn().mockResolvedValue(audioRef)
     render(<CommentsPanel {...makeProps({ onRecord })} />)
     fireEvent.click(screen.getByRole('button', { name: /record audio/i }))
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getByRole('button', { name: /discard recording/i })).toBeInTheDocument()
     })
     fireEvent.click(screen.getByRole('button', { name: /discard recording/i }))
