@@ -1,0 +1,155 @@
+/* src/components/Toast/Toast.module.css */
+
+/* ─── Container ──────────────────────────────────────────────────────────── */
+/*
+  flex-direction: column-reverse → first DOM child placed at the container's
+  bottom edge (main-start). Since we prepend newest toasts, the newest always
+  sits closest to the bottom-right corner anchor; older toasts stack upward.
+*/
+
+.container {
+  position: fixed;
+  bottom: var(--space-4);
+  right:  var(--space-4);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: var(--space-2);
+  z-index: 600;
+  pointer-events: none;
+}
+
+/* ─── Toast surface ──────────────────────────────────────────────────────── */
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  min-width: 240px;
+  max-width: 320px;
+
+  background-color: var(--surface);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    var(--shadow-md);
+
+  pointer-events: auto;
+
+  /* Enter: slide up from below + fade in */
+  animation: toast-in var(--dur-slow) var(--ease-out) both;
+}
+
+/* Variant signaling is carried by the icon color — no side-tab border needed. */
+
+/* ─── Leave animation ────────────────────────────────────────────────────── */
+/* Slide right + fade out. JS removes from DOM after LEAVE_DURATION (200ms). */
+
+.toast[data-leaving] {
+  animation: toast-out var(--dur-slow) var(--ease-out) forwards;
+}
+
+/* ─── Keyframes ──────────────────────────────────────────────────────────── */
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0);   }
+  to   { opacity: 0; transform: translateX(8px); }
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+/*
+  Slide is decorative → snap; opacity is functional (signals arrival/dismissal).
+  JS already skips the leaving delay under reduced-motion, so toast-out never
+  fires; we only need to suppress toast-in here.
+*/
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+}
+
+/* ─── Variant icon color ─────────────────────────────────────────────────── */
+
+.icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--text-dim);
+}
+
+.toast[data-variant="info"]    .icon { color: var(--accent); }
+.toast[data-variant="success"] .icon { color: var(--led-green); }
+.toast[data-variant="error"]   .icon { color: var(--led-red); }
+
+/* ─── Message ────────────────────────────────────────────────────────────── */
+
+.message {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text);
+  line-height: var(--leading-base);
+  min-width: 0;
+}
+
+/* ─── Action button ──────────────────────────────────────────────────────── */
+
+.action {
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--accent);
+  white-space: nowrap;
+  outline: none;
+}
+
+.action:hover {
+  filter: brightness(1.12);
+}
+
+.action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ─── Close button ───────────────────────────────────────────────────────── */
+
+.close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  outline: none;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.close:hover {
+  color: var(--text);
+}
+
+.close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+}
