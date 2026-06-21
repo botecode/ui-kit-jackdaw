@@ -1,0 +1,91 @@
+/* src/components/ScrollArea/ScrollArea.module.css */
+
+/* ─── Container ─────────────────────────────────────────────────────────── */
+
+.root {
+  /* Prevent block-level shrink-wrapping problems in flex/grid parents */
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Overflow per orientation */
+.root[data-orientation='vertical']   { overflow-y: auto; overflow-x: hidden; }
+.root[data-orientation='horizontal'] { overflow-x: auto; overflow-y: hidden; }
+.root[data-orientation='both']       { overflow: auto; }
+
+/* ─── Scrollbar size ────────────────────────────────────────────────────── */
+
+.root[data-size='md']::-webkit-scrollbar { width: 8px; height: 8px; }
+.root[data-size='sm']::-webkit-scrollbar { width: 6px; height: 6px; }
+
+/* ─── Track (recessed groove — same inset-shadow recipe as Fader channel) ── */
+
+.root::-webkit-scrollbar-track {
+  background: var(--stage);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--border);
+}
+
+/* ─── Thumb (warm, grippable — fader-cap family) ───────────────────────── */
+
+/*
+  border: transparent + background-clip: padding-box creates a visual inset
+  gap between thumb and track walls without a colored border.
+  Reducing border-width on hover/active widens the thumb tactilely.
+*/
+
+.root::-webkit-scrollbar-thumb {
+  background-color: var(--surface-2);
+  /* Catch-light: same top-left highlight recipe as Toggle knob / Fader cap */
+  background-image: radial-gradient(
+    circle at 40% 30%,
+    rgba(255, 255, 255, 0.22),
+    transparent 55%
+  );
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-width     var(--dur-base) var(--ease-out);
+}
+
+/* Hover: brighten + widen (border shrinks → visual thumb expands) */
+.root::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-dim);
+  border-width: 1px;
+}
+
+/* Active/dragging: pressed — darker, full width, dimmer catch-light */
+.root::-webkit-scrollbar-thumb:active {
+  background-color: var(--text-muted);
+  border-width: 1px;
+  background-image: radial-gradient(
+    circle at 40% 30%,
+    rgba(255, 255, 255, 0.10),
+    transparent 55%
+  );
+}
+
+/* ─── Corner (where horizontal + vertical bars meet) ───────────────────── */
+
+.root::-webkit-scrollbar-corner {
+  background: var(--stage);
+}
+
+/* ─── Auto-hide: fade out when idle ────────────────────────────────────── */
+
+/*
+  When [data-auto-hide] and neither [data-scrolling] (set by scroll listener)
+  nor :hover, make the thumb invisible. The transition defined on the base
+  ::-webkit-scrollbar-thumb rule drives the fade in both directions.
+  Under prefers-reduced-motion, --dur-base → 0ms → instant snap (decorative only).
+*/
+.root[data-auto-hide]:not([data-scrolling]):not(:hover)::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  background-image: none;
+  border-width: 2px;
+}
