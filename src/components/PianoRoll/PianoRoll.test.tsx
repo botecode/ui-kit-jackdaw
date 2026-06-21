@@ -106,7 +106,8 @@ describe('PianoRoll selection', () => {
     } as DOMRect)
     fireEvent.pointerDown(noteEl, { button: 0, clientX: 100, clientY: 7, pointerId: 1 })
     expect(onSelectNote).toHaveBeenCalled()
-    expect(onSelectNote.mock.calls.at(-1)?.[0]).toContain('a')
+    const calls = onSelectNote.mock.calls
+    expect(calls[calls.length - 1]?.[0]).toContain('a')
   })
 
   it('pointerDown on grid clears selection', () => {
@@ -197,7 +198,8 @@ describe('PianoRoll delete note', () => {
     fireEvent.pointerDown(noteEl, { button: 0, clientX: 100, clientY: 7, pointerId: 1 })
     // Then right-click (delete)
     fireEvent.contextMenu(noteEl)
-    const lastCall = onSelectNote.mock.calls.at(-1)?.[0] as string[]
+    const sc = onSelectNote.mock.calls
+    const lastCall = sc[sc.length - 1]?.[0] as string[]
     expect(lastCall).not.toContain('a')
   })
 })
@@ -289,7 +291,8 @@ describe('PianoRoll keyboard navigation', () => {
     } as DOMRect)
     fireEvent.pointerDown(noteEl, { button: 0, clientX: 100, clientY: 7, pointerId: 1 })
     fireEvent.keyDown(noteEl, { key: 'Delete' })
-    const lastCall = onSelectNote.mock.calls.at(-1)?.[0] as string[]
+    const sc2 = onSelectNote.mock.calls
+    const lastCall = sc2[sc2.length - 1]?.[0] as string[]
     expect(lastCall).not.toContain('a')
   })
 })
