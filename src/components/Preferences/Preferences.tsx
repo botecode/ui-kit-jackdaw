@@ -40,7 +40,8 @@ export function Preferences({
   onSelect,
   children,
 }: PreferencesProps) {
-  const titleId = useId()
+  const uid     = useId()
+  const titleId = `${uid}-title`
   const shellRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const portalTarget = usePortalTarget()
@@ -157,9 +158,9 @@ export function Preferences({
               <button
                 key={section.id}
                 role="tab"
-                id={`prefs-tab-${section.id}`}
+                id={`${uid}-tab-${section.id}`}
                 aria-selected={active === section.id}
-                aria-controls={`prefs-panel-${section.id}`}
+                aria-controls={`${uid}-panel-${section.id}`}
                 className={styles.navItem}
                 data-active={active === section.id || undefined}
                 onClick={() => onSelect(section.id)}
@@ -174,8 +175,8 @@ export function Preferences({
           {/* Content panel */}
           <div
             role="tabpanel"
-            id={`prefs-panel-${active}`}
-            aria-labelledby={`prefs-tab-${active}`}
+            id={`${uid}-panel-${active}`}
+            aria-labelledby={`${uid}-tab-${active}`}
             className={styles.content}
           >
             {children}
