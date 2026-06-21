@@ -206,3 +206,11 @@
   outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
   outline-offset: 2px;
 }
+
+/* Share button: secondary style + inline icon glyph */
+.btnShare {
+  composes: btnSecondary;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}

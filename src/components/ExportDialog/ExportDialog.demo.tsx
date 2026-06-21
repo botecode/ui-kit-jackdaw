@@ -163,6 +163,7 @@ function DoneCard() {
         onFilenameChange={() => {}}
         onRender={() => {}}
         onReveal={() => { alert('Reveal in Finder') }}
+        onShare={() => { alert('Share → macOS share sheet') }}
         onCancel={() => setOpen(false)}
       />
     </State>
@@ -300,6 +301,7 @@ function PlaygroundDemo() {
           onFilenameChange={setFilename}
           onRender={handleRender}
           onReveal={() => alert('Reveal in Finder')}
+          onShare={() => alert('Share → macOS share sheet')}
           onCancel={handleCancel}
         />
 
