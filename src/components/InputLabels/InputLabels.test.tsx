@@ -227,3 +227,31 @@ describe('InputLabels Escape revert', () => {
     expect(onLabel).not.toHaveBeenCalled()
   })
 })
+
+// ── Disabled state ────────────────────────────────────────────────────────────
+
+describe('InputLabels disabled', () => {
+  it('sets data-disabled on the root when disabled=true', () => {
+    const { container } = render(
+      <InputLabels inputs={INPUTS} onLabel={vi.fn()} disabled />,
+    )
+    expect(container.firstChild).toHaveAttribute('data-disabled')
+  })
+
+  it('does not set data-disabled when disabled is not passed', () => {
+    const { container } = render(
+      <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
+    )
+    expect(container.firstChild).not.toHaveAttribute('data-disabled')
+  })
+
+  it('marks all pill inputs as disabled', () => {
+    const { getAllByRole } = render(
+      <InputLabels inputs={INPUTS} onLabel={vi.fn()} disabled />,
+    )
+    for (const field of getAllByRole('textbox')) {
+      expect(field).toBeDisabled()
+    }
+  })
+
+})

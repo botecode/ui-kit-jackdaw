@@ -54,19 +54,19 @@ function StatesDemo() {
 
   return (
     <StatesGrid>
-      <State label="All empty (placeholders)">
+      <State label="Empty pills (placeholder)">
         <Panel title="Inputs" style={{ width: 300 }}>
           <InputLabels inputs={ALL_EMPTY} onLabel={() => {}} />
         </Panel>
       </State>
 
-      <State label="Some labelled">
+      <State label="Labelled pills">
         <Panel title="Inputs" style={{ width: 300 }}>
           <InputLabels inputs={SOME_LABELLED} onLabel={() => {}} />
         </Panel>
       </State>
 
-      <State label="Field editing (live)">
+      <State label="Inline edit (click any pill)">
         <Panel title="Inputs" style={{ width: 300 }}>
           <InputLabels
             inputs={editable}
@@ -80,6 +80,12 @@ function StatesDemo() {
       <State label="Many inputs (scroll)">
         <Panel title="Inputs" style={{ width: 300 }}>
           <InputLabels inputs={MANY} onLabel={() => {}} />
+        </Panel>
+      </State>
+
+      <State label="Disabled">
+        <Panel title="Inputs" style={{ width: 300 }}>
+          <InputLabels inputs={SOME_LABELLED} onLabel={() => {}} disabled />
         </Panel>
       </State>
 
@@ -102,8 +108,9 @@ function StatesDemo() {
 
 function PlaygroundDemo() {
   const [inputs, setInputs] = useState<InputEntry[]>(SOME_LABELLED)
-  const [useSmall, setUseSmall] = useState(false)
-  const [useMany,  setUseMany]  = useState(false)
+  const [useSmall,    setUseSmall]    = useState(false)
+  const [useMany,     setUseMany]     = useState(false)
+  const [useDisabled, setUseDisabled] = useState(false)
 
   const displayed = useMany
     ? MANY.map(m => ({ ...m, label: inputs.find(i => i.id === m.id)?.label ?? m.label }))
@@ -121,13 +128,15 @@ function PlaygroundDemo() {
             inputs={displayed}
             onLabel={handleLabel}
             size={useSmall ? 'sm' : 'md'}
+            disabled={useDisabled}
           />
         </Panel>
 
         {/* Controls — dogfooded from kit Toggle */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <Toggle checked={useSmall} onChange={setUseSmall} size="sm" label="size sm" />
-          <Toggle checked={useMany}  onChange={setUseMany}  size="sm" label="many inputs" />
+          <Toggle checked={useSmall}    onChange={setUseSmall}    size="sm" label="size sm" />
+          <Toggle checked={useMany}     onChange={setUseMany}     size="sm" label="many inputs" />
+          <Toggle checked={useDisabled} onChange={setUseDisabled} size="sm" label="disabled" />
           <p
             style={{
               fontFamily: 'var(--font-mono)',
