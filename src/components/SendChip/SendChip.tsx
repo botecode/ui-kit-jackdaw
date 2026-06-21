@@ -179,7 +179,7 @@ function SendChipPill({
         className={styles.chip}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Send to ${send.returnName}`}
+        aria-label={`Send to ${send.returnName}${send.automated ? ', automated' : ''}`}
         disabled={disabled}
         onClick={onClick}
       >
@@ -190,7 +190,7 @@ function SendChipPill({
           <span className={styles.preBadge} aria-hidden>pre</span>
         )}
         {send.automated && (
-          <span className={styles.autoDot} title="automated" aria-label="automated" />
+          <span className={styles.autoDot} title="automated" aria-hidden />
         )}
       </button>
       {open && (
@@ -220,9 +220,21 @@ interface AddSendButtonProps {
 function AddSendButton({ sends, returns, onAddSend, disabled }: AddSendButtonProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerPos,  setPickerPos]  = useState({ x: 0, y: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef  = useRef<HTMLDivElement>(null)
+  // The ContextMenu's Popover fires a mousedown-based outside-click that closes the
+  // picker when the user clicks this button. The subsequent click event would
+  // immediately reopen it. This flag lets handleClick skip that reopen pass.
+  const skipNextClick = useRef(false)
+
+  function handleClose() {
+    skipNextClick.current = true
+    setPickerOpen(false)
+    // Clear the guard after the click event has been processed.
+    setTimeout(() => { skipNextClick.current = false }, 0)
+  }
 
   function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
+    if (skipNextClick.current) return
     const rect = e.currentTarget.getBoundingClientRect()
     setPickerPos({ x: rect.left, y: rect.bottom + 4 })
     setPickerOpen(true)
@@ -261,7 +273,7 @@ function AddSendButton({ sends, returns, onAddSend, disabled }: AddSendButtonPro
         open={pickerOpen}
         x={pickerPos.x}
         y={pickerPos.y}
-        onClose={() => setPickerOpen(false)}
+        onClose={handleClose}
         aria-label="Add send"
       />
     </div>

@@ -66,6 +66,12 @@ describe('SendChip chip rendering', () => {
     expect(screen.getByTitle('automated')).toBeInTheDocument()
   })
 
+  it('chip button aria-label includes "automated" when automated=true', () => {
+    const automatedSend: SendEntry[] = [{ ...ONE_SEND[0], automated: true }]
+    render(<SendChip {...DEFAULT_PROPS} sends={automatedSend} />)
+    expect(screen.getByRole('button', { name: /Send to Reverb, automated/i })).toBeInTheDocument()
+  })
+
   it('no automation dot when automated=false/undefined', () => {
     render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} />)
     expect(screen.queryByTitle('automated')).not.toBeInTheDocument()
@@ -196,6 +202,55 @@ describe('SendChip popover', () => {
     expect(onSetSendLevel).toHaveBeenCalledWith('r1', 1)
   })
 
+  it('level clamped to 0 when ArrowDown from level=0', () => {
+    const onSetSendLevel = vi.fn()
+    const zeroLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0, tap: 'post' }]
+    render(<SendChip {...DEFAULT_PROPS} sends={zeroLevel} onSetSendLevel={onSetSendLevel} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    const slider = screen.getByRole('slider', { name: /send level/i })
+    fireEvent.keyDown(slider, { key: 'ArrowDown' })
+    expect(onSetSendLevel).toHaveBeenCalledWith('r1', 0)
+  })
+
+  it('Home key sets level to 0', () => {
+    const onSetSendLevel = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} onSetSendLevel={onSetSendLevel} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    fireEvent.keyDown(screen.getByRole('slider', { name: /send level/i }), { key: 'Home' })
+    expect(onSetSendLevel).toHaveBeenCalledWith('r1', 0)
+  })
+
+  it('End key sets level to 1', () => {
+    const onSetSendLevel = vi.fn()
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    fireEvent.keyDown(screen.getByRole('slider', { name: /send level/i }), { key: 'End' })
+    expect(onSetSendLevel).toHaveBeenCalledWith('r1', 1)
+  })
+
+  it('Shift+ArrowUp uses fine step of 0.01', () => {
+    const onSetSendLevel = vi.fn()
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    fireEvent.keyDown(screen.getByRole('slider', { name: /send level/i }), { key: 'ArrowUp', shiftKey: true })
+    expect(onSetSendLevel).toHaveBeenCalledWith('r1', expect.closeTo(0.51, 4))
+  })
+
+  it('pointer drag up on level slider increases level', () => {
+    HTMLElement.prototype.setPointerCapture = vi.fn()
+    const onSetSendLevel = vi.fn()
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    const slider = screen.getByRole('slider', { name: /send level/i })
+    fireEvent.pointerDown(slider, { clientY: 100, pointerId: 1 })
+    fireEvent.pointerMove(slider, { clientY: 80,  pointerId: 1 }) // 20px up → +0.10
+    fireEvent.pointerUp(slider,   { clientY: 80,  pointerId: 1 })
+    expect(onSetSendLevel).toHaveBeenCalledWith('r1', expect.closeTo(0.6, 4))
+  })
+
   it('tap toggle is aria-checked=false when tap=post', () => {
     render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
@@ -287,6 +342,23 @@ describe('SendChip + Send picker', () => {
     fireEvent.click(screen.getByRole('button', { name: /add send/i }))
     expect(screen.getByRole('menu')).toBeInTheDocument()
     fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('clicking outside the open picker (mousedown) closes it and does not reopen', () => {
+    render(
+      <div>
+        <div data-testid="outside">out</div>
+        <SendChip {...DEFAULT_PROPS} />
+      </div>
+    )
+    fireEvent.click(screen.getByRole('button', { name: /add send/i }))
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    // Simulate the outside-mousedown + subsequent click on the trigger button.
+    // mousedown fires the Popover outside-click handler (closes the menu);
+    // the skipNextClick guard must prevent handleClick from reopening it.
+    fireEvent.mouseDown(screen.getByRole('button', { name: /add send/i }))
+    fireEvent.click(screen.getByRole('button', { name: /add send/i }))
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 })
