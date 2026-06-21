@@ -10,8 +10,8 @@
   height: 100%;
   padding: var(--space-2) 0;
   background: var(--bg);
-  /* Hairline right border — subtle seam between rail and main canvas */
-  box-shadow: inset -1px 0 0 0 var(--border);
+  /* Hairline left border — subtle seam between main canvas and rail on right edge */
+  box-shadow: inset 1px 0 0 0 var(--border);
 }
 
 .rail[data-collapsed] {

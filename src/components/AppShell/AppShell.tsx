@@ -383,7 +383,7 @@ export function AppShell({
         data-right-panel={rightPanelOpen || undefined}
         data-testid="app-shell"
       >
-        {/* ── Nav rail — left column, full height ─────────────────────────── */}
+        {/* ── Nav rail — right column, full height ────────────────────────── */}
         <div className={styles.navCol}>
           <NavRail
             items={NAV_ITEMS}
@@ -391,6 +391,9 @@ export function AppShell({
             active={activeSection}
             onSelect={id => onSelectSection(id as NavSection)}
             aria-label="Application navigation"
+            side="left"
+            mixerOpen={mixerOpen}
+            onToggleMixer={onToggleMixer}
           />
         </div>
 
@@ -422,8 +425,6 @@ export function AppShell({
             onSetTempo={onSetTempo}
             onSetTimeSignature={onSetTimeSignature}
             onClockModeChange={onClockModeChange}
-            mixerOpen={mixerOpen}
-            onToggleMixer={onToggleMixer}
             disabled={disabled}
           />
         </div>

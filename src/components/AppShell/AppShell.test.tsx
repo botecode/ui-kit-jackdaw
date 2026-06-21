@@ -165,11 +165,16 @@ describe('AppShell', () => {
     expect(screen.getByRole('region', { name: 'Mixer' })).toBeTruthy()
   })
 
-  it('calls onToggleMixer when the mixer toggle button in transport is clicked', () => {
+  it('calls onToggleMixer when the mixer button in the nav rail is clicked', () => {
     const onToggleMixer = vi.fn()
     render(<AppShell {...BASE} mixerOpen={false} onToggleMixer={onToggleMixer} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle mixer' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Mixer' }))
     expect(onToggleMixer).toHaveBeenCalledWith(true)
+  })
+
+  it('mixer button in nav rail reflects open state via aria-pressed', () => {
+    render(<AppShell {...BASE} mixerOpen={true} />)
+    expect(screen.getByRole('button', { name: 'Mixer' }).getAttribute('aria-pressed')).toBe('true')
   })
 
   it('does not render detail panel when detailTrack is undefined', () => {

@@ -209,6 +209,65 @@ describe('NavRail keyboard navigation', () => {
   })
 })
 
+// ── Mixer toggle ───────────────────────────────────────────────────────────────
+
+describe('NavRail mixer toggle', () => {
+  it('does not render a Mixer button when onToggleMixer is not provided', () => {
+    renderRail()
+    expect(screen.queryByRole('button', { name: 'Mixer' })).toBeNull()
+  })
+
+  it('renders a Mixer button when onToggleMixer is provided', () => {
+    const onToggleMixer = vi.fn()
+    renderRail({ mixerOpen: false, onToggleMixer })
+    expect(screen.getByRole('button', { name: 'Mixer' })).toBeInTheDocument()
+  })
+
+  it('mixer button has aria-pressed=false when mixerOpen=false', () => {
+    renderRail({ mixerOpen: false, onToggleMixer: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Mixer' }).getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('mixer button has aria-pressed=true when mixerOpen=true', () => {
+    renderRail({ mixerOpen: true, onToggleMixer: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Mixer' }).getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('mixer button has data-active when mixerOpen=true', () => {
+    renderRail({ mixerOpen: true, onToggleMixer: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Mixer' })).toHaveAttribute('data-active')
+  })
+
+  it('mixer button does not have data-active when mixerOpen=false', () => {
+    renderRail({ mixerOpen: false, onToggleMixer: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Mixer' })).not.toHaveAttribute('data-active')
+  })
+
+  it('clicking mixer button calls onToggleMixer with toggled value', () => {
+    const onToggleMixer = vi.fn()
+    renderRail({ mixerOpen: false, onToggleMixer })
+    fireEvent.click(screen.getByRole('button', { name: 'Mixer' }))
+    expect(onToggleMixer).toHaveBeenCalledWith(true)
+  })
+
+  it('clicking mixer button calls onToggleMixer(false) when mixer is open', () => {
+    const onToggleMixer = vi.fn()
+    renderRail({ mixerOpen: true, onToggleMixer })
+    fireEvent.click(screen.getByRole('button', { name: 'Mixer' }))
+    expect(onToggleMixer).toHaveBeenCalledWith(false)
+  })
+
+  it('ArrowDown on mixer button moves focus to next footer item', () => {
+    const onToggleMixer = vi.fn()
+    renderRail({ mixerOpen: false, onToggleMixer })
+    const mixerBtn   = screen.getByRole('button', { name: 'Mixer' })
+    const settingsBtn = screen.getByRole('button', { name: 'Settings' })
+    mixerBtn.focus()
+    fireEvent.keyDown(mixerBtn, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(settingsBtn)
+  })
+})
+
 // ── Empty state ────────────────────────────────────────────────────────────────
 
 describe('NavRail empty state', () => {
