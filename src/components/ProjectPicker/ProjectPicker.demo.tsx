@@ -51,6 +51,7 @@ const BTN: React.CSSProperties = {
 
 function MainViewCard() {
   const [open, setOpen] = useState(false)
+  const [previewingId, setPreviewingId] = useState<string | null>(null)
   return (
     <State label="Main view (projects + recent)">
       <button style={BTN} onClick={() => setOpen(true)}>Open picker</button>
@@ -63,6 +64,31 @@ function MainViewCard() {
         onNewFromCode={() => setOpen(false)}
         onOpen={() => setOpen(false)}
         onBrowse={() => setOpen(false)}
+        onPreview={id => setPreviewingId(id)}
+        previewingId={previewingId}
+      />
+    </State>
+  )
+}
+
+function PlayingStateCard() {
+  const [open, setOpen] = useState(false)
+  // p2 is previewing on open so the playing state is immediately visible
+  const [previewingId, setPreviewingId] = useState<string | null>('p2')
+  return (
+    <State label="Playing state (Demo Track previewing)">
+      <button style={BTN} onClick={() => setOpen(true)}>Open (playing)</button>
+      <ProjectPicker
+        open={open}
+        onClose={() => setOpen(false)}
+        projects={FEW_PROJECTS}
+        recent={RECENT}
+        onNew={() => setOpen(false)}
+        onNewFromCode={() => setOpen(false)}
+        onOpen={() => setOpen(false)}
+        onBrowse={() => setOpen(false)}
+        onPreview={id => setPreviewingId(id)}
+        previewingId={previewingId}
       />
     </State>
   )
@@ -89,6 +115,7 @@ function EmptyStateCard() {
 
 function ManyProjectsCard() {
   const [open, setOpen] = useState(false)
+  const [previewingId, setPreviewingId] = useState<string | null>(null)
   return (
     <State label="Many projects (scrollable list)">
       <button style={BTN} onClick={() => setOpen(true)}>Open with 8 projects</button>
@@ -101,6 +128,8 @@ function ManyProjectsCard() {
         onNewFromCode={() => setOpen(false)}
         onOpen={() => setOpen(false)}
         onBrowse={() => setOpen(false)}
+        onPreview={id => setPreviewingId(id)}
+        previewingId={previewingId}
       />
     </State>
   )
@@ -108,6 +137,7 @@ function ManyProjectsCard() {
 
 function NoRecentCard() {
   const [open, setOpen] = useState(false)
+  const [previewingId, setPreviewingId] = useState<string | null>(null)
   return (
     <State label="Projects but no recent">
       <button style={BTN} onClick={() => setOpen(true)}>Open (no recent)</button>
@@ -120,6 +150,8 @@ function NoRecentCard() {
         onNewFromCode={() => setOpen(false)}
         onOpen={() => setOpen(false)}
         onBrowse={() => setOpen(false)}
+        onPreview={id => setPreviewingId(id)}
+        previewingId={previewingId}
       />
     </State>
   )
@@ -131,6 +163,7 @@ function StatesDemo() {
   return (
     <StatesGrid>
       <MainViewCard />
+      <PlayingStateCard />
       <EmptyStateCard />
       <ManyProjectsCard />
       <NoRecentCard />
@@ -141,10 +174,11 @@ function StatesDemo() {
 // ── Playground ─────────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [open,        setOpen]        = useState(false)
-  const [hasProjects, setHasProjects] = useState(true)
-  const [hasRecent,   setHasRecent]   = useState(true)
-  const [lastAction,  setLastAction]  = useState<string | null>(null)
+  const [open,         setOpen]         = useState(false)
+  const [hasProjects,  setHasProjects]  = useState(true)
+  const [hasRecent,    setHasRecent]    = useState(true)
+  const [previewingId, setPreviewingId] = useState<string | null>(null)
+  const [lastAction,   setLastAction]   = useState<string | null>(null)
 
   const projects = hasProjects ? MANY_PROJECTS.slice(0, 4) : []
   const recent   = hasRecent   ? RECENT                    : []
@@ -175,6 +209,11 @@ function PlaygroundDemo() {
           onNewFromCode={(code) => { setOpen(false); setLastAction(`onNewFromCode("${code}")`) }}
           onOpen={(id) => { setOpen(false); setLastAction(`onOpen("${id}")`) }}
           onBrowse={() => { setOpen(false); setLastAction('onBrowse()') }}
+          onPreview={(id) => {
+            setPreviewingId(id)
+            setLastAction(id ? `onPreview("${id}")` : 'onPreview(null)')
+          }}
+          previewingId={previewingId}
         />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>

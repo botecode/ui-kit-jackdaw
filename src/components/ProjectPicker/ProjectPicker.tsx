@@ -1,6 +1,6 @@
 // src/components/ProjectPicker/ProjectPicker.tsx
 import { useState, useRef, useEffect } from 'react'
-import { FilePlus, ShareNetwork, X } from '@phosphor-icons/react'
+import { FilePlus, ShareNetwork, X, Play, Stop } from '@phosphor-icons/react'
 import { Dialog } from '../Dialog'
 import { TextField } from '../TextField'
 import styles from './ProjectPicker.module.css'
@@ -21,6 +21,10 @@ export interface ProjectPickerProps {
   onNewFromCode: (code: string) => void
   onOpen: (id: string) => void
   onBrowse: () => void
+  /** Emit with the project id to start preview; null to stop */
+  onPreview?: (id: string | null) => void
+  /** Id of the project currently being previewed, if any */
+  previewingId?: string | null
 }
 
 function formatDate(iso: string): string {
@@ -43,6 +47,8 @@ export function ProjectPicker({
   onNewFromCode,
   onOpen,
   onBrowse,
+  onPreview,
+  previewingId,
 }: ProjectPickerProps) {
   const [codeExpanded, setCodeExpanded] = useState(false)
   const [code, setCode] = useState('')
@@ -181,25 +187,48 @@ export function ProjectPicker({
               className={styles.projectList}
               onKeyDown={handleListKeyDown}
             >
-              {projects.map((proj, idx) => (
-                <div
-                  key={proj.id}
-                  role="option"
-                  aria-selected={idx === focusedIdx}
-                  tabIndex={idx === focusedIdx ? 0 : -1}
-                  className={styles.projectItem}
-                  data-selected={idx === focusedIdx || undefined}
-                  ref={el => { itemRefs.current[idx] = el }}
-                  onClick={() => { setFocusedIdx(idx); onOpen(proj.id) }}
-                  onFocus={() => setFocusedIdx(idx)}
-                >
-                  <span className={styles.projectName}>{proj.name}</span>
-                  <span className={styles.projectPath}>{proj.path}</span>
-                  <time className={styles.projectDate} dateTime={proj.lastOpened}>
-                    {formatDate(proj.lastOpened)}
-                  </time>
-                </div>
-              ))}
+              {projects.map((proj, idx) => {
+                const isPlaying = previewingId === proj.id
+                return (
+                  <div
+                    key={proj.id}
+                    role="option"
+                    aria-selected={idx === focusedIdx}
+                    tabIndex={idx === focusedIdx ? 0 : -1}
+                    className={styles.projectCard}
+                    data-selected={idx === focusedIdx || undefined}
+                    data-playing={isPlaying || undefined}
+                    ref={el => { itemRefs.current[idx] = el }}
+                    onClick={() => { setFocusedIdx(idx); onOpen(proj.id) }}
+                    onFocus={() => setFocusedIdx(idx)}
+                  >
+                    <span className={styles.cardInfo}>
+                      <span className={styles.projectName}>{proj.name}</span>
+                      <span className={styles.cardMeta}>
+                        <span className={styles.projectPath}>{proj.path}</span>
+                        <time className={styles.projectDate} dateTime={proj.lastOpened}>
+                          {formatDate(proj.lastOpened)}
+                        </time>
+                      </span>
+                    </span>
+                    <button
+                      className={styles.playBtn}
+                      data-playing={isPlaying || undefined}
+                      tabIndex={-1}
+                      aria-label={isPlaying ? 'Stop preview' : `Preview ${proj.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onPreview?.(isPlaying ? null : proj.id)
+                      }}
+                    >
+                      {isPlaying
+                        ? <Stop size={13} weight="fill" />
+                        : <Play size={13} weight="fill" />
+                      }
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
 
