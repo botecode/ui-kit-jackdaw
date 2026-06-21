@@ -1,0 +1,83 @@
+/* src/components/Mixer/Mixer.module.css */
+
+/* ── Root — the panel shell ───────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: var(--stage);
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+
+  /* Consumer controls height via the layout — we just establish the surface */
+  min-height: 220px;
+  max-height: 380px;
+
+  /* Warm texture from stage tokens */
+  background-image: var(--texture-stage, none);
+  background-blend-mode: overlay;
+}
+
+/* ── Master anchor — pinned, never scrolls ────────────────────────────────── */
+
+.masterAnchor {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  padding: var(--space-2);
+  /* Slightly elevated so master reads as distinct from the track sea */
+  background: color-mix(in srgb, var(--stage) 80%, black);
+  border-right: 1px solid var(--border);
+}
+
+/* ── Divider between master and scrollable area ───────────────────────────── */
+
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--border) 40%, transparent);
+  /* hidden — the masterAnchor border-right already acts as the divider;
+     this element provides a gap token slot for future tweaks */
+  display: none;
+}
+
+/* ── Scrollable track area ────────────────────────────────────────────────── */
+
+.scrollArea {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Smooth momentum scroll on touch/trackpad */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* Subtle scrollbar that doesn't fight the dark surface */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollArea::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollArea::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* ── Strip slot (listitem wrapper) ───────────────────────────────────────── */
+
+.stripSlot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+}
