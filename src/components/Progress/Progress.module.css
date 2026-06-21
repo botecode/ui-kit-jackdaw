@@ -1,0 +1,188 @@
+/* src/components/Progress/Progress.module.css */
+
+/* ── Bar wrapper ──────────────────────────────────────────────────────────── */
+
+.barWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+/* ── Bar track (the progressbar role element) ─────────────────────────────── */
+
+/*
+  Recessed well: the same groove recipe used on the Toggle pill and Fader channel.
+  overflow:hidden clips the fill to the rounded track without masking the outer
+  border-glow (the box-shadow ring sits outside the clip boundary).
+*/
+
+.bar {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--border);
+}
+
+.bar[data-size='md'] { height: 6px; }
+.bar[data-size='sm'] { height: 3px; }
+
+/* ── Bar fill ─────────────────────────────────────────────────────────────── */
+
+/*
+  scaleX instead of animating width — avoids layout thrash.
+  width:100% always; transform scales it from the left edge.
+  border-radius on a scaleX'd element compresses the right-side radius at low
+  values, which is barely visible at 6px height and preferable to reflow cost.
+*/
+
+.barFill {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  /* Rightward LED bloom at the fill tip */
+  box-shadow: 4px 0 10px 1px color-mix(in srgb, var(--accent) 50%, transparent);
+  /* Functional motion: stays under prefers-reduced-motion */
+  transition: transform var(--dur-base) linear;
+  transform: scaleX(var(--_fill, 0));
+  transform-origin: left center;
+}
+
+/* ── Bar indeterminate: travelling shimmer ────────────────────────────────── */
+
+/*
+  A 30%-wide element translates across the full track width.
+  Gradient fade at both ends keeps it soft, not mechanical.
+  transform-origin: left ensures the X translation is relative to the element's
+  own left edge so the math is predictable.
+*/
+
+.bar[data-indeterminate] .barFill {
+  width: 30%;
+  box-shadow: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 60%, transparent) 30%,
+    var(--accent) 50%,
+    color-mix(in srgb, var(--accent) 60%, transparent) 70%,
+    transparent 100%
+  );
+  transition: none;
+  animation: bar-sweep 1.8s ease-in-out infinite;
+}
+
+@keyframes bar-sweep {
+  0%   { transform: translateX(-160%); }
+  100% { transform: translateX(440%); }
+}
+
+/* ── Ring wrapper ─────────────────────────────────────────────────────────── */
+
+.ringWrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Ring SVG ─────────────────────────────────────────────────────────────── */
+
+/*
+  Rotated -90deg so the fill arc starts at 12 o'clock, matching convention
+  (SplashScreen, every progress ring ever). transform-origin:center is
+  required so the rotation pivots at the SVG's own center, not the viewport.
+*/
+
+.ring {
+  transform: rotate(-90deg);
+  transform-origin: center;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* Indeterminate: full rotation, 1.4s linear gives a calm, instrument-like sweep */
+.ring[data-indeterminate] {
+  animation: ring-spin 1.4s linear infinite;
+}
+
+@keyframes ring-spin {
+  from { transform: rotate(-90deg); }
+  to   { transform: rotate(270deg); }
+}
+
+/* ── Ring track ───────────────────────────────────────────────────────────── */
+
+.ringTrack {
+  fill: none;
+  stroke: var(--border);
+}
+
+/* ── Ring fill ────────────────────────────────────────────────────────────── */
+
+.ringFill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  /* Functional motion: the fill arc advancing with progress stays under reduced-motion */
+  transition: stroke-dashoffset var(--dur-base) linear;
+}
+
+/* Warm LED bloom when complete */
+.ring:not([data-indeterminate])[aria-valuenow='100'] .ringFill {
+  stroke: color-mix(in srgb, var(--accent) 85%, white);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 55%, transparent));
+}
+
+/* ── Label ────────────────────────────────────────────────────────────────── */
+
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+/* ── Reduced-motion ───────────────────────────────────────────────────────── */
+/*
+  Functional motion (the fill width / arc advancing) keeps its transition — that
+  information conveys progress and must stay per KIT-LEAD.
+  Decorative indeterminate animations (the sweep / spin) are swapped for a
+  quiet opacity pulse so there is still a "loading" signal with zero movement.
+*/
+
+@media (prefers-reduced-motion: reduce) {
+  .bar[data-indeterminate] .barFill {
+    width: 100%;
+    transform: none;
+    animation: bar-pulse 1.8s ease-in-out infinite;
+    background: var(--accent);
+    box-shadow: none;
+  }
+
+  @keyframes bar-pulse {
+    0%, 100% { opacity: 0.25; }
+    50%       { opacity: 0.55; }
+  }
+
+  .ring[data-indeterminate] {
+    animation: none;
+    transform: rotate(-90deg);
+  }
+
+  .ring[data-indeterminate] .ringFill {
+    animation: ring-pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes ring-pulse {
+    0%, 100% { opacity: 0.25; }
+    50%       { opacity: 0.65; }
+  }
+}
