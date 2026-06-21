@@ -33,13 +33,13 @@
 /* ─── Sizes ──────────────────────────────────────────────────────────────── */
 
 .root[data-size="md"] {
-  padding: var(--space-2) var(--space-3);
-  min-width: 168px;
+  padding: var(--space-1) var(--space-2);
+  min-width: 100px;
 }
 
 .root[data-size="sm"] {
-  padding: var(--space-1) var(--space-2);
-  min-width: 120px;
+  padding: 3px var(--space-2);
+  min-width: 72px;
 }
 
 /* ─── Hover ──────────────────────────────────────────────────────────────── */
@@ -133,9 +133,9 @@
 }
 
 .root[data-size="md"] .position {
-  font-size: 28px;
+  font-size: 18px;
 }
 
 .root[data-size="sm"] .position {
-  font-size: 20px;
+  font-size: 13px;
 }

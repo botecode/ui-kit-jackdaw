@@ -338,6 +338,8 @@ export interface TransportBarProps {
   /** Clock display mode */
   clockMode?: 'bars' | 'time'
   onClockModeChange?: (mode: 'bars' | 'time') => void
+  /** How many time units the clock shows. 1=coarse, 3=full. Default 3. */
+  clockPrecision?: 1 | 2 | 3
 
   /** Transport callbacks */
   onPlay: () => void
@@ -382,6 +384,7 @@ export function TransportBar({
   rate,
   clockMode = 'bars',
   onClockModeChange,
+  clockPrecision = 3,
   onPlay,
   onStop,
   onGoToStart,
@@ -450,6 +453,7 @@ export function TransportBar({
           state={clockState}
           mode={clockMode}
           onModeChange={onClockModeChange}
+          precision={clockPrecision}
           size={size}
         />
       </div>

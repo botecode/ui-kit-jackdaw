@@ -12,21 +12,27 @@ const STATE_LABELS: Record<ClockState, string> = {
   recording: 'Recording',
 }
 
-/** seconds → bars.beats.ticks string (1-indexed, ticks 0-padded 2 digits) */
-function toBarsBeats(seconds: number, bpm: number, numerator: number): string {
-  if (bpm <= 0 || numerator <= 0) return '-.-.--'
+const BARS_FALLBACK: Record<1 | 2 | 3, string> = { 1: '-', 2: '-.-', 3: '-.-.--' }
+
+/** seconds → bars string, precision controls how many units: 1=bar, 2=bar.beat, 3=bar.beat.tick */
+function toBarsBeats(seconds: number, bpm: number, numerator: number, precision: 1 | 2 | 3): string {
+  if (bpm <= 0 || numerator <= 0) return BARS_FALLBACK[precision]
   const beats = Math.max(0, seconds) * (bpm / 60)
   const bar = Math.floor(beats / numerator) + 1
+  if (precision === 1) return `${bar}`
   const beat = Math.floor(beats % numerator) + 1
+  if (precision === 2) return `${bar}.${beat}`
   const tick = Math.floor((beats % 1) * TICKS_PER_BEAT)
   return `${bar}.${beat}.${String(tick).padStart(2, '0')}`
 }
 
-/** seconds → m:ss.mmm string */
-function toMinSec(seconds: number): string {
+/** seconds → time string, precision controls units: 1=m, 2=m:ss, 3=m:ss.mmm */
+function toMinSec(seconds: number, precision: 1 | 2 | 3): string {
   const s = Math.max(0, seconds)
   const m = Math.floor(s / 60)
+  if (precision === 1) return `${m}`
   const sec = Math.floor(s % 60)
+  if (precision === 2) return `${m}:${String(sec).padStart(2, '0')}`
   const ms = Math.floor((s % 1) * 1000)
   return `${m}:${String(sec).padStart(2, '0')}.${String(ms).padStart(3, '0')}`
 }
@@ -49,6 +55,12 @@ export interface ClockProps {
   /** Display mode. Default 'bars'. */
   mode?: 'bars' | 'time'
   onModeChange?: (mode: 'bars' | 'time') => void
+  /**
+   * How many time units to show. Default 3 (all).
+   * bars mode: 1=bar, 2=bar.beat, 3=bar.beat.tick
+   * time mode: 1=m, 2=m:ss, 3=m:ss.mmm
+   */
+  precision?: 1 | 2 | 3
   size?: 'sm' | 'md'
 }
 
@@ -60,11 +72,12 @@ export function Clock({
   state,
   mode = 'bars',
   onModeChange,
+  precision = 3,
   size = 'md',
 }: ClockProps) {
   const position = mode === 'bars'
-    ? toBarsBeats(seconds, bpm, numerator)
-    : toMinSec(seconds)
+    ? toBarsBeats(seconds, bpm, numerator, precision)
+    : toMinSec(seconds, precision)
 
   const nextMode: 'bars' | 'time' = mode === 'bars' ? 'time' : 'bars'
 
@@ -79,6 +92,7 @@ export function Clock({
       data-size={size}
       data-state={state}
       data-mode={mode}
+      data-precision={precision}
       aria-label={`Position display, ${mode} mode. Switch to ${nextMode} mode`}
       onClick={handleClick}
     >

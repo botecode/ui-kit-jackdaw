@@ -138,6 +138,54 @@ function StatesDemo() {
           mode="bars"
         />
       </State>
+
+      <State label="precision=2 (bars mode)">
+        <Clock
+          seconds={37.5}
+          bpm={120}
+          numerator={4}
+          denominator={4}
+          state="stopped"
+          mode="bars"
+          precision={2}
+        />
+      </State>
+
+      <State label="precision=1 (bars mode)">
+        <Clock
+          seconds={37.5}
+          bpm={120}
+          numerator={4}
+          denominator={4}
+          state="stopped"
+          mode="bars"
+          precision={1}
+        />
+      </State>
+
+      <State label="precision=2 (time mode)">
+        <Clock
+          seconds={73.456}
+          bpm={120}
+          numerator={4}
+          denominator={4}
+          state="playing"
+          mode="time"
+          precision={2}
+        />
+      </State>
+
+      <State label="precision=1 (time mode)">
+        <Clock
+          seconds={73.456}
+          bpm={120}
+          numerator={4}
+          denominator={4}
+          state="playing"
+          mode="time"
+          precision={1}
+        />
+      </State>
     </StatesGrid>
   )
 }
@@ -147,6 +195,7 @@ function StatesDemo() {
 function PlaygroundDemo() {
   const [state, setState] = useState<'stopped' | 'playing' | 'recording'>('stopped')
   const [mode, setMode] = useState<'bars' | 'time'>('bars')
+  const [precision, setPrecision] = useState<1 | 2 | 3>(3)
   const [size, setSize] = useState<'sm' | 'md'>('md')
   const [running, setRunning] = useState(false)
   const liveSeconds = useLiveSeconds(running, 0)
@@ -182,6 +231,7 @@ function PlaygroundDemo() {
           state={state}
           mode={mode}
           onModeChange={setMode}
+          precision={precision}
           size={size}
         />
 
@@ -208,6 +258,19 @@ function PlaygroundDemo() {
             >
               <option value="md">md</option>
               <option value="sm">sm</option>
+            </select>
+          </label>
+
+          <label style={labelStyle}>
+            precision
+            <select
+              value={precision}
+              onChange={e => setPrecision(Number(e.target.value) as 1 | 2 | 3)}
+              style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)' }}
+            >
+              <option value={3}>3 — full</option>
+              <option value={2}>2 — mid</option>
+              <option value={1}>1 — coarse</option>
             </select>
           </label>
 
