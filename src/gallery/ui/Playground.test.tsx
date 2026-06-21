@@ -47,4 +47,9 @@ describe('Playground', () => {
     const controls = section.lastElementChild!
     expect(controls.childElementCount).toBe(3)
   })
+
+  it('is a labeled region for screen reader navigation', () => {
+    render(<Playground><div>content</div></Playground>)
+    expect(screen.getByRole('region', { name: 'Playground' })).toBeInTheDocument()
+  })
 })

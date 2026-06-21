@@ -1,5 +1,7 @@
 /* src/gallery/ui/Playground.module.css */
-.section {}
+.section {
+  width: 100%;
+}
 
 .heading {
   font-family: var(--font-ui);
@@ -20,6 +22,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  overflow-x: auto;
 }
 
 /* when a single wrapper div is the only child, let it fill the available width */
