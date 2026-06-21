@@ -164,27 +164,6 @@
   color: var(--text-dim);
 }
 
-/* ── Key badge (kbd) ─────────────────────────────────────────────────────── */
-
-.keybadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px var(--space-1);
-  background: var(--stage);
-  border: 1px solid var(--border-strong);
-  border-radius: calc(var(--radius) * 0.5);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.4);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--stage-text);
-  line-height: 1;
-  white-space: nowrap;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
 /* ── Capturing hint ("Press a key…") ────────────────────────────────────── */
 
 .capturingHint {

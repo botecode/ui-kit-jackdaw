@@ -3,6 +3,7 @@ import { useEffect, useId, useState } from 'react'
 import styles from './Shortcuts.module.css'
 import { InputSelect } from '../InputSelect'
 import type { InputSelectOption } from '../InputSelect'
+import { Kbd } from '../Kbd'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -103,7 +104,7 @@ function ActionRow({ action, capturing, onStartCapture, onCapture, onCancelCaptu
         {capturing ? (
           <span className={styles.capturingHint} aria-live="polite">Press a key…</span>
         ) : action.bindings.length > 0 ? (
-          action.bindings.map(b => <kbd key={b} className={styles.keybadge}>{b}</kbd>)
+          action.bindings.map(b => <Kbd key={b} binding={b} size="sm" />)
         ) : (
           <span className={styles.noBinding}>—</span>
         )}
@@ -312,7 +313,7 @@ export function Shortcuts({ actions, onRebind, onCreateMacro }: ShortcutsProps) 
               {capturingMacroKey ? (
                 <span className={styles.capturingHint} aria-live="polite">Press a key…</span>
               ) : macroKey ? (
-                <kbd className={styles.keybadge}>{macroKey}</kbd>
+                <Kbd binding={macroKey} size="sm" />
               ) : (
                 'Assign key…'
               )}

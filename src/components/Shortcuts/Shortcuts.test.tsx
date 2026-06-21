@@ -29,9 +29,10 @@ describe('Shortcuts — rendering', () => {
     expect(screen.getByText('Undo')).toBeInTheDocument()
   })
 
-  it('renders existing bindings as kbd elements', () => {
+  it('renders existing bindings as Kbd elements', () => {
     render(<Shortcuts {...BASE} />)
-    expect(screen.getByText('⌘C')).toBeInTheDocument()
+    // Kbd renders binding='⌘C' as role="img" with aria-label "Command C"
+    expect(screen.getByRole('img', { name: 'Command C' })).toBeInTheDocument()
   })
 
   it('shows — for actions with no bindings', () => {
@@ -162,11 +163,12 @@ describe('Shortcuts — macro builder', () => {
     expect(screen.getAllByText('Press a key…').length).toBeGreaterThan(0)
   })
 
-  it('captures a macro key and displays it as a kbd badge', () => {
+  it('captures a macro key and displays it as a Kbd element', () => {
     render(<Shortcuts {...BASE} />)
     fireEvent.click(screen.getByText('Assign key…'))
     fireEvent.keyDown(window, { key: 'M', ctrlKey: true })
-    expect(screen.getByText('Ctrl+M')).toBeInTheDocument()
+    // Kbd renders binding='Ctrl+M' as role="img" with aria-label "Ctrl M"
+    expect(screen.getByRole('img', { name: 'Ctrl M' })).toBeInTheDocument()
   })
 
   it('calls onCreateMacro with name, steps, key when form is complete', () => {
