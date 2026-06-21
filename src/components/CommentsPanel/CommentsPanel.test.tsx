@@ -389,3 +389,69 @@ describe('CommentsPanel — author identity: data-own', () => {
     expect(screen.getByTestId('comment-card-c1')).not.toHaveAttribute('data-own')
   })
 })
+
+// ── Grouping — consecutive same-author messages ───────────────────────────────
+
+const ALICE_RUN: Comment[] = [
+  { id: 'g1', author: ALICE, time: 1_700_000_000_000, text: 'First message.' },
+  { id: 'g2', author: ALICE, time: 1_700_000_001_000, text: 'Second message.' },
+  { id: 'g3', author: BOB,   time: 1_700_000_002_000, text: 'Bob chimes in.' },
+  { id: 'g4', author: ALICE, time: 1_700_000_003_000, text: 'Alice again.' },
+]
+
+describe('CommentsPanel — grouping', () => {
+  it('first message in a run has no data-grouped', () => {
+    render(<CommentsPanel {...makeProps({ comments: ALICE_RUN })} />)
+    expect(screen.getByTestId('comment-card-g1')).not.toHaveAttribute('data-grouped')
+  })
+
+  it('second consecutive same-author message gets data-grouped', () => {
+    render(<CommentsPanel {...makeProps({ comments: ALICE_RUN })} />)
+    expect(screen.getByTestId('comment-card-g2')).toHaveAttribute('data-grouped')
+  })
+
+  it('message from a different author resets the group (no data-grouped)', () => {
+    render(<CommentsPanel {...makeProps({ comments: ALICE_RUN })} />)
+    expect(screen.getByTestId('comment-card-g3')).not.toHaveAttribute('data-grouped')
+  })
+
+  it('first message after a break has no data-grouped even if same author later', () => {
+    render(<CommentsPanel {...makeProps({ comments: ALICE_RUN })} />)
+    expect(screen.getByTestId('comment-card-g4')).not.toHaveAttribute('data-grouped')
+  })
+
+  it('all messages still render body text', () => {
+    render(<CommentsPanel {...makeProps({ comments: ALICE_RUN })} />)
+    expect(screen.getByText('First message.')).toBeInTheDocument()
+    expect(screen.getByText('Second message.')).toBeInTheDocument()
+    expect(screen.getByText('Bob chimes in.')).toBeInTheDocument()
+    expect(screen.getByText('Alice again.')).toBeInTheDocument()
+  })
+})
+
+// ── Chat bubble structure ─────────────────────────────────────────────────────
+
+describe('CommentsPanel — bubble structure', () => {
+  it('hides avatar for grouped (non-first) messages from the same author', () => {
+    // Two consecutive Alice messages only — so exactly one AL avatar should appear
+    const twoAlice: Comment[] = [
+      { id: 'ta1', author: ALICE, time: 1_700_000_000_000, text: 'First.' },
+      { id: 'ta2', author: ALICE, time: 1_700_000_001_000, text: 'Second.' },
+    ]
+    render(<CommentsPanel {...makeProps({ comments: twoAlice })} />)
+    const initials = screen.getAllByText('AL')
+    expect(initials).toHaveLength(1)
+  })
+
+  it('reply text renders inside the threaded replies section', () => {
+    render(<CommentsPanel {...makeProps({ comments: [THREAD_COMMENT] })} />)
+    expect(screen.getByText('Agreed, will re-record.')).toBeInTheDocument()
+  })
+
+  it('reply author name renders for collaborator replies', () => {
+    render(<CommentsPanel {...makeProps({ comments: [THREAD_COMMENT] })} />)
+    // Both Alice (parent) and Bob (reply) names should appear
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.getByText('Bob')).toBeInTheDocument()
+  })
+})
