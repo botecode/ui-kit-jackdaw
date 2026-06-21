@@ -1,0 +1,151 @@
+/* src/components/Avatar/Avatar.module.css */
+
+/* ─── Root ───────────────────────────────────────────────────────────────────── */
+
+/*
+  Each avatar is a recessed circular well lit from behind by the user's palette
+  color. The ring (outer box-shadow 2px) uses --_avatar-color directly; the fill
+  is a 22% tint of that color blended into --stage so initials read over a
+  consistent dark ground across all themes without hardcoding any text color.
+
+  overflow:hidden clips the img but NOT the status dot — the dot is a child
+  positioned outside the image area at the avatar's edge, so it needs to escape.
+  We handle this by NOT using overflow:hidden here; the dot's own border ring
+  provides the visual separation from the avatar edge.
+*/
+
+.root {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--_avatar-color) 22%, var(--stage));
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--_avatar-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Sizes ──────────────────────────────────────────────────────────────────── */
+
+.root[data-size="xs"] { width: 20px; height: 20px; }
+.root[data-size="sm"] { width: 28px; height: 28px; }
+.root[data-size="md"] { width: 36px; height: 36px; }
+
+/* ─── Image ──────────────────────────────────────────────────────────────────── */
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+/* ─── Initials ───────────────────────────────────────────────────────────────── */
+
+.initials {
+  font-family: var(--font-ui);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  color: var(--stage-text);
+  text-transform: uppercase;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-size="xs"] .initials { font-size: 8px; }
+.root[data-size="sm"] .initials { font-size: 10px; }
+.root[data-size="md"] .initials { font-size: 12px; }
+
+/* ─── Status dot ─────────────────────────────────────────────────────────────── */
+
+/*
+  Semantic LED colors per KIT-LEAD §6:
+    online → green  (play/rolling family — "I'm here and active")
+    away   → amber  (attention/partial family — "I'm partially present")
+
+  The 2px --bg outline ring floats the dot cleanly off any avatar background
+  without relying on a specific color (works in light and dark themes).
+  Bottom-right position is the universal collaboration UI convention.
+*/
+
+.statusDot {
+  position: absolute;
+  border-radius: 50%;
+  outline: 2px solid var(--bg);
+  outline-offset: -1px;
+}
+
+.root[data-size="xs"] .statusDot { width: 5px;  height: 5px;  bottom: -1px; right: -1px; }
+.root[data-size="sm"] .statusDot { width: 7px;  height: 7px;  bottom: -1px; right: -1px; }
+.root[data-size="md"] .statusDot { width: 9px;  height: 9px;  bottom: -1px; right: -1px; }
+
+.statusDot[data-status="online"] {
+  background: var(--led-green);
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--led-green) 55%, transparent);
+}
+
+.statusDot[data-status="away"] {
+  background: var(--led-orange);
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--led-orange) 55%, transparent);
+}
+
+/* ─── Group ──────────────────────────────────────────────────────────────────── */
+
+/*
+  Overlapping stack: each item after the first gets a negative left margin equal
+  to ~35% of avatar width, so adjacent circles overlap but remain identifiable.
+  Earlier avatars have higher z-index (set inline) — first collaborator reads
+  as "in front" which matches left-to-right reading order.
+*/
+
+.group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.groupItem {
+  position: relative;
+}
+
+.groupItem:not(:first-child) {
+  margin-left: var(--_group-overlap);
+}
+
+.group[data-size="xs"] { --_group-overlap: -7px; }
+.group[data-size="sm"] { --_group-overlap: -10px; }
+.group[data-size="md"] { --_group-overlap: -13px; }
+
+/* ─── Overflow badge ─────────────────────────────────────────────────────────── */
+
+/*
+  Same circular shape as Avatar. Intentionally quieter — dark well + muted text
+  signals "a count, not a person." The 2px --border ring echoes the avatar ring
+  treatment without claiming a palette color.
+*/
+
+.overflowBadge {
+  border-radius: 50%;
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.overflowBadge[data-size="xs"] { width: 20px; height: 20px; font-size: 7px; }
+.overflowBadge[data-size="sm"] { width: 28px; height: 28px; font-size: 9px; }
+.overflowBadge[data-size="md"] { width: 36px; height: 36px; font-size: 11px; }
