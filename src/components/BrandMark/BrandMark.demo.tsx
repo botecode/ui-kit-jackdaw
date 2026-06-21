@@ -11,15 +11,9 @@ export const meta: DemoMeta = {
   order: 1,
 }
 
-// ─── Shared tile helper ───────────────────────────────────────────────────
+// ─── Tile helper ─────────────────────────────────────────────────────────────
 
-function Tile({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
+function Tile({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-2)' }}>
       {children}
@@ -35,9 +29,9 @@ function Tile({
   )
 }
 
-// ─── Section A: Interpretations ───────────────────────────────────────────
+// ─── Section: Mark (icon-only) ────────────────────────────────────────────────
 
-function InterpretationsSection() {
+function MarkSection() {
   return (
     <section>
       <h2 style={{
@@ -49,38 +43,32 @@ function InterpretationsSection() {
         letterSpacing: '0.08em',
         marginBottom:  'var(--space-6)',
       }}>
-        Interpretations
+        Mark — icon only
       </h2>
       <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        {/* A: Full mark — light only (wordmark needs readable bg) */}
-        <Tile label="A — Full mark (400px)">
-          <BrandMark variant="full" size={400} />
+        <Tile label="512px">
+          <BrandMark variant="mark" size={512} />
         </Tile>
-
-        {/* B: Icon — light + dark side by side */}
-        <Tile label="B — Icon / light (256px)">
-          <BrandMark variant="icon" size={256} />
+        <Tile label="128px">
+          <BrandMark variant="mark" size={128} />
         </Tile>
-        <Tile label="B — Icon / dark (256px)">
-          <BrandMark variant="icon" size={256} stage />
+        <Tile label="64px">
+          <BrandMark variant="mark" size={64} />
         </Tile>
-
-        {/* C: Sigil — light + dark side by side */}
-        <Tile label="C — Sigil / light (128px)">
-          <BrandMark variant="sigil" size={128} />
+        <Tile label="32px">
+          <BrandMark variant="mark" size={32} />
         </Tile>
-        <Tile label="C — Sigil / dark (128px)">
-          <BrandMark variant="sigil" size={128} stage />
+        <Tile label="20px">
+          <BrandMark variant="mark" size={20} />
         </Tile>
       </div>
     </section>
   )
 }
 
-// ─── Section B: App icon sizes (Interpretation B) ────────────────────────
+// ─── Section: Wordmark (text-only, theme-aware) ───────────────────────────────
 
-function AppIconSizesSection() {
-  const SIZES = [512, 128, 64] as const
+function WordmarkSection() {
   return (
     <section>
       <h2 style={{
@@ -92,21 +80,75 @@ function AppIconSizesSection() {
         letterSpacing: '0.08em',
         marginBottom:  'var(--space-6)',
       }}>
-        App icon sizes — Interpretation B
+        Wordmark — text only (adapts to active theme)
       </h2>
-      {/* Light row */}
-      <div style={{ display: 'flex', gap: 'var(--space-6)', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
-        {SIZES.map(s => (
-          <Tile key={s} label={`${s}px / light`}>
-            <BrandMark variant="icon" size={s} />
-          </Tile>
-        ))}
+      <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <Tile label="128px">
+          <BrandMark variant="wordmark" size={128} />
+        </Tile>
+        <Tile label="64px">
+          <BrandMark variant="wordmark" size={64} />
+        </Tile>
+        <Tile label="32px">
+          <BrandMark variant="wordmark" size={32} />
+        </Tile>
       </div>
-      {/* Dark row */}
+    </section>
+  )
+}
+
+// ─── Section: Lockup (mark + wordmark stacked) ────────────────────────────────
+
+function LockupSection() {
+  return (
+    <section>
+      <h2 style={{
+        fontFamily:    'var(--font-ui)',
+        fontSize:      'var(--text-sm)',
+        fontWeight:    'var(--weight-medium)',
+        color:         'var(--text-dim)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        marginBottom:  'var(--space-6)',
+      }}>
+        Lockup — mark + wordmark
+      </h2>
+      <div style={{ display: 'flex', gap: 'var(--space-10)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <Tile label="256px">
+          <BrandMark variant="lockup" size={256} />
+        </Tile>
+        <Tile label="128px">
+          <BrandMark variant="lockup" size={128} />
+        </Tile>
+        <Tile label="64px">
+          <BrandMark variant="lockup" size={64} />
+        </Tile>
+      </div>
+    </section>
+  )
+}
+
+// ─── Section: App icon sizes ──────────────────────────────────────────────────
+
+function AppIconSection() {
+  const SIZES = [512, 128, 64, 32, 16] as const
+  return (
+    <section>
+      <h2 style={{
+        fontFamily:    'var(--font-ui)',
+        fontSize:      'var(--text-sm)',
+        fontWeight:    'var(--weight-medium)',
+        color:         'var(--text-dim)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        marginBottom:  'var(--space-6)',
+      }}>
+        App icon sizes — mark variant
+      </h2>
       <div style={{ display: 'flex', gap: 'var(--space-6)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
         {SIZES.map(s => (
-          <Tile key={s} label={`${s}px / dark`}>
-            <BrandMark variant="icon" size={s} stage />
+          <Tile key={s} label={`${s}px`}>
+            <BrandMark variant="mark" size={s} />
           </Tile>
         ))}
       </div>
@@ -114,45 +156,15 @@ function AppIconSizesSection() {
   )
 }
 
-// ─── Section C: Favicon (16px — B vs C side by side) ─────────────────────
-
-function FaviconSection() {
-  return (
-    <section>
-      <h2 style={{
-        fontFamily:    'var(--font-ui)',
-        fontSize:      'var(--text-sm)',
-        fontWeight:    'var(--weight-medium)',
-        color:         'var(--text-dim)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        marginBottom:  'var(--space-6)',
-      }}>
-        Favicon — 16px ownership
-      </h2>
-      <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-end' }}>
-        <Tile label="B icon — 16px (illegible)">
-          <BrandMark variant="icon" size={16} />
-        </Tile>
-        <Tile label="C sigil — 16px (reads)">
-          <BrandMark variant="sigil" size={16} />
-        </Tile>
-        <Tile label="C sigil — 16px / dark (reads)">
-          <BrandMark variant="sigil" size={16} stage />
-        </Tile>
-      </div>
-    </section>
-  )
-}
-
-// ─── Default export ───────────────────────────────────────────────────────
+// ─── Default export ───────────────────────────────────────────────────────────
 
 export default function BrandMarkDemo() {
   return (
     <DemoShell meta={meta}>
-      <InterpretationsSection />
-      <AppIconSizesSection />
-      <FaviconSection />
+      <MarkSection />
+      <WordmarkSection />
+      <LockupSection />
+      <AppIconSection />
     </DemoShell>
   )
 }

@@ -80,7 +80,7 @@ export function SplashScreen({
           </svg>
 
           <BrandMark
-            variant="icon"
+            variant="mark"
             size={120}
             className={styles.brand}
           />

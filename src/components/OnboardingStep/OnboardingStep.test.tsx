@@ -257,22 +257,29 @@ describe('OnboardingStep — progress', () => {
 // ── Media ─────────────────────────────────────────────────────────────────────
 
 describe('OnboardingStep — media slot', () => {
-  it('renders an img when media is provided', () => {
+  it('renders a media img when media is provided', () => {
     const { container } = render(
       <OnboardingStep
         step={{ ...TUTORIAL, media: { src: 'clip-save.gif', kind: 'gif' } }}
         {...BASE_PROPS}
       />,
     )
-    // alt="" gives role="presentation"; query by element tag directly
-    const img = container.querySelector('img')
+    // The media img carries data-kind; query by that to skip the brand mark img
+    const img = container.querySelector('img[data-kind]')
     expect(img).not.toBeNull()
     expect(img).toHaveAttribute('src', 'clip-save.gif')
     expect(img).toHaveAttribute('data-kind', 'gif')
   })
 
-  it('does not render an img when media is omitted', () => {
+  it('renders a brand mark img in the header', () => {
     const { container } = render(<OnboardingStep step={TUTORIAL} {...BASE_PROPS} />)
-    expect(container.querySelector('img')).toBeNull()
+    // BrandMark always renders at least one img (the mark)
+    expect(container.querySelector('img')).not.toBeNull()
+  })
+
+  it('does not render a media img when media is omitted', () => {
+    const { container } = render(<OnboardingStep step={TUTORIAL} {...BASE_PROPS} />)
+    // The media slot img has data-kind; the brand mark img does not
+    expect(container.querySelector('img[data-kind]')).toBeNull()
   })
 })
