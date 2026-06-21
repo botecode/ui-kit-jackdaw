@@ -1,5 +1,5 @@
 // src/components/AnnotationEditor/AnnotationEditor.demo.tsx
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
@@ -38,7 +38,17 @@ interface EditorCardProps {
 
 function EditorCard({ label, type, value, editMode }: EditorCardProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null)
   const [result, setResult] = useState<string | null>(null)
+
+  // Compute viewport anchor once the container is in the DOM.
+  // anchor={x:8,y:8} would be viewport coords that pin to the top-left corner —
+  // instead use the card's actual viewport position + a small inset.
+  useLayoutEffect(() => {
+    if (!containerRef.current) return
+    const { left, top } = containerRef.current.getBoundingClientRect()
+    setAnchor({ x: left + 8, y: top + 8 })
+  }, [])
 
   function reset() { setResult(null) }
 
@@ -78,10 +88,10 @@ function EditorCard({ label, type, value, editMode }: EditorCardProps) {
               Re-open
             </button>
           </div>
-        ) : (
+        ) : anchor ? (
           <AnnotationEditor
             type={type}
-            anchor={{ x: 8, y: 8 }}
+            anchor={anchor}
             value={value}
             time={TIME[type]}
             containerRef={containerRef}
@@ -93,7 +103,7 @@ function EditorCard({ label, type, value, editMode }: EditorCardProps) {
             onCancel={() => setResult('Cancelled')}
             onRecord={type === 'comment' ? stubRecord : undefined}
           />
-        )}
+        ) : null}
       </div>
     </State>
   )
@@ -163,6 +173,14 @@ function PlaygroundDemo() {
   const [editMode, setEditMode] = useState(false)
   const [open, setOpen]         = useState(true)
   const [lastAction, setLastAction] = useState<string | null>(null)
+  const [anchor, setAnchor]     = useState<{ x: number; y: number } | null>(null)
+
+  // Compute a sensible initial anchor once the container is in the DOM.
+  useLayoutEffect(() => {
+    if (!containerRef.current) return
+    const { left, top } = containerRef.current.getBoundingClientRect()
+    setAnchor({ x: left + 16, y: top + 16 })
+  }, [])
 
   const typeOptions: { value: AnnotationType; label: string }[] = [
     { value: 'lyrics',  label: 'Lyrics'  },
@@ -187,7 +205,15 @@ function PlaygroundDemo() {
         {/* Click surface — represents the annotation lane */}
         <div
           ref={containerRef}
-          onClick={() => { if (!open) { setOpen(true); setLastAction(null) } }}
+          onClick={e => {
+            if (!open) {
+              // Anchor to where the user clicked — this is how AnnotationLane will
+              // call the editor in the real app (clientX/Y from the pointer event).
+              setAnchor({ x: e.clientX, y: e.clientY })
+              setOpen(true)
+              setLastAction(null)
+            }
+          }}
           style={{
             position: 'relative',
             width: 360,
@@ -209,7 +235,7 @@ function PlaygroundDemo() {
               justifyContent: 'center',
               fontFamily: 'var(--font-ui)',
               fontSize: 'var(--text-sm)',
-              color: 'var(--text-dim)',
+              color: 'var(--stage-text)',
               userSelect: 'none',
               pointerEvents: 'none',
             }}>
@@ -217,10 +243,10 @@ function PlaygroundDemo() {
             </span>
           )}
 
-          {open && (
+          {open && anchor && (
             <AnnotationEditor
               type={type}
-              anchor={{ x: 16, y: 16 }}
+              anchor={anchor}
               value={editValue}
               time={42}
               containerRef={containerRef}

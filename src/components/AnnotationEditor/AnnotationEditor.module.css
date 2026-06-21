@@ -86,7 +86,7 @@
     0 0 0 1px var(--border);
   font-family: var(--font-ui);
   font-size: var(--text-base);
-  color: var(--text);
+  color: var(--stage-text);
   caret-color: var(--accent);
   transition: box-shadow var(--dur-base) var(--ease-out);
 }
@@ -226,7 +226,7 @@
 .playChipLabel {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--text);
+  color: var(--stage-text);
 }
 
 .clearAudioBtn {
