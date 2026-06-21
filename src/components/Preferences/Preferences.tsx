@@ -1,172 +1,99 @@
 // src/components/Preferences/Preferences.tsx
-import { useEffect, useRef, useId } from 'react'
-import { createPortal } from 'react-dom'
-import { X } from '@phosphor-icons/react'
-import { usePortalTarget } from '../../theme/ThemeProvider'
+import { useRef, useState } from 'react'
+import { GearSix } from '@phosphor-icons/react'
+import { ContextMenu } from '../ContextMenu'
+import type { MenuEntry } from '../ContextMenu'
+import { Dialog } from '../Dialog'
 import styles from './Preferences.module.css'
 
 export interface PreferencesSection {
   id: string
   label: string
+  panel: React.ReactNode
 }
 
 export interface PreferencesProps {
-  open: boolean
-  onClose: () => void
   sections: PreferencesSection[]
-  active: string
-  onSelect: (id: string) => void
-  children: React.ReactNode
 }
 
-const FOCUSABLE = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(', ')
+export function Preferences({ sections }: PreferencesProps) {
+  const triggerRef    = useRef<HTMLButtonElement>(null)
+  const containerRef  = useRef<HTMLDivElement>(null)
+  const closeTimeRef  = useRef(0)
+  const [menuOpen, setMenuOpen]           = useState(false)
+  const [menuPos,  setMenuPos]            = useState({ x: 0, y: 0 })
+  const [activeSection, setActiveSection] = useState<string | null>(null)
 
-function getFocusable(container: HTMLElement): HTMLElement[] {
-  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE))
-}
+  const activeData = activeSection ? sections.find(s => s.id === activeSection) ?? null : null
 
-export function Preferences({
-  open,
-  onClose,
-  sections,
-  active,
-  onSelect,
-  children,
-}: PreferencesProps) {
-  const titleId = useId()
-  const modalRef = useRef<HTMLDivElement>(null)
-  const selectRef = useRef<HTMLSelectElement>(null)
-  const returnFocusRef = useRef<HTMLElement | null>(null)
-  const portalTarget = usePortalTarget()
+  function openMenu() {
+    // Guard: if Popover outside-click fired on the trigger just before this
+    // click, closeMenu set closeTimeRef — skip the reopen.
+    if (Date.now() - closeTimeRef.current < 300) return
+    const el = triggerRef.current
+    if (!el) return
+    el.focus() // WKWebView: clicking a button does NOT focus it
+    const rect = el.getBoundingClientRect()
+    setMenuPos({ x: rect.left, y: rect.bottom + 2 })
+    setMenuOpen(true)
+  }
 
-  // Capture trigger before the focus shift below.
-  useEffect(() => {
-    if (open && document.activeElement instanceof HTMLElement) {
-      returnFocusRef.current = document.activeElement
-    }
-  }, [open])
+  function closeMenu() {
+    closeTimeRef.current = Date.now()
+    setMenuOpen(false)
+  }
 
-  // Focus the section select on open (WKWebView: clicking a button does NOT focus it).
-  useEffect(() => {
-    if (!open || !modalRef.current) return
-    const target = selectRef.current ?? getFocusable(modalRef.current)[0] ?? modalRef.current
-    target.focus()
-  }, [open])
+  function selectSection(id: string) {
+    setActiveSection(id)
+    // ContextMenu calls onClose (closeMenu) after onSelect, returning focus to trigger
+  }
 
-  // Return focus to trigger on close.
-  useEffect(() => {
-    if (!open && returnFocusRef.current) {
-      returnFocusRef.current.focus()
-      returnFocusRef.current = null
-    }
-  }, [open])
+  function closeSection() {
+    setActiveSection(null)
+    // Dialog's returnFocusRef restores focus to the trigger automatically
+  }
 
-  // Lock body scroll while open.
-  useEffect(() => {
-    if (!open) return
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [open])
+  const menuItems: MenuEntry[] = sections.map(s => ({
+    id:       s.id,
+    label:    s.label,
+    onSelect: () => selectSection(s.id),
+  }))
 
-  // Esc to close.
-  useEffect(() => {
-    if (!open) return
-    function handle(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onClose()
-      }
-    }
-    document.addEventListener('keydown', handle)
-    return () => document.removeEventListener('keydown', handle)
-  }, [open, onClose])
-
-  // Focus trap: Tab/Shift+Tab cycles within the modal.
-  useEffect(() => {
-    if (!open) return
-    function handle(e: KeyboardEvent) {
-      if (e.key !== 'Tab' || !modalRef.current) return
-      const focusable = getFocusable(modalRef.current)
-      if (focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault()
-          last!.focus()
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault()
-          first!.focus()
-        }
-      }
-    }
-    document.addEventListener('keydown', handle)
-    return () => document.removeEventListener('keydown', handle)
-  }, [open])
-
-  if (!open) return null
-
-  const activeLabel = sections.find(s => s.id === active)?.label
-
-  return createPortal(
-    <div className={styles.scrim} onClick={onClose}>
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className={styles.modal}
-        tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
+  return (
+    <div ref={containerRef} className={styles.root}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={styles.trigger}
+        aria-label="Preferences"
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        onClick={openMenu}
       >
-        {/* Header */}
-        <div className={styles.header}>
-          <h2 id={titleId} className={styles.title}>PREFERENCES</h2>
-          <button
-            className={styles.closeBtn}
-            aria-label="Close preferences"
-            onClick={onClose}
-          >
-            <X weight="bold" size={14} />
-          </button>
-        </div>
+        <GearSix weight="regular" size={16} aria-hidden />
+      </button>
 
-        {/* Section selector */}
-        <div className={styles.sectionBar}>
-          <select
-            ref={selectRef}
-            className={styles.sectionSelect}
-            value={active}
-            onChange={(e) => onSelect(e.target.value)}
-            aria-label="Preferences section"
-          >
-            {sections.map((section) => (
-              <option key={section.id} value={section.id}>
-                {section.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      {menuOpen && (
+        <ContextMenu
+          items={menuItems}
+          open={menuOpen}
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={closeMenu}
+          aria-label="Preferences sections"
+        />
+      )}
 
-        {/* Panel — full width */}
-        <div
-          role="region"
-          aria-label={activeLabel}
-          className={styles.content}
-        >
-          {children}
-        </div>
-      </div>
-    </div>,
-    portalTarget ?? document.body,
+      <Dialog
+        open={activeSection !== null}
+        onClose={closeSection}
+        title={activeData ? `Preferences / ${activeData.label}` : ''}
+        showCloseButton
+        style={{ width: 800, height: 560 }}
+        bodyStyle={{ padding: 0, overflow: 'auto' }}
+      >
+        {activeData?.panel}
+      </Dialog>
+    </div>
   )
 }

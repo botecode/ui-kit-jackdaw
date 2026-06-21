@@ -64,7 +64,8 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: var(--space-3) var(--space-4);
+  justify-content: space-between;
+  padding: 0 var(--space-4);
   border-bottom: 1px solid var(--border);
   min-height: 44px;
 }
@@ -76,6 +77,34 @@
   font-weight: var(--weight-medium);
   color: var(--text);
   line-height: var(--leading-base);
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.closeBtn:hover {
+  background: var(--stage);
+  color: var(--text);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* ─── Body (scrolls for long content) ────────────────────────────────────────── */

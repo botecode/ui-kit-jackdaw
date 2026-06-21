@@ -5,212 +5,205 @@ import { Preferences } from './Preferences'
 import type { PreferencesSection } from './Preferences'
 
 const SECTIONS: PreferencesSection[] = [
-  { id: 'input',         label: 'Input' },
-  { id: 'look-and-feel', label: 'Look and feel' },
-  { id: 'shortcuts',     label: 'Shortcuts' },
+  { id: 'input',         label: 'Input',         panel: <div data-testid="panel-input">Input panel</div> },
+  { id: 'look-and-feel', label: 'Look and feel', panel: <div data-testid="panel-look">Look panel</div> },
+  { id: 'shortcuts',     label: 'Shortcuts',      panel: <div data-testid="panel-shortcuts">Shortcuts panel</div> },
 ]
-
-const BASE = {
-  open: true as const,
-  onClose: vi.fn(),
-  sections: SECTIONS,
-  active: 'input',
-  onSelect: vi.fn(),
-  children: <div data-testid="panel-content">Panel content</div>,
-}
 
 beforeEach(() => {
   vi.clearAllMocks()
   document.body.style.overflow = ''
 })
 
-// ── Rendering ─────────────────────────────────────────────────────────────────
+// ── Trigger ───────────────────────────────────────────────────────────────────
 
-describe('Preferences — rendering', () => {
-  it('renders role="dialog" when open=true', () => {
-    render(<Preferences {...BASE} />)
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+describe('Preferences — trigger', () => {
+  it('renders a settings trigger button', () => {
+    render(<Preferences sections={SECTIONS} />)
+    expect(screen.getByRole('button', { name: 'Preferences' })).toBeInTheDocument()
   })
 
-  it('renders nothing when open=false', () => {
-    render(<Preferences {...BASE} open={false} />)
+  it('menu is not shown initially', () => {
+    render(<Preferences sections={SECTIONS} />)
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('no dialog is shown initially', () => {
+    render(<Preferences sections={SECTIONS} />)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('has aria-modal="true"', () => {
-    render(<Preferences {...BASE} />)
+  it('trigger has aria-haspopup="menu"', () => {
+    render(<Preferences sections={SECTIONS} />)
+    expect(screen.getByRole('button', { name: 'Preferences' })).toHaveAttribute('aria-haspopup', 'menu')
+  })
+
+  it('trigger aria-expanded is false when menu is closed', () => {
+    render(<Preferences sections={SECTIONS} />)
+    expect(screen.getByRole('button', { name: 'Preferences' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('trigger aria-expanded is true when menu is open', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    expect(screen.getByRole('button', { name: 'Preferences' })).toHaveAttribute('aria-expanded', 'true')
+  })
+})
+
+// ── Menu ──────────────────────────────────────────────────────────────────────
+
+describe('Preferences — menu', () => {
+  it('clicking the trigger opens the menu', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+  })
+
+  it('menu contains all section labels', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    expect(screen.getByRole('menuitem', { name: 'Input' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Look and feel' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Shortcuts' })).toBeInTheDocument()
+  })
+
+  it('Esc closes the menu', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('ArrowDown moves focus to the next item', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    const menu = screen.getByRole('menu')
+    const items = screen.getAllByRole('menuitem')
+    // First item is auto-focused on open
+    expect(document.activeElement).toBe(items[0])
+    fireEvent.keyDown(menu, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(items[1])
+  })
+
+  it('ArrowUp moves focus to the previous item', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    const menu = screen.getByRole('menu')
+    const items = screen.getAllByRole('menuitem')
+    // Navigate to items[1] first, then ArrowUp returns to items[0]
+    fireEvent.keyDown(menu, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(items[1])
+    fireEvent.keyDown(menu, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(items[0])
+  })
+})
+
+// ── Section modals ────────────────────────────────────────────────────────────
+
+describe('Preferences — section modals', () => {
+  it('selecting "Input" opens a dialog with title "Preferences / Input"', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Preferences / Input')).toBeInTheDocument()
+  })
+
+  it('selecting "Look and feel" opens a dialog titled "Preferences / Look and feel"', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Look and feel' }))
+    expect(screen.getByText('Preferences / Look and feel')).toBeInTheDocument()
+  })
+
+  it('selecting "Shortcuts" opens a dialog titled "Preferences / Shortcuts"', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Shortcuts' }))
+    expect(screen.getByText('Preferences / Shortcuts')).toBeInTheDocument()
+  })
+
+  it('the section panel is rendered inside the dialog', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
+    expect(screen.getByTestId('panel-input')).toBeInTheDocument()
+  })
+
+  it('the menu closes when a section is selected', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('dialog has aria-modal="true"', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
   })
 
-  it('has aria-labelledby pointing to the PREFERENCES title', () => {
-    render(<Preferences {...BASE} />)
-    const dialog = screen.getByRole('dialog')
-    const labelledBy = dialog.getAttribute('aria-labelledby')
-    expect(labelledBy).toBeTruthy()
-    const titleEl = document.getElementById(labelledBy!)
-    expect(titleEl?.textContent).toBe('PREFERENCES')
-  })
-
-  it('renders all section labels in the section select', () => {
-    render(<Preferences {...BASE} />)
-    expect(screen.getByText('Input')).toBeInTheDocument()
-    expect(screen.getByText('Look and feel')).toBeInTheDocument()
-    expect(screen.getByText('Shortcuts')).toBeInTheDocument()
-  })
-
-  it('renders the children in the content region', () => {
-    render(<Preferences {...BASE} />)
-    expect(screen.getByTestId('panel-content')).toBeInTheDocument()
-  })
-
-  it('renders a close button', () => {
-    render(<Preferences {...BASE} />)
-    expect(screen.getByRole('button', { name: 'Close preferences' })).toBeInTheDocument()
-  })
-})
-
-// ── ARIA section select ───────────────────────────────────────────────────────
-
-describe('Preferences — section select', () => {
-  it('renders a combobox for section navigation', () => {
-    render(<Preferences {...BASE} />)
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
-  })
-
-  it('renders an option for each section', () => {
-    render(<Preferences {...BASE} />)
-    const options = screen.getAllByRole('option')
-    expect(options).toHaveLength(SECTIONS.length)
-  })
-
-  it('active section option is selected in the dropdown', () => {
-    render(<Preferences {...BASE} active="look-and-feel" />)
-    const select = screen.getByRole('combobox') as HTMLSelectElement
-    expect(select.value).toBe('look-and-feel')
-  })
-
-  it('changing the section select calls onSelect with the section id', () => {
-    const onSelect = vi.fn()
-    render(<Preferences {...BASE} onSelect={onSelect} />)
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'shortcuts' } })
-    expect(onSelect).toHaveBeenCalledWith('shortcuts')
-  })
-
-  it('changing the section select does NOT call onClose', () => {
-    const onClose = vi.fn()
-    render(<Preferences {...BASE} onClose={onClose} />)
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'look-and-feel' } })
-    expect(onClose).not.toHaveBeenCalled()
-  })
-
-  it('content region is labelled by the active section name', () => {
-    render(<Preferences {...BASE} active="shortcuts" />)
-    expect(screen.getByRole('region', { name: /shortcuts/i })).toBeInTheDocument()
-  })
-})
-
-// ── Keyboard ──────────────────────────────────────────────────────────────────
-
-describe('Preferences — keyboard', () => {
-  it('Escape calls onClose', () => {
-    const onClose = vi.fn()
-    render(<Preferences {...BASE} onClose={onClose} />)
+  it('Esc closes the section dialog', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Shortcuts' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
     fireEvent.keyDown(document, { key: 'Escape' })
-    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('Escape does NOT call onClose when closed', () => {
-    const onClose = vi.fn()
-    render(<Preferences {...BASE} open={false} onClose={onClose} />)
-    fireEvent.keyDown(document, { key: 'Escape' })
-    expect(onClose).not.toHaveBeenCalled()
+  it('clicking the X button closes the dialog', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('Tab wraps from last focusable to first', () => {
-    render(<Preferences {...BASE} />)
-    const dialog = screen.getByRole('dialog')
-    const focusable = Array.from(
-      dialog.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ),
-    )
-    focusable[focusable.length - 1]!.focus()
-    fireEvent.keyDown(document, { key: 'Tab' })
-    expect(document.activeElement).toBe(focusable[0])
-  })
-
-  it('Shift+Tab wraps from first focusable to last', () => {
-    render(<Preferences {...BASE} />)
-    const dialog = screen.getByRole('dialog')
-    const focusable = Array.from(
-      dialog.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ),
-    )
-    focusable[0]!.focus()
-    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
-    expect(document.activeElement).toBe(focusable[focusable.length - 1])
-  })
-})
-
-// ── Interaction ───────────────────────────────────────────────────────────────
-
-describe('Preferences — interaction', () => {
-  it('clicking close button calls onClose', () => {
-    const onClose = vi.fn()
-    render(<Preferences {...BASE} onClose={onClose} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Close preferences' }))
-    expect(onClose).toHaveBeenCalledTimes(1)
-  })
-
-  it('clicking scrim calls onClose', () => {
-    const onClose = vi.fn()
-    render(<Preferences {...BASE} onClose={onClose} />)
+  it('clicking the scrim closes the dialog', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
     const scrim = screen.getByRole('dialog').parentElement!
     fireEvent.click(scrim)
-    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('clicking inside the modal does NOT call onClose', () => {
-    const onClose = vi.fn()
-    render(<Preferences {...BASE} onClose={onClose} />)
+  it('clicking inside the dialog does NOT close it', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
     fireEvent.click(screen.getByRole('dialog'))
-    expect(onClose).not.toHaveBeenCalled()
-  })
-})
-
-// ── Focus management ──────────────────────────────────────────────────────────
-
-describe('Preferences — focus management', () => {
-  it('focuses the section select on open', () => {
-    render(<Preferences {...BASE} />)
-    expect(document.activeElement).toBe(screen.getByRole('combobox'))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
-  it('returns focus to the previously focused element on close', () => {
-    const trigger = document.createElement('button')
-    document.body.appendChild(trigger)
-    trigger.focus()
-
-    const { rerender } = render(<Preferences {...BASE} />)
-    rerender(<Preferences {...BASE} open={false} />)
-
+  it('focus returns to the trigger after closing the dialog with Esc', () => {
+    render(<Preferences sections={SECTIONS} />)
+    const trigger = screen.getByRole('button', { name: 'Preferences' })
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
+    fireEvent.keyDown(document, { key: 'Escape' })
     expect(document.activeElement).toBe(trigger)
-    document.body.removeChild(trigger)
   })
 })
 
 // ── Scroll lock ───────────────────────────────────────────────────────────────
 
 describe('Preferences — scroll lock', () => {
-  it('sets body overflow:hidden while open', () => {
-    render(<Preferences {...BASE} />)
+  it('sets body overflow:hidden while a section dialog is open', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
     expect(document.body.style.overflow).toBe('hidden')
   })
 
-  it('restores body overflow on close', () => {
-    const { rerender } = render(<Preferences {...BASE} />)
-    rerender(<Preferences {...BASE} open={false} />)
+  it('restores body overflow when the dialog closes', () => {
+    render(<Preferences sections={SECTIONS} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Input' }))
+    fireEvent.keyDown(document, { key: 'Escape' })
     expect(document.body.style.overflow).toBe('')
   })
 })
