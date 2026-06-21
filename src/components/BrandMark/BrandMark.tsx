@@ -28,8 +28,7 @@ export function BrandMark({
 }: BrandMarkProps) {
   const { theme } = useTheme()
   // Dark themes need white-letter wordmark; light themes use dark-letter wordmark.
-  // TODO(brand-assets): replace stubs in src/assets/brand/ with real exports from design.
-  // TODO(brand-assets): add jackdaw-wordmark-light.png (white letters) for dark themes.
+  // TODO(brand-assets): replace transparent 1×1 stubs in src/assets/brand/ with real exports from design.
   const wordmarkSrc = DARK_THEMES.has(theme) ? wordmarkLightSrc : wordmarkDarkSrc
 
   const showMark     = variant === 'mark'     || variant === 'lockup'

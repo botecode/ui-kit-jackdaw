@@ -61,4 +61,16 @@ describe('BrandMark', () => {
     const imgs = container.querySelectorAll('img')
     imgs.forEach(img => expect(img.getAttribute('alt')).toBe(''))
   })
+
+  it('mark img src points to the mark asset', () => {
+    const { container } = render(<BrandMark variant="mark" size={64} />)
+    const img = container.querySelector('img')!
+    expect(img.getAttribute('src')).toContain('jackdaw-mark')
+  })
+
+  it('wordmark img src points to a wordmark asset', () => {
+    const { container } = render(<BrandMark variant="wordmark" size={64} />)
+    const img = container.querySelector('img')!
+    expect(img.getAttribute('src')).toContain('jackdaw-wordmark')
+  })
 })
