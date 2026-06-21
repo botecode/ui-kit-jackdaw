@@ -13,6 +13,8 @@ export interface DialogProps {
   size?: 'sm' | 'md'
   dismissible?: boolean
   'aria-label'?: string
+  style?: React.CSSProperties
+  bodyStyle?: React.CSSProperties
 }
 
 const FOCUSABLE = [
@@ -37,6 +39,8 @@ export function Dialog({
   size = 'md',
   dismissible = true,
   'aria-label': ariaLabel,
+  style,
+  bodyStyle,
 }: DialogProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -128,6 +132,7 @@ export function Dialog({
         className={styles.dialog}
         data-size={size}
         tabIndex={-1}
+        style={style}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
@@ -135,7 +140,7 @@ export function Dialog({
             <h2 id={titleId} className={styles.title}>{title}</h2>
           </div>
         )}
-        <div className={styles.body}>{children}</div>
+        <div className={styles.body} style={bodyStyle}>{children}</div>
         {actions != null && (
           <div className={styles.footer}>{actions}</div>
         )}
