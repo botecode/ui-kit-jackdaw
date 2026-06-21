@@ -29,6 +29,7 @@ export interface PianoRollProps {
   onDeleteNote?: (id: string) => void
   onSelectNote?: (ids: string[]) => void
   size?: 'sm' | 'md'
+  disabled?: boolean
 }
 
 // ─── Drag state ───────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ export function PianoRoll({
   onDeleteNote,
   onSelectNote,
   size = 'md',
+  disabled = false,
 }: PianoRollProps) {
   const [loNote, hiNote] = pitchRange
   const pitches   = buildPitchRange(loNote, hiNote)
@@ -130,7 +132,7 @@ export function PianoRoll({
   // ── Grid pointer handlers (click-to-add / draw) ──────────────────────────────
 
   function handleGridPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (e.button !== 0) return
+    if (disabled || e.button !== 0) return
     e.currentTarget.setPointerCapture(e.pointerId)
 
     const { gx, gy } = gridXY(e.clientX, e.clientY)
@@ -174,7 +176,7 @@ export function PianoRoll({
   // ── Note pointer handlers ─────────────────────────────────────────────────────
 
   function handleNotePointerDown(e: React.PointerEvent<HTMLDivElement>, note: PianoNote) {
-    if (e.button !== 0) return
+    if (disabled || e.button !== 0) return
     e.stopPropagation()
     e.currentTarget.setPointerCapture(e.pointerId)
 
@@ -243,6 +245,7 @@ export function PianoRoll({
   }
 
   function handleNoteContextMenu(e: React.MouseEvent, note: PianoNote) {
+    if (disabled) return
     e.preventDefault()
     onDeleteNote?.(note.id)
     setSelectedIds(prev => {
@@ -256,6 +259,7 @@ export function PianoRoll({
   // ── Note keyboard navigation ─────────────────────────────────────────────────
 
   function handleNoteKeyDown(e: React.KeyboardEvent, note: PianoNote) {
+    if (disabled) return
     switch (e.key) {
       case 'ArrowUp': {
         e.preventDefault()
@@ -311,6 +315,7 @@ export function PianoRoll({
       className={styles.root}
       data-testid="piano-roll"
       data-size={size}
+      data-disabled={disabled || undefined}
       style={{ '--lane-h': `${laneH}px`, '--key-w': `${keyW}px` } as React.CSSProperties}
     >
       <div ref={containerRef} className={styles.scrollArea}>
@@ -340,10 +345,10 @@ export function PianoRoll({
             className={styles.grid}
             data-testid="piano-roll-grid"
             style={{ width: totalWidth, '--beat-px': `${pxPerBeat}px` } as React.CSSProperties}
-            onPointerDown={handleGridPointerDown}
-            onPointerMove={handleGridPointerMove}
-            onPointerUp={handleGridPointerUp}
-            onPointerCancel={handleGridPointerUp}
+            onPointerDown={disabled ? undefined : handleGridPointerDown}
+            onPointerMove={disabled ? undefined : handleGridPointerMove}
+            onPointerUp={disabled ? undefined : handleGridPointerUp}
+            onPointerCancel={disabled ? undefined : handleGridPointerUp}
             onContextMenu={e => e.preventDefault()}
           >
             {/* Pitch lane backgrounds (one row per semitone) */}
@@ -372,20 +377,21 @@ export function PianoRoll({
                 <div
                   key={note.id}
                   role="button"
-                  tabIndex={0}
+                  tabIndex={disabled ? -1 : 0}
                   aria-pressed={isSel}
+                  aria-disabled={disabled || undefined}
                   aria-label={noteLabel(note.pitch, note.start, division)}
                   data-testid={`note-${note.id}`}
                   data-selected={isSel || undefined}
                   data-dragging={isDrag || undefined}
                   className={styles.note}
                   style={{ left, top, width, height, opacity }}
-                  onPointerDown={ev => handleNotePointerDown(ev, note)}
-                  onPointerMove={ev => handleNotePointerMove(ev)}
-                  onPointerUp={() => handleNotePointerUp()}
-                  onPointerCancel={() => handleNotePointerUp()}
-                  onContextMenu={ev => handleNoteContextMenu(ev, note)}
-                  onKeyDown={ev => handleNoteKeyDown(ev, note)}
+                  onPointerDown={disabled ? undefined : ev => handleNotePointerDown(ev, note)}
+                  onPointerMove={disabled ? undefined : ev => handleNotePointerMove(ev)}
+                  onPointerUp={disabled ? undefined : () => handleNotePointerUp()}
+                  onPointerCancel={disabled ? undefined : () => handleNotePointerUp()}
+                  onContextMenu={disabled ? undefined : ev => handleNoteContextMenu(ev, note)}
+                  onKeyDown={disabled ? undefined : ev => handleNoteKeyDown(ev, note)}
                 >
                   <div className={styles.noteResizeHandle} aria-hidden="true" />
                 </div>

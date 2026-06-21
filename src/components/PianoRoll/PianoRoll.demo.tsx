@@ -1,168 +1,162 @@
 // src/components/PianoRoll/PianoRoll.demo.tsx
-import { useState, useCallback, useRef } from 'react'
-import type { DemoMeta } from '../../gallery/registry'
-import { DemoShell } from '../../gallery/ui/DemoShell'
+import { useState, useCallback } from 'react'
+import type { DemoMeta }  from '../../gallery/registry'
+import { DemoShell }      from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
-import { Playground } from '../../gallery/ui/Playground'
-import { Toggle } from '../Toggle'
-import { Fader } from '../Fader'
-import { ThemeProvider } from '../../theme/ThemeProvider'
-import { PianoRoll } from './PianoRoll'
+import { Playground }     from '../../gallery/ui/Playground'
+import { Fader }          from '../Fader'
+import { Toggle }         from '../Toggle'
+import { PianoRoll }      from './PianoRoll'
 import type { PianoNote } from './PianoRoll'
 
 export const meta: DemoMeta = {
   name:  'PianoRoll',
   group: 'Composites',
   route: '/piano-roll',
-  order: 25,
+  order: 7,
 }
 
-// ─── Fixture notes ────────────────────────────────────────────────────────────
+// ─── Fixtures ─────────────────────────────────────────────────────────────────
 
-const FIXTURE_NOTES: PianoNote[] = [
-  { id: 'n1', pitch: 60, start: 0,   length: 1,    velocity: 100 },
-  { id: 'n2', pitch: 62, start: 1,   length: 0.5,  velocity: 80  },
-  { id: 'n3', pitch: 64, start: 1.5, length: 0.5,  velocity: 60  },
-  { id: 'n4', pitch: 60, start: 2,   length: 2,    velocity: 110 },
-  { id: 'n5', pitch: 55, start: 4,   length: 1,    velocity: 90  },
-  { id: 'n6', pitch: 57, start: 5,   length: 0.5,  velocity: 70  },
-  { id: 'n7', pitch: 59, start: 5.5, length: 0.5,  velocity: 85  },
-  { id: 'n8', pitch: 55, start: 6,   length: 2,    velocity: 100 },
+// A simple C-major scale phrase (all in beats, 4/4 at quarter-note division=1)
+const MELODY: PianoNote[] = [
+  { id: 'm1', pitch: 60, start: 0,    length: 1,   velocity: 100 }, // C4
+  { id: 'm2', pitch: 62, start: 1,    length: 0.5, velocity: 90  }, // D4
+  { id: 'm3', pitch: 64, start: 1.5,  length: 0.5, velocity: 95  }, // E4
+  { id: 'm4', pitch: 65, start: 2,    length: 1,   velocity: 85  }, // F4
+  { id: 'm5', pitch: 67, start: 3,    length: 1,   velocity: 80  }, // G4
+  { id: 'm6', pitch: 65, start: 4,    length: 0.5, velocity: 75  }, // F4
+  { id: 'm7', pitch: 64, start: 4.5,  length: 0.5, velocity: 88  }, // E4
+  { id: 'm8', pitch: 62, start: 5,    length: 2,   velocity: 100 }, // D4 — held
+  { id: 'm9', pitch: 60, start: 7,    length: 1,   velocity: 110 }, // C4
+  // Bar 3 chord
+  { id: 'c1', pitch: 60, start: 8,    length: 4,   velocity: 90  }, // C4
+  { id: 'c2', pitch: 64, start: 8,    length: 4,   velocity: 85  }, // E4
+  { id: 'c3', pitch: 67, start: 8,    length: 4,   velocity: 80  }, // G4
 ]
 
-const SMALL_RANGE: [number, number] = [48, 72]  // C3–C5
+// Velocity gradient — shows how velocity affects opacity/brightness
+const VEL_NOTES: PianoNote[] = [
+  { id: 'v1', pitch: 67, start: 0, length: 1, velocity: 127 }, // ff — G4
+  { id: 'v2', pitch: 65, start: 1, length: 1, velocity: 100 }, // mf — F4
+  { id: 'v3', pitch: 64, start: 2, length: 1, velocity: 75  }, // mp — E4
+  { id: 'v4', pitch: 62, start: 3, length: 1, velocity: 50  }, // p  — D4
+  { id: 'v5', pitch: 60, start: 4, length: 1, velocity: 25  }, // pp — C4
+  { id: 'v6', pitch: 59, start: 5, length: 1, velocity: 10  }, // ppp— B3
+]
 
-// ─── Shared wrapper ───────────────────────────────────────────────────────────
+// ─── Shared wrapper ────────────────────────────────────────────────────────────
 
-function RollWrap({ height = 220, children }: { height?: number; children: React.ReactNode }) {
+function RollWrap({
+  children,
+  height = 220,
+}: { children: React.ReactNode; height?: number }) {
   return (
     <div style={{
-      width:        440,
       height,
-      overflow:     'hidden',
-      borderRadius: 'var(--radius)',
+      overflow: 'auto',
       border:       '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
     }}>
       {children}
     </div>
   )
 }
 
-// ─── Stateful sub-states ──────────────────────────────────────────────────────
-
-function SelectedNoteState() {
-  const [notes, setNotes] = useState<PianoNote[]>(FIXTURE_NOTES)
-  return (
-    <PianoRoll
-      notes={notes}
-      pxPerBeat={40}
-      durationBeats={8}
-      pitchRange={SMALL_RANGE}
-      onDeleteNote={id  => setNotes(n => n.filter(x => x.id !== id))}
-      onMoveNote={(id, pitch, start) => setNotes(n => n.map(x => x.id === id ? { ...x, pitch, start } : x))}
-      onResizeNote={(id, length)     => setNotes(n => n.map(x => x.id === id ? { ...x, length }       : x))}
-    />
-  )
-}
-
-function MultiSelectState() {
-  const [notes, setNotes] = useState<PianoNote[]>(FIXTURE_NOTES)
-  return (
-    <PianoRoll
-      notes={notes}
-      pxPerBeat={40}
-      durationBeats={8}
-      pitchRange={SMALL_RANGE}
-      onDeleteNote={id  => setNotes(n => n.filter(x => x.id !== id))}
-      onMoveNote={(id, pitch, start) => setNotes(n => n.map(x => x.id === id ? { ...x, pitch, start } : x))}
-      onResizeNote={(id, length)     => setNotes(n => n.map(x => x.id === id ? { ...x, length }       : x))}
-    />
-  )
-}
-
-function InteractiveDraw() {
-  const [notes, setNotes] = useState<PianoNote[]>([])
-  const nextId = useRef(0)
-  return (
-    <PianoRoll
-      notes={notes}
-      pxPerBeat={40}
-      durationBeats={8}
-      pitchRange={SMALL_RANGE}
-      snap
-      division={0.5}
-      onAddNote={(pitch, start) => {
-        const id = `d${++nextId.current}`
-        setNotes(n => [...n, { id, pitch, start, length: 0.5, velocity: 100 }])
-      }}
-      onDeleteNote={id => setNotes(n => n.filter(x => x.id !== id))}
-      onMoveNote={(id, pitch, start) => setNotes(n => n.map(x => x.id === id ? { ...x, pitch, start } : x))}
-      onResizeNote={(id, length)     => setNotes(n => n.map(x => x.id === id ? { ...x, length }       : x))}
-    />
-  )
-}
-
-// ─── States grid ─────────────────────────────────────────────────────────────
+// ─── States grid ──────────────────────────────────────────────────────────────
 
 function StatesDemo() {
   return (
     <StatesGrid>
-      <State label="Empty (grid + keyboard)">
-        <RollWrap>
-          <PianoRoll notes={[]} pxPerBeat={40} durationBeats={8} pitchRange={SMALL_RANGE} />
+      <State label="empty — grid + keyboard, no notes">
+        <RollWrap height={200}>
+          <PianoRoll
+            notes={[]}
+            pxPerBeat={48}
+            pitchRange={[48, 72]}
+            durationBeats={16}
+          />
         </RollWrap>
       </State>
 
-      <State label="With notes">
-        <RollWrap>
-          <PianoRoll notes={FIXTURE_NOTES} pxPerBeat={40} durationBeats={8} pitchRange={SMALL_RANGE} />
+      <State label="with notes — melody + chord">
+        <RollWrap height={220}>
+          <PianoRoll
+            notes={MELODY}
+            pxPerBeat={48}
+            pitchRange={[48, 72]}
+            durationBeats={16}
+          />
         </RollWrap>
       </State>
 
-      <State label="Note selected (click a note)">
-        <RollWrap>
-          <SelectedNoteState />
+      <State label="velocity gradient — louder = more opaque">
+        <RollWrap height={200}>
+          <PianoRoll
+            notes={VEL_NOTES}
+            pxPerBeat={64}
+            pitchRange={[57, 69]}
+            durationBeats={8}
+          />
         </RollWrap>
       </State>
 
-      <State label="Multi-select (Shift+click)">
-        <RollWrap>
-          <MultiSelectState />
+      <State label="1/8 division snap grid visible">
+        <RollWrap height={200}>
+          <PianoRoll
+            notes={MELODY.slice(0, 5)}
+            pxPerBeat={64}
+            pitchRange={[57, 72]}
+            durationBeats={8}
+            division={0.5}
+            snap
+          />
         </RollWrap>
       </State>
 
-      <State label="Draw mode (snap on, click to add)">
-        <RollWrap>
-          <InteractiveDraw />
+      <State label="wide pitch range — C2 to C7 (scrollable)">
+        <RollWrap height={220}>
+          <PianoRoll
+            notes={MELODY}
+            pxPerBeat={48}
+            pitchRange={[24, 96]}
+            durationBeats={16}
+          />
         </RollWrap>
       </State>
 
-      <State label="Small size (sm)">
+      <State label="sm size — compact key strip + tight rows">
         <RollWrap height={160}>
-          <PianoRoll notes={FIXTURE_NOTES} pxPerBeat={32} durationBeats={8} pitchRange={SMALL_RANGE} size="sm" />
+          <PianoRoll
+            notes={MELODY.slice(0, 5)}
+            pxPerBeat={48}
+            pitchRange={[55, 72]}
+            durationBeats={8}
+            size="sm"
+          />
         </RollWrap>
       </State>
 
-      <State label="Chroma vs Nocturne">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          <ThemeProvider theme="chroma">
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', marginBottom: 2 }}>chroma</div>
-            <RollWrap height={160}>
-              <PianoRoll notes={FIXTURE_NOTES} pxPerBeat={32} durationBeats={8} pitchRange={SMALL_RANGE} />
-            </RollWrap>
-          </ThemeProvider>
-          <ThemeProvider theme="nocturne">
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', marginBottom: 2 }}>nocturne</div>
-            <RollWrap height={160}>
-              <PianoRoll notes={FIXTURE_NOTES} pxPerBeat={32} durationBeats={8} pitchRange={SMALL_RANGE} />
-            </RollWrap>
-          </ThemeProvider>
-        </div>
+      <State label="zoomed in — 96 px/beat">
+        <RollWrap height={200}>
+          <PianoRoll
+            notes={MELODY.slice(0, 4)}
+            pxPerBeat={96}
+            pitchRange={[57, 72]}
+            durationBeats={6}
+          />
+        </RollWrap>
       </State>
 
-      <State label="Scrolled (full C1–C7 range)">
-        <RollWrap>
-          <PianoRoll notes={FIXTURE_NOTES} pxPerBeat={40} durationBeats={8} pitchRange={[24, 96]} />
+      <State label="disabled — no interactions">
+        <RollWrap height={200}>
+          <PianoRoll
+            notes={MELODY.slice(0, 5)}
+            pxPerBeat={48}
+            pitchRange={[55, 72]}
+            durationBeats={8}
+            disabled
+          />
         </RollWrap>
       </State>
     </StatesGrid>
@@ -172,143 +166,189 @@ function StatesDemo() {
 // ─── Playground ───────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [notes,      setNotes]      = useState<PianoNote[]>(FIXTURE_NOTES)
-  const [pxPerBeat,  setPxPerBeat]  = useState(48)
-  const [snap,       setSnap]       = useState(false)
-  const [division,   setDivision]   = useState(0.25)
-  const [lastAction, setLastAction] = useState('—')
+  const [notes,        setNotes]        = useState<PianoNote[]>(MELODY)
+  const [pxPerBeat,    setPxPerBeat]    = useState(48)
+  const [division,     setDivision]     = useState(0.25)
+  const [snap,         setSnap]         = useState(false)
+  const [durationBeats, setDurationBeats] = useState(16)
+  const [log,          setLog]          = useState('—')
 
-  const idCounter = useRef(100)
+  const DIVISIONS = [
+    { label: '1/4',  value: 1    },
+    { label: '1/8',  value: 0.5  },
+    { label: '1/16', value: 0.25 },
+  ]
 
-  const handleAdd = useCallback((pitch: number, start: number) => {
-    const id = `u${idCounter.current++}`
-    setNotes(n => [...n, { id, pitch, start, length: division, velocity: 100 }])
-    setLastAction(`add pitch=${pitch} start=${start.toFixed(2)}`)
-  }, [division]) // eslint-disable-line react-hooks/exhaustive-deps
+  const handleAddNote = useCallback((pitch: number, start: number) => {
+    const id = `u${Date.now()}`
+    setNotes(prev => [...prev, { id, pitch, start, length: division, velocity: 100 }])
+    setLog(`add → pitch ${pitch}  start ${start.toFixed(2)}`)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [division])
 
-  const handleMove = useCallback((id: string, pitch: number, start: number) => {
-    setNotes(n => n.map(x => x.id === id ? { ...x, pitch, start } : x))
-    setLastAction(`move ${id} → pitch=${pitch} start=${start.toFixed(2)}`)
+  const handleMoveNote = useCallback((id: string, pitch: number, start: number) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, pitch, start } : n))
+    setLog(`move → ${id}  pitch ${pitch}  start ${start.toFixed(2)}`)
   }, [])
 
-  const handleResize = useCallback((id: string, length: number) => {
-    setNotes(n => n.map(x => x.id === id ? { ...x, length } : x))
-    setLastAction(`resize ${id} → ${length.toFixed(2)} beats`)
+  const handleResizeNote = useCallback((id: string, length: number) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, length } : n))
+    setLog(`resize → ${id}  length ${length.toFixed(2)}`)
   }, [])
 
-  const handleDelete = useCallback((id: string) => {
-    setNotes(n => n.filter(x => x.id !== id))
-    setLastAction(`delete ${id}`)
+  const handleDeleteNote = useCallback((id: string) => {
+    setNotes(prev => prev.filter(n => n.id !== id))
+    setLog(`delete → ${id}`)
+  }, [])
+
+  const handleSelectNote = useCallback((ids: string[]) => {
+    if (ids.length > 0) setLog(`select → [${ids.join(', ')}]`)
   }, [])
 
   const labelStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
-    fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)',
+    display:    'flex',
+    alignItems: 'center',
+    gap:        'var(--space-2)',
+    fontFamily: 'var(--font-ui)',
+    fontSize:   'var(--text-sm)',
+    color:      'var(--text-muted)',
   }
 
   return (
     <Playground>
-      <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
         {/* Piano roll */}
-        <div style={{
-          flex:         '1 1 400px',
-          height:       320,
-          border:       '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          overflow:     'hidden',
-        }}>
-          <PianoRoll
-            notes={notes}
-            pxPerBeat={pxPerBeat}
-            durationBeats={16}
-            pitchRange={[36, 84]}
-            division={division}
-            snap={snap}
-            onAddNote={handleAdd}
-            onMoveNote={handleMove}
-            onResizeNote={handleResize}
-            onDeleteNote={handleDelete}
-          />
+        <div style={{ flex: '1 1 480px', minWidth: 0 }}>
+          <div style={{ height: 300, overflow: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+            <PianoRoll
+              notes={notes}
+              pxPerBeat={pxPerBeat}
+              pitchRange={[48, 84]}
+              durationBeats={durationBeats}
+              division={division}
+              snap={snap}
+              onAddNote={handleAddNote}
+              onMoveNote={handleMoveNote}
+              onResizeNote={handleResizeNote}
+              onDeleteNote={handleDeleteNote}
+              onSelectNote={handleSelectNote}
+            />
+          </div>
+          {/* Intent log */}
+          <div style={{
+            marginTop:  'var(--space-2)',
+            fontFamily: 'var(--font-mono)',
+            fontSize:   'var(--text-xs)',
+            color:      'var(--text-dim)',
+          }}>
+            {log}
+          </div>
         </div>
 
         {/* Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', flexShrink: 0, minWidth: 180 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', flexShrink: 0, minWidth: 160 }}>
+
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+            division
+          </div>
+          <div role="radiogroup" aria-label="Division" style={{ display: 'flex', gap: 'var(--space-1)' }}>
+            {DIVISIONS.map(d => (
+              <Toggle
+                key={d.label}
+                checked={division === d.value}
+                onChange={on => { if (on) setDivision(d.value) }}
+                label={d.label}
+                size="sm"
+                aria-label={`Division ${d.label}`}
+              />
+            ))}
+          </div>
+
           <label style={labelStyle}>
             px/beat ({pxPerBeat})
             <Fader
               value={pxPerBeat}
               onChange={v => setPxPerBeat(Math.max(16, Math.round(v)))}
-              min={16} max={120}
+              min={16}
+              max={128}
               orientation="horizontal"
               size="sm"
               aria-label="Pixels per beat"
             />
           </label>
 
-          <Toggle checked={snap} onChange={setSnap} label="snap" size="sm" />
-
           <label style={labelStyle}>
-            division
-            <select
-              value={division}
-              onChange={e => setDivision(Number(e.target.value))}
-              style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)' }}
-            >
-              <option value={0.25}>1/16</option>
-              <option value={0.5}>1/8</option>
-              <option value={1}>1/4</option>
-              <option value={2}>1/2</option>
-            </select>
+            beats ({durationBeats})
+            <Fader
+              value={durationBeats}
+              onChange={v => setDurationBeats(Math.max(4, Math.round(v)))}
+              min={4}
+              max={32}
+              orientation="horizontal"
+              size="sm"
+              aria-label="Duration beats"
+            />
           </label>
 
-          <div style={{
-            fontFamily:   'var(--font-mono)',
-            fontSize:     'var(--text-xs)',
-            color:        'var(--text-dim)',
-            marginTop:    'var(--space-2)',
-            padding:      'var(--space-2)',
-            background:   'var(--stage)',
-            borderRadius: 'var(--radius)',
-            lineHeight:   1.6,
-          }}>
-            last: {lastAction}<br />
-            notes: {notes.length}
-          </div>
+          <Toggle
+            checked={snap}
+            onChange={setSnap}
+            label="snap to grid"
+            size="sm"
+          />
 
           <button
-            onClick={() => { setNotes([]); setLastAction('clear all') }}
+            type="button"
+            onClick={() => setNotes(MELODY)}
             style={{
               fontFamily:   'var(--font-ui)',
               fontSize:     'var(--text-sm)',
-              padding:      '4px 12px',
-              background:   'var(--stage)',
               color:        'var(--text-muted)',
+              background:   'var(--surface)',
               border:       '1px solid var(--border)',
               borderRadius: 'var(--radius)',
+              padding:      '4px 8px',
               cursor:       'pointer',
             }}
           >
-            clear
+            Reset notes
           </button>
-        </div>
-      </div>
 
-      {/* Usage notes */}
-      <div style={{
-        marginTop:  'var(--space-4)',
-        fontFamily: 'var(--font-mono)',
-        fontSize:   'var(--text-xs)',
-        color:      'var(--text-dim)',
-        lineHeight: 1.8,
-      }}>
-        click empty lane = add note · drag body = move · drag right edge = resize · right-click = delete<br />
-        ↑/↓ = ±semitone · Shift+↑/↓ = ±octave · ←/→ = move by division · Del/Backspace = remove
+          <button
+            type="button"
+            onClick={() => setNotes([])}
+            style={{
+              fontFamily:   'var(--font-ui)',
+              fontSize:     'var(--text-sm)',
+              color:        'var(--text-dim)',
+              background:   'transparent',
+              border:       '1px solid var(--border)',
+              borderRadius: 'var(--radius)',
+              padding:      '4px 8px',
+              cursor:       'pointer',
+            }}
+          >
+            Clear notes
+          </button>
+
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize:   'var(--text-xs)',
+            color:      'var(--text-dim)',
+            marginTop:  'var(--space-2)',
+            lineHeight: 1.6,
+            whiteSpace: 'pre',
+          }}>
+            {'click grid → add note\nclick-drag → draw longer\ndrag body → move note\ndrag right edge → resize\nright-click note → delete\n↑/↓ = ±1 semitone\nShift+↑/↓ = ±octave\n←/→ = move by division\nDelete = remove selected'}
+          </div>
+        </div>
       </div>
     </Playground>
   )
 }
 
-// ─── Default export ──────────────────────────────────────────────────────────
+// ─── Default export ───────────────────────────────────────────────────────────
 
 export default function PianoRollDemo() {
   return (

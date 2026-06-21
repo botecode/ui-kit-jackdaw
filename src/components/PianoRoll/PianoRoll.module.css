@@ -226,6 +226,13 @@
   z-index: 1;
 }
 
+/* ─── Disabled ───────────────────────────────────────────────────────────────── */
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
 /* ─── Size variants ─────────────────────────────────────────────────────────── */
 
 /* sm: smaller lanes + key strip (set via --lane-h/--key-w CSS vars on root).
