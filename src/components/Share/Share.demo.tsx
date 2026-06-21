@@ -6,16 +6,27 @@ import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { Toggle } from '../Toggle'
 import { Share } from './Share'
-import type { ShareScope, ShareStatus } from './Share'
+import type { TransferRole, TransferPhase, ErrorKind, TakeManifest } from './Share'
 
 export const meta: DemoMeta = {
-  name: 'Share',
+  name: 'Share (Take)',
   group: 'Composites',
   route: '/share',
   order: 50,
 }
 
-// ── Shared trigger style (kit tokens) ─────────────────────────────────────────
+// ── Shared fixtures ────────────────────────────────────────────────────────────
+
+const MANIFEST: TakeManifest = {
+  songName:        'Summer Drift',
+  takeLabel:       'Main Mix',
+  takeNumber:      3,
+  durationSeconds: 183,
+  trackCount:      8,
+  sizeBytes:       32_400_000,
+  hasLyrics:       true,
+  hasChords:       true,
+}
 
 const TRIGGER: React.CSSProperties = {
   appearance: 'none',
@@ -30,253 +41,344 @@ const TRIGGER: React.CSSProperties = {
   color: 'var(--text)',
   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)',
   outline: 'none',
-  lineHeight: 1,
 }
 
-// ── State cards ───────────────────────────────────────────────────────────────
+const NOOP = () => {}
 
-function IdleCard() {
+// ── Sender state cards ─────────────────────────────────────────────────────────
+
+function SenderIdleCard() {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<ShareScope>('project')
   return (
-    <State label="idle — scope selection">
-      <button style={TRIGGER} onClick={() => setOpen(true)}>Share…</button>
-      <Share
-        open={open}
-        scope={scope}
-        status="idle"
-        onScopeChange={setScope}
-        onGenerate={() => setOpen(false)}
-        onCopy={() => {}}
-        onCancel={() => setOpen(false)}
-      />
+    <State label="sender · idle">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'idle' }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
     </State>
   )
 }
 
-function GeneratingCard() {
+function SenderManifestCard() {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<ShareScope>('project')
   return (
-    <State label="generating">
-      <button style={TRIGGER} onClick={() => setOpen(true)}>Share…</button>
-      <Share
-        open={open}
-        scope={scope}
-        status="generating"
-        onScopeChange={setScope}
-        onGenerate={() => {}}
-        onCopy={() => {}}
-        onCancel={() => setOpen(false)}
-      />
+    <State label="sender · manifest">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'manifest' }} manifest={MANIFEST}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
     </State>
   )
 }
 
-function WaitingCard() {
+function SenderCodeCard() {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<ShareScope>('project')
   return (
-    <State label="waiting for peer">
-      <button style={TRIGGER} onClick={() => setOpen(true)}>Share…</button>
-      <Share
-        open={open}
-        scope={scope}
-        code="MANGO-TIGER-7"
-        status="waiting"
-        onScopeChange={setScope}
-        onGenerate={() => {}}
-        onCopy={() => navigator.clipboard?.writeText('MANGO-TIGER-7').catch(() => {})}
-        onCancel={() => setOpen(false)}
-      />
+    <State label="sender · code (waiting for peer)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'code' }}
+        manifest={MANIFEST} code="7-tuna-zebra-piano"
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
     </State>
   )
 }
 
-function TransferringCard() {
+function SenderConnectingCard() {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<ShareScope>('project')
   return (
-    <State label="transferring (60%)">
-      <button style={TRIGGER} onClick={() => setOpen(true)}>Share…</button>
-      <Share
-        open={open}
-        scope={scope}
-        code="MANGO-TIGER-7"
-        status="transferring"
-        progress={0.6}
-        onScopeChange={setScope}
-        onGenerate={() => {}}
-        onCopy={() => {}}
-        onCancel={() => setOpen(false)}
-      />
+    <State label="sender · connecting">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'connecting' }}
+        code="7-tuna-zebra-piano"
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
     </State>
   )
 }
 
-function DoneCard() {
+function SenderTransferringCard() {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<ShareScope>('project')
   return (
-    <State label="done">
-      <button style={TRIGGER} onClick={() => setOpen(true)}>Share…</button>
-      <Share
-        open={open}
-        scope={scope}
-        code="MANGO-TIGER-7"
-        status="done"
-        onScopeChange={setScope}
-        onGenerate={() => {}}
-        onCopy={() => {}}
-        onCancel={() => setOpen(false)}
-      />
+    <State label="sender · transferring 60%">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'transferring', progress: 0.6 }}
+        code="7-tuna-zebra-piano"
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
     </State>
   )
 }
 
-function ErrorCard() {
+function SenderSuccessCard() {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<ShareScope>('project')
   return (
-    <State label="error">
-      <button style={TRIGGER} onClick={() => setOpen(true)}>Share…</button>
-      <Share
-        open={open}
-        scope={scope}
-        code="MANGO-TIGER-7"
-        status="error"
-        errorMessage="Peer disconnected. Check your network and try again."
-        onScopeChange={setScope}
-        onGenerate={() => {}}
-        onCopy={() => {}}
-        onCancel={() => setOpen(false)}
-      />
+    <State label="sender · success">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'success' }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
     </State>
   )
 }
 
-function TrackCard() {
+function SenderErrorDroppedCard() {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<ShareScope>('track')
   return (
-    <State label="track scope — waiting">
-      <button style={TRIGGER} onClick={() => setOpen(true)}>Share track…</button>
-      <Share
-        open={open}
-        scope={scope}
-        target="track-01"
-        trackName="Drums"
-        code="CEDAR-WOLF-3"
-        status="waiting"
-        onScopeChange={setScope}
-        onGenerate={() => {}}
-        onCopy={() => navigator.clipboard?.writeText('CEDAR-WOLF-3').catch(() => {})}
-        onCancel={() => setOpen(false)}
-      />
+    <State label="sender · error (connection dropped)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open}
+        transfer={{ role: 'sender', phase: 'error', error: { kind: 'dropped', message: 'Connection dropped. Check your network.' } }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
     </State>
   )
 }
 
-// ── States grid ───────────────────────────────────────────────────────────────
+function SenderErrorExpiredCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="sender · error (code expired)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open}
+        transfer={{ role: 'sender', phase: 'error', error: { kind: 'expired', message: 'Pairing code expired — generate a new one.' } }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function SenderErrorVersionCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="sender · error (version mismatch)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open}
+        transfer={{ role: 'sender', phase: 'error', error: { kind: 'version-mismatch', message: 'Incompatible version — the other device needs to update Jackdaw.' } }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+// ── Receiver state cards ───────────────────────────────────────────────────────
+
+function ReceiverIdleCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · idle (enter code)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'idle' }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverManifestCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · manifest (accept?)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'manifest' }}
+        manifest={MANIFEST} peerName="Alice"
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverConnectingCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · connecting">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'connecting' }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverTransferringCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · receiving 40%">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'transferring', progress: 0.4 }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverConfirmCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · confirm (apply?)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'confirm' }}
+        manifest={MANIFEST} peerName="Alice"
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverAppliedCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · applied">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'applied' }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverErrorCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · error (transfer failed)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open}
+        transfer={{ role: 'receiver', phase: 'error', error: { kind: 'failed', message: 'Transfer failed. Try again.' } }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+// ── States grid ────────────────────────────────────────────────────────────────
 
 function StatesDemo() {
   return (
     <StatesGrid>
-      <IdleCard />
-      <GeneratingCard />
-      <WaitingCard />
-      <TransferringCard />
-      <DoneCard />
-      <ErrorCard />
-      <TrackCard />
+      {/* Sender flow: idle → manifest → code → connecting → transferring → success + errors */}
+      <SenderIdleCard />
+      <SenderManifestCard />
+      <SenderCodeCard />
+      <SenderConnectingCard />
+      <SenderTransferringCard />
+      <SenderSuccessCard />
+      <SenderErrorDroppedCard />
+      <SenderErrorExpiredCard />
+      <SenderErrorVersionCard />
+      {/* Receiver flow: idle → manifest → connecting → transferring → confirm → applied + error */}
+      <ReceiverIdleCard />
+      <ReceiverManifestCard />
+      <ReceiverConnectingCard />
+      <ReceiverTransferringCard />
+      <ReceiverConfirmCard />
+      <ReceiverAppliedCard />
+      <ReceiverErrorCard />
     </StatesGrid>
   )
 }
 
-// ── Playground ─────────────────────────────────────────────────────────────────
+// ── Playground — dogfoods Toggle for all controls ──────────────────────────────
 
-const STATUSES: ShareStatus[] = [
-  'idle', 'generating', 'waiting', 'transferring', 'done', 'error',
-]
+const SENDER_PHASES: TransferPhase[]   = ['idle', 'manifest', 'code', 'connecting', 'transferring', 'success', 'error']
+const RECEIVER_PHASES: TransferPhase[] = ['idle', 'manifest', 'connecting', 'transferring', 'confirm', 'applied', 'error']
+const ERROR_KINDS: ErrorKind[] = ['expired', 'no-peer', 'dropped', 'failed', 'version-mismatch']
+
+const ERROR_MESSAGES: Record<ErrorKind, string> = {
+  'expired':          'Pairing code expired — generate a new one.',
+  'no-peer':          'No peer connected. Share the code and try again.',
+  'dropped':          'Connection dropped. Check your network.',
+  'failed':           'Transfer failed. Try again.',
+  'version-mismatch': 'Incompatible version — the other device needs to update Jackdaw.',
+}
 
 function PlaygroundDemo() {
-  const [open,     setOpen]     = useState(false)
-  const [status,   setStatus]   = useState<ShareStatus>('idle')
-  const [progress, setProgress] = useState(0.4)
-  const [isTrack,  setIsTrack]  = useState(false)
+  const [open,      setOpen]     = useState(false)
+  const [role,      setRole]     = useState<TransferRole>('sender')
+  const [phase,     setPhase]    = useState<TransferPhase>('manifest')
+  const [progress,  setProgress] = useState(0.45)
+  const [errorKind, setErrKind]  = useState<ErrorKind>('failed')
 
-  const scope: ShareScope = isTrack ? 'track' : 'project'
-  const hasCode = status !== 'idle' && status !== 'generating'
+  const phases = role === 'sender' ? SENDER_PHASES : RECEIVER_PHASES
+
+  const transfer = {
+    role,
+    phase,
+    progress,
+    error: phase === 'error'
+      ? { kind: errorKind, message: ERROR_MESSAGES[errorKind] }
+      : undefined,
+  }
 
   return (
     <Playground>
       <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <button style={TRIGGER} onClick={() => setOpen(true)}>Open Share…</button>
+        <button style={TRIGGER} onClick={() => setOpen(true)}>Open…</button>
 
         <Share
           open={open}
-          scope={scope}
-          target={isTrack ? 'track-01' : undefined}
-          trackName={isTrack ? 'Drums' : undefined}
-          code={hasCode ? 'MANGO-TIGER-7' : undefined}
-          status={status}
-          progress={progress}
-          errorMessage="Peer disconnected."
-          onScopeChange={(s) => setIsTrack(s === 'track')}
-          onGenerate={() => {}}
-          onCopy={() => {}}
+          transfer={transfer}
+          manifest={MANIFEST}
+          code="7-tuna-zebra-piano"
+          peerName="Alice"
+          onGenerateCode={NOOP}
+          onSend={NOOP}
+          onEnterCode={NOOP}
+          onAccept={NOOP}
           onCancel={() => setOpen(false)}
+          onRetry={NOOP}
         />
 
-        {/* Controls — dogfood Toggle ────────────────────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <Toggle
-            checked={isTrack}
-            onChange={setIsTrack}
-            size="sm"
-            label="track scope"
-          />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-            <span style={{
-              fontFamily: 'var(--font-ui)',
-              fontSize: 'var(--text-xs)',
-              color: 'var(--text-dim)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom: 'var(--space-1)',
-            }}>
-              status
+        {/* Controls — dogfood Toggle for every knob */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', minWidth: 160 }}>
+          {/* Role */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              role
             </span>
-            {STATUSES.map(s => (
-              <Toggle
-                key={s}
-                checked={status === s}
-                onChange={() => setStatus(s)}
-                size="sm"
-                label={s}
-              />
+            <Toggle
+              checked={role === 'receiver'}
+              onChange={(v) => {
+                setRole(v ? 'receiver' : 'sender')
+                setPhase(v ? 'idle' : 'manifest')
+              }}
+              size="sm"
+              label="receiver"
+            />
+          </div>
+
+          {/* Phase */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              phase
+            </span>
+            {phases.map(p => (
+              <Toggle key={p} checked={phase === p} onChange={() => setPhase(p)} size="sm" label={p} />
             ))}
           </div>
 
-          <label style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-1)',
-            fontFamily: 'var(--font-ui)',
-            fontSize: 'var(--text-sm)',
-            color: 'var(--text-muted)',
-          }}>
-            <span>progress ({Math.round(progress * 100)}%)</span>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={progress}
-              onChange={e => setProgress(Number(e.target.value))}
-            />
-          </label>
+          {/* Error kind (only when phase=error) */}
+          {phase === 'error' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                error kind
+              </span>
+              {ERROR_KINDS.map(k => (
+                <Toggle key={k} checked={errorKind === k} onChange={() => setErrKind(k)} size="sm" label={k} />
+              ))}
+            </div>
+          )}
+
+          {/* Progress slider (only when phase=transferring) */}
+          {phase === 'transferring' && (
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+              <span>progress ({Math.round(progress * 100)}%)</span>
+              <input
+                type="range" min={0} max={1} step={0.01}
+                value={progress}
+                onChange={e => setProgress(Number(e.target.value))}
+              />
+            </label>
+          )}
         </div>
       </div>
     </Playground>

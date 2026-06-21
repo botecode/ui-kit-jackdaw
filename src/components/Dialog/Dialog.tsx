@@ -81,7 +81,8 @@ export function Dialog({
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  // Esc to close.
+  // Esc to close — always available as an escape hatch regardless of dismissible.
+  // dismissible only gates the backdrop click.
   useEffect(() => {
     if (!open) return
     function handle(e: KeyboardEvent) {
