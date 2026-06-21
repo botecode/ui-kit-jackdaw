@@ -27,16 +27,16 @@ const RETURNS: ReturnEntry[] = [
 const NO_SENDS: SendEntry[] = []
 
 const ONE_SEND: SendEntry[] = [
-  { returnId: 'reverb', returnName: 'Reverb', level: 0.8, tap: 'post', color: '#7ec8a4' },
+  { returnId: 'reverb', returnName: 'Reverb', level: 0.8, tap: 'post', pan: 0, color: '#7ec8a4' },
 ]
 
 const MULTI_SENDS: SendEntry[] = [
-  { returnId: 'reverb', returnName: 'Reverb',        level: 0.75, tap: 'post', color: '#7ec8a4' },
-  { returnId: 'pcomp',  returnName: 'Parallel Comp', level: 0.5,  tap: 'pre',  color: '#c4a0e4' },
+  { returnId: 'reverb', returnName: 'Reverb',        level: 0.75, tap: 'post', pan: 0,    color: '#7ec8a4' },
+  { returnId: 'pcomp',  returnName: 'Parallel Comp', level: 0.5,  tap: 'pre',  pan: -0.4, color: '#c4a0e4' },
 ]
 
 const AUTOMATED_SEND: SendEntry[] = [
-  { returnId: 'reverb', returnName: 'Reverb', level: 0.6, tap: 'post', color: '#7ec8a4', automated: true },
+  { returnId: 'reverb', returnName: 'Reverb', level: 0.6, tap: 'post', pan: 0.3, color: '#7ec8a4', automated: true },
 ]
 
 // Minimal track strip to host sends in context — mirrors how they'll sit in TrackHeader
@@ -81,6 +81,9 @@ function OpenPopoverDemo() {
       onSetSendTap={(id, tap) =>
         setSends(ps => ps.map(s => s.returnId === id ? { ...s, tap } : s))
       }
+      onSetSendPan={(id, pan) =>
+        setSends(ps => ps.map(s => s.returnId === id ? { ...s, pan } : s))
+      }
       onRemoveSend={id => setSends(ps => ps.filter(s => s.returnId !== id))}
     />
   )
@@ -93,7 +96,7 @@ function OpenPickerDemo() {
     if (id === 'new') return
     const ret = RETURNS.find(r => r.id === id)
     if (!ret || sends.some(s => s.returnId === id)) return
-    setSends(ps => [...ps, { returnId: id, returnName: ret.name, level: 0.75, tap: 'post' }])
+    setSends(ps => [...ps, { returnId: id, returnName: ret.name, level: 0.75, tap: 'post', pan: 0 }])
   }
 
   return (
@@ -106,6 +109,9 @@ function OpenPickerDemo() {
       }
       onSetSendTap={(id, tap) =>
         setSends(ps => ps.map(s => s.returnId === id ? { ...s, tap } : s))
+      }
+      onSetSendPan={(id, pan) =>
+        setSends(ps => ps.map(s => s.returnId === id ? { ...s, pan } : s))
       }
       onRemoveSend={id => setSends(ps => ps.filter(s => s.returnId !== id))}
     />
@@ -125,12 +131,13 @@ function StatesDemo() {
             onAddSend={noop}
             onSetSendLevel={noop}
             onSetSendTap={noop}
+            onSetSendPan={noop}
             onRemoveSend={noop}
           />
         </SendStrip>
       </State>
 
-      <State label="one send — post, 80%">
+      <State label="one send — post, 80%, center">
         <SendStrip>
           <SendChip
             sends={ONE_SEND}
@@ -138,12 +145,13 @@ function StatesDemo() {
             onAddSend={noop}
             onSetSendLevel={noop}
             onSetSendTap={noop}
+            onSetSendPan={noop}
             onRemoveSend={noop}
           />
         </SendStrip>
       </State>
 
-      <State label="multiple sends (post + pre)">
+      <State label="multiple sends (post center + pre L40)">
         <SendStrip>
           <SendChip
             sends={MULTI_SENDS}
@@ -151,12 +159,13 @@ function StatesDemo() {
             onAddSend={noop}
             onSetSendLevel={noop}
             onSetSendTap={noop}
+            onSetSendPan={noop}
             onRemoveSend={noop}
           />
         </SendStrip>
       </State>
 
-      <State label="level automated (violet dot)">
+      <State label="level automated (violet dot), pan R30">
         <SendStrip>
           <SendChip
             sends={AUTOMATED_SEND}
@@ -164,6 +173,7 @@ function StatesDemo() {
             onAddSend={noop}
             onSetSendLevel={noop}
             onSetSendTap={noop}
+            onSetSendPan={noop}
             onRemoveSend={noop}
           />
         </SendStrip>
@@ -177,6 +187,7 @@ function StatesDemo() {
             onAddSend={noop}
             onSetSendLevel={noop}
             onSetSendTap={noop}
+            onSetSendPan={noop}
             onRemoveSend={noop}
             disabled
           />
@@ -191,6 +202,7 @@ function StatesDemo() {
             onAddSend={noop}
             onSetSendLevel={noop}
             onSetSendTap={noop}
+            onSetSendPan={noop}
             onRemoveSend={noop}
             size="sm"
           />
@@ -199,7 +211,7 @@ function StatesDemo() {
 
       {/* Open states need extra height so portaled panels don't clip the grid */}
       <State label="popover open (click a chip to open)">
-        <div style={{ paddingBottom: 148 }}>
+        <div style={{ paddingBottom: 200 }}>
           <SendStrip>
             <OpenPopoverDemo />
           </SendStrip>
@@ -220,7 +232,7 @@ function StatesDemo() {
 // ── Playground ────────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [sends, setSends]     = useState<SendEntry[]>(MULTI_SENDS)
+  const [sends, setSends]       = useState<SendEntry[]>(MULTI_SENDS)
   const [disabled, setDisabled] = useState(false)
   const [size, setSize]         = useState<'sm' | 'md'>('md')
 
@@ -228,7 +240,7 @@ function PlaygroundDemo() {
     if (id === 'new') return
     const ret = RETURNS.find(r => r.id === id)
     if (!ret || sends.some(s => s.returnId === id)) return
-    setSends(ps => [...ps, { returnId: id, returnName: ret.name, level: 0.75, tap: 'post' }])
+    setSends(ps => [...ps, { returnId: id, returnName: ret.name, level: 0.75, tap: 'post', pan: 0 }])
   }
 
   function handleSetLevel(returnId: string, level: number) {
@@ -237,6 +249,10 @@ function PlaygroundDemo() {
 
   function handleSetTap(returnId: string, tap: 'pre' | 'post') {
     setSends(ps => ps.map(s => s.returnId === returnId ? { ...s, tap } : s))
+  }
+
+  function handleSetPan(returnId: string, pan: number) {
+    setSends(ps => ps.map(s => s.returnId === returnId ? { ...s, pan } : s))
   }
 
   function handleRemoveSend(returnId: string) {
@@ -251,7 +267,7 @@ function PlaygroundDemo() {
         alignItems: 'flex-start',
         flexWrap:   'wrap',
       }}>
-        <div style={{ paddingBottom: 180 }}>
+        <div style={{ paddingBottom: 200 }}>
           <SendStrip>
             <SendChip
               sends={sends}
@@ -259,6 +275,7 @@ function PlaygroundDemo() {
               onAddSend={handleAddSend}
               onSetSendLevel={handleSetLevel}
               onSetSendTap={handleSetTap}
+              onSetSendPan={handleSetPan}
               onRemoveSend={handleRemoveSend}
               size={size}
               disabled={disabled}

@@ -1,6 +1,6 @@
 // src/components/SendChip/SendChip.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { SendChip } from './SendChip'
 import type { SendEntry, ReturnEntry } from './SendChip'
 
@@ -12,12 +12,12 @@ const RETURNS: ReturnEntry[] = [
 ]
 
 const ONE_SEND: SendEntry[] = [
-  { returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post' },
+  { returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post', pan: 0 },
 ]
 
 const TWO_SENDS: SendEntry[] = [
-  { returnId: 'r1', returnName: 'Reverb',        level: 0.75, tap: 'post' },
-  { returnId: 'r2', returnName: 'Parallel Comp', level: 0.5,  tap: 'pre'  },
+  { returnId: 'r1', returnName: 'Reverb',        level: 0.75, tap: 'post', pan: 0    },
+  { returnId: 'r2', returnName: 'Parallel Comp', level: 0.5,  tap: 'pre',  pan: -0.4 },
 ]
 
 const DEFAULT_PROPS = {
@@ -26,6 +26,7 @@ const DEFAULT_PROPS = {
   onAddSend:      noop,
   onSetSendLevel: noop,
   onSetSendTap:   noop,
+  onSetSendPan:   noop,
   onRemoveSend:   noop,
 }
 
@@ -122,6 +123,35 @@ describe('SendChip chip rendering', () => {
   })
 })
 
+// ── Pan hint on chip ──────────────────────────────────────────────────────────
+
+describe('SendChip chip pan hint', () => {
+  it('no pan hint when pan is center (0)', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} />)
+    expect(screen.queryByText('L')).not.toBeInTheDocument()
+    expect(screen.queryByText('R')).not.toBeInTheDocument()
+  })
+
+  it('no pan hint when pan is undefined (defaults center)', () => {
+    const noExplicitPan: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post' }]
+    render(<SendChip {...DEFAULT_PROPS} sends={noExplicitPan} />)
+    expect(screen.queryByText('L')).not.toBeInTheDocument()
+    expect(screen.queryByText('R')).not.toBeInTheDocument()
+  })
+
+  it('shows L hint when pan < 0', () => {
+    const leftSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post', pan: -0.5 }]
+    render(<SendChip {...DEFAULT_PROPS} sends={leftSend} />)
+    expect(screen.getByText('L')).toBeInTheDocument()
+  })
+
+  it('shows R hint when pan > 0', () => {
+    const rightSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post', pan: 0.5 }]
+    render(<SendChip {...DEFAULT_PROPS} sends={rightSend} />)
+    expect(screen.getByText('R')).toBeInTheDocument()
+  })
+})
+
 // ── Popover ───────────────────────────────────────────────────────────────────
 
 describe('SendChip popover', () => {
@@ -175,7 +205,7 @@ describe('SendChip popover', () => {
 
   it('ArrowUp on slider calls onSetSendLevel with level+0.05', () => {
     const onSetSendLevel = vi.fn()
-    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     const slider = screen.getByRole('slider', { name: /send level/i })
@@ -185,7 +215,7 @@ describe('SendChip popover', () => {
 
   it('ArrowDown on slider calls onSetSendLevel with level-0.05', () => {
     const onSetSendLevel = vi.fn()
-    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     const slider = screen.getByRole('slider', { name: /send level/i })
@@ -204,7 +234,7 @@ describe('SendChip popover', () => {
 
   it('level clamped to 0 when ArrowDown from level=0', () => {
     const onSetSendLevel = vi.fn()
-    const zeroLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0, tap: 'post' }]
+    const zeroLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0, tap: 'post', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={zeroLevel} onSetSendLevel={onSetSendLevel} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     const slider = screen.getByRole('slider', { name: /send level/i })
@@ -222,7 +252,7 @@ describe('SendChip popover', () => {
 
   it('End key sets level to 1', () => {
     const onSetSendLevel = vi.fn()
-    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     fireEvent.keyDown(screen.getByRole('slider', { name: /send level/i }), { key: 'End' })
@@ -231,7 +261,7 @@ describe('SendChip popover', () => {
 
   it('Shift+ArrowUp uses fine step of 0.01', () => {
     const onSetSendLevel = vi.fn()
-    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     fireEvent.keyDown(screen.getByRole('slider', { name: /send level/i }), { key: 'ArrowUp', shiftKey: true })
@@ -241,7 +271,7 @@ describe('SendChip popover', () => {
   it('pointer drag up on level slider increases level', () => {
     HTMLElement.prototype.setPointerCapture = vi.fn()
     const onSetSendLevel = vi.fn()
-    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post' }]
+    const halfLevel: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 0.5, tap: 'post', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={halfLevel} onSetSendLevel={onSetSendLevel} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     const slider = screen.getByRole('slider', { name: /send level/i })
@@ -259,7 +289,7 @@ describe('SendChip popover', () => {
   })
 
   it('tap toggle is aria-checked=true when tap=pre', () => {
-    const preSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'pre' }]
+    const preSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'pre', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={preSend} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     const tapBtn = screen.getByRole('checkbox', { name: /pre-fader tap/i })
@@ -276,7 +306,7 @@ describe('SendChip popover', () => {
 
   it('clicking tap toggle calls onSetSendTap(returnId, "post") when currently pre', () => {
     const onSetSendTap = vi.fn()
-    const preSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'pre' }]
+    const preSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'pre', pan: 0 }]
     render(<SendChip {...DEFAULT_PROPS} sends={preSend} onSetSendTap={onSetSendTap} />)
     fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
     fireEvent.click(screen.getByRole('checkbox', { name: /pre-fader tap/i }))
@@ -290,6 +320,58 @@ describe('SendChip popover', () => {
     fireEvent.click(screen.getByRole('button', { name: /remove send/i }))
     expect(onRemoveSend).toHaveBeenCalledWith('r1')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})
+
+// ── Popover pan row ───────────────────────────────────────────────────────────
+
+describe('SendChip popover pan', () => {
+  it('pan slider (PanKnob) renders in popover', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    expect(screen.getByRole('slider', { name: /send pan/i })).toBeInTheDocument()
+  })
+
+  it('pan slider shows correct aria-valuenow for center pan', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    const panSlider = screen.getByRole('slider', { name: /send pan/i })
+    expect(panSlider).toHaveAttribute('aria-valuenow', '0')
+  })
+
+  it('ArrowRight on pan slider calls onSetSendPan with pan+0.05', () => {
+    const onSetSendPan = vi.fn()
+    const centerSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post', pan: 0 }]
+    render(<SendChip {...DEFAULT_PROPS} sends={centerSend} onSetSendPan={onSetSendPan} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    fireEvent.keyDown(screen.getByRole('slider', { name: /send pan/i }), { key: 'ArrowRight' })
+    expect(onSetSendPan).toHaveBeenCalledWith('r1', expect.closeTo(0.05, 4))
+  })
+
+  it('ArrowLeft on pan slider calls onSetSendPan with pan-0.05', () => {
+    const onSetSendPan = vi.fn()
+    const centerSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post', pan: 0 }]
+    render(<SendChip {...DEFAULT_PROPS} sends={centerSend} onSetSendPan={onSetSendPan} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    fireEvent.keyDown(screen.getByRole('slider', { name: /send pan/i }), { key: 'ArrowLeft' })
+    expect(onSetSendPan).toHaveBeenCalledWith('r1', expect.closeTo(-0.05, 4))
+  })
+
+  it('double-click on pan slider calls onSetSendPan with 0 (reset to center)', () => {
+    const onSetSendPan = vi.fn()
+    const pannedSend: SendEntry[] = [{ returnId: 'r1', returnName: 'Reverb', level: 1, tap: 'post', pan: 0.5 }]
+    render(<SendChip {...DEFAULT_PROPS} sends={pannedSend} onSetSendPan={onSetSendPan} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    fireEvent.dblClick(screen.getByRole('slider', { name: /send pan/i }))
+    expect(onSetSendPan).toHaveBeenCalledWith('r1', 0)
+  })
+
+  it('popover dialog renders with title when open', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    const dialog = screen.getByRole('dialog', { name: /Send to Reverb/i })
+    expect(dialog).toBeInTheDocument()
+    expect(within(dialog).getByText('→ Reverb')).toBeInTheDocument()
   })
 })
 

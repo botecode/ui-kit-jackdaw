@@ -3,6 +3,7 @@ import { CSSProperties, useRef, useState } from 'react'
 import styles from './SendChip.module.css'
 import { Popover } from '../Popover'
 import { ContextMenu } from '../ContextMenu'
+import { PanKnob } from '../PanKnob'
 import type { MenuEntry } from '../ContextMenu'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -12,6 +13,7 @@ export interface SendEntry {
   returnName: string
   level:      number        // 0..1
   tap:        'pre' | 'post'
+  pan?:       number        // −1..1, 0 = center
   color?:     string
   automated?: boolean
 }
@@ -27,6 +29,7 @@ export interface SendChipProps {
   onAddSend:      (returnId: string | 'new') => void
   onSetSendLevel: (returnId: string, level: number) => void
   onSetSendTap:   (returnId: string, tap: 'pre' | 'post') => void
+  onSetSendPan:   (returnId: string, pan: number) => void
   onRemoveSend:   (returnId: string) => void
   size?:          'sm' | 'md'
   disabled?:      boolean
@@ -47,11 +50,12 @@ interface SendPopoverProps {
   onClose:        () => void
   onSetSendLevel: (returnId: string, level: number) => void
   onSetSendTap:   (returnId: string, tap: 'pre' | 'post') => void
+  onSetSendPan:   (returnId: string, pan: number) => void
   onRemoveSend:   (returnId: string) => void
 }
 
 function SendPopover({
-  send, containerRef, triggerRef, onClose, onSetSendLevel, onSetSendTap, onRemoveSend,
+  send, containerRef, triggerRef, onClose, onSetSendLevel, onSetSendTap, onSetSendPan, onRemoveSend,
 }: SendPopoverProps) {
   const [dragging, setDragging] = useState(false)
   const dragStart = useRef({ y: 0, level: 0 })
@@ -114,6 +118,18 @@ function SendPopover({
           </div>
         </div>
 
+        {/* ── Pan control ── */}
+        <div className={styles.popoverRow}>
+          <span className={styles.popoverRowLabel}>Pan</span>
+          <PanKnob
+            pan={send.pan ?? 0}
+            onChange={pan => onSetSendPan(send.returnId, pan)}
+            size="sm"
+            color={send.color ?? undefined}
+            aria-label="Send pan"
+          />
+        </div>
+
         {/* ── Tap toggle ── */}
         <div className={styles.popoverRow}>
           <span className={styles.popoverRowLabel}>Tap</span>
@@ -154,16 +170,18 @@ interface SendChipPillProps {
   onClose:        () => void
   onSetSendLevel: (returnId: string, level: number) => void
   onSetSendTap:   (returnId: string, tap: 'pre' | 'post') => void
+  onSetSendPan:   (returnId: string, pan: number) => void
   onRemoveSend:   (returnId: string) => void
 }
 
 function SendChipPill({
-  send, open, disabled, onClick, onClose, onSetSendLevel, onSetSendTap, onRemoveSend,
+  send, open, disabled, onClick, onClose, onSetSendLevel, onSetSendTap, onSetSendPan, onRemoveSend,
 }: SendChipPillProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef   = useRef<HTMLButtonElement>(null)
 
   const sendColor = send.color ?? 'var(--accent)'
+  const pan = send.pan ?? 0
 
   return (
     <div
@@ -186,6 +204,11 @@ function SendChipPill({
         <span className={styles.colorDot} aria-hidden />
         <span className={styles.chipLabel}>→ {send.returnName}</span>
         <span className={styles.levelReadout}>{Math.round(send.level * 100)}</span>
+        {Math.abs(pan) > 0.005 && (
+          <span className={styles.panHint} aria-hidden>
+            {pan < 0 ? 'L' : 'R'}
+          </span>
+        )}
         {send.tap === 'pre' && (
           <span className={styles.preBadge} aria-hidden>pre</span>
         )}
@@ -201,6 +224,7 @@ function SendChipPill({
           onClose={onClose}
           onSetSendLevel={onSetSendLevel}
           onSetSendTap={onSetSendTap}
+          onSetSendPan={onSetSendPan}
           onRemoveSend={onRemoveSend}
         />
       )}
@@ -288,6 +312,7 @@ export function SendChip({
   onAddSend,
   onSetSendLevel,
   onSetSendTap,
+  onSetSendPan,
   onRemoveSend,
   size = 'md',
   disabled,
@@ -309,6 +334,7 @@ export function SendChip({
           onClose={closeChip}
           onSetSendLevel={onSetSendLevel}
           onSetSendTap={onSetSendTap}
+          onSetSendPan={onSetSendPan}
           onRemoveSend={onRemoveSend}
         />
       ))}
