@@ -92,6 +92,7 @@ export function SupportFlow({
               <div className={styles.amountDisplay} data-testid="amount-display">
                 <span
                   className={styles.amountValue}
+                  data-testid="amount-value"
                   data-zero={amountCents === 0 || undefined}
                 >
                   {amountCents === 0 ? 'free' : `$${Math.round(amountCents / 100)}`}

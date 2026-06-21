@@ -74,7 +74,7 @@
 .dialogContent {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .message {
@@ -82,7 +82,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-base);
   line-height: var(--leading-base);
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 /* ─── Slider section ──────────────────────────────────────────────────────── */
@@ -91,7 +91,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .amountDisplay {
@@ -99,20 +102,22 @@
   min-height: 2em;
 }
 
+/* --led-green-core is the pale bloom (#D4FECB) — invisible on light cream.
+   Use --led-green (#46A147) for the lit readout: readable on both light and dark. */
 .amountValue {
   font-family: var(--font-mono);
   font-size: var(--text-display);
   font-weight: var(--weight-bold);
   letter-spacing: -0.02em;
-  color: var(--led-green-core);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--led-green) 40%, transparent);
+  color: var(--led-green);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--led-green) 30%, transparent);
   transition:
     color var(--dur-base) var(--ease-out),
     text-shadow var(--dur-led-on) var(--ease-out);
 }
 
 .amountValue[data-zero] {
-  color: var(--text-dim);
+  color: var(--text-muted);
   text-shadow: none;
 }
 
@@ -134,17 +139,18 @@
 
 .actions {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
+/* Secondary — quiet but clearly available: strong border, full-contrast label */
 .continueBtn {
   flex: 1;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--text-muted);
+  color: var(--text);
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
@@ -157,9 +163,8 @@
 }
 
 .continueBtn:hover {
-  color: var(--text);
+  background: var(--surface-2);
   border-color: var(--border-strong);
-  background: var(--stage);
 }
 
 .continueBtn:focus-visible {
@@ -167,14 +172,15 @@
   outline-offset: 1px;
 }
 
+/* Primary CTA — stage-recessed when idle, LED-lit when amount chosen */
 .donateBtn {
   flex: 1;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--text-dim);
+  color: var(--text-muted);
   background: var(--stage);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   padding: var(--space-2) var(--space-4);
   cursor: default;
@@ -214,15 +220,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) 0;
+  gap: var(--space-5);
+  padding: var(--space-6) var(--space-2);
   text-align: center;
 }
 
+/* Warm amber heart — emotionally distinct from the green "give" accent */
 .thankyouMark {
   font-size: 32px;
-  color: var(--led-green);
-  text-shadow: 0 0 16px color-mix(in srgb, var(--led-green) 50%, transparent);
+  color: var(--led-orange);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--led-orange) 50%, transparent);
   line-height: 1;
   user-select: none;
 }
