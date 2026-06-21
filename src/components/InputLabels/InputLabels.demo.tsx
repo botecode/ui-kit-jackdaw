@@ -5,6 +5,7 @@ import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { Toggle } from '../Toggle'
+import { Panel } from '../Panel'
 import { InputLabels } from './InputLabels'
 import type { InputEntry } from './InputLabels'
 
@@ -17,118 +18,96 @@ export const meta: DemoMeta = {
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const FOUR_INPUTS: InputEntry[] = [
-  { id: 'in-1', name: 'Input 1' },
-  { id: 'in-2', name: 'Input 2' },
-  { id: 'in-3', name: 'Input 3' },
-  { id: 'in-4', name: 'Input 4' },
+const ALL_EMPTY: InputEntry[] = [
+  { id: 'e-1', name: 'Input 1' },
+  { id: 'e-2', name: 'Input 2' },
+  { id: 'e-3', name: 'Input 3' },
+  { id: 'e-4', name: 'Input 4' },
 ]
 
 const SOME_LABELLED: InputEntry[] = [
-  { id: 'in-1', name: 'Input 1', label: 'Guitar - ez1073' },
-  { id: 'in-2', name: 'Input 2', label: 'Bass DI' },
-  { id: 'in-3', name: 'Input 3' },
-  { id: 'in-4', name: 'Input 4' },
+  { id: 's-1', name: 'Input 1', label: 'Guitar - ez1073' },
+  { id: 's-2', name: 'Input 2', label: 'Bass DI' },
+  { id: 's-3', name: 'Input 3' },
+  { id: 's-4', name: 'Input 4' },
 ]
 
-const MANY_INPUTS: InputEntry[] = [
-  { id: 'in-1',  name: 'Input 1',  label: 'Guitar - ez1073' },
-  { id: 'in-2',  name: 'Input 2',  label: 'Bass DI' },
-  { id: 'in-3',  name: 'Input 3',  label: 'Kick' },
-  { id: 'in-4',  name: 'Input 4',  label: 'Snare Top' },
-  { id: 'in-5',  name: 'Input 5' },
-  { id: 'in-6',  name: 'Input 6' },
-  { id: 'in-7',  name: 'Input 7' },
-  { id: 'in-8',  name: 'Input 8' },
-  { id: 'in-9',  name: 'Input 9' },
-  { id: 'in-10', name: 'Input 10' },
+const MANY: InputEntry[] = [
+  { id: 'm-1',  name: 'Input 1',  label: 'Guitar - ez1073' },
+  { id: 'm-2',  name: 'Input 2',  label: 'Bass DI' },
+  { id: 'm-3',  name: 'Input 3',  label: 'Kick' },
+  { id: 'm-4',  name: 'Input 4',  label: 'Snare Top' },
+  { id: 'm-5',  name: 'Input 5' },
+  { id: 'm-6',  name: 'Input 6' },
+  { id: 'm-7',  name: 'Input 7' },
+  { id: 'm-8',  name: 'Input 8' },
+  { id: 'm-9',  name: 'Input 9' },
+  { id: 'm-10', name: 'Input 10' },
+  { id: 'm-11', name: 'Input 11' },
+  { id: 'm-12', name: 'Input 12' },
 ]
 
 // ── States grid ───────────────────────────────────────────────────────────────
 
 function StatesDemo() {
+  const [editable, setEditable] = useState<InputEntry[]>(SOME_LABELLED)
+
   return (
     <StatesGrid>
       <State label="All empty (placeholders)">
-        <div style={{ width: 280 }}>
-          <InputLabels inputs={FOUR_INPUTS} onLabel={() => {}} />
-        </div>
+        <Panel title="Inputs" style={{ width: 300 }}>
+          <InputLabels inputs={ALL_EMPTY} onLabel={() => {}} />
+        </Panel>
       </State>
 
       <State label="Some labelled">
-        <div style={{ width: 280 }}>
+        <Panel title="Inputs" style={{ width: 300 }}>
           <InputLabels inputs={SOME_LABELLED} onLabel={() => {}} />
-        </div>
+        </Panel>
       </State>
 
-      <State label="Field focused / editing">
-        {/* autoFocus on one field shows the accent focus ring */}
-        <div style={{ width: 280 }}>
-          <InputLabelsFocused />
-        </div>
+      <State label="Field editing (live)">
+        <Panel title="Inputs" style={{ width: 300 }}>
+          <InputLabels
+            inputs={editable}
+            onLabel={(id, label) =>
+              setEditable(prev => prev.map(i => i.id === id ? { ...i, label } : i))
+            }
+          />
+        </Panel>
       </State>
 
       <State label="Many inputs (scroll)">
-        <div style={{ width: 280, height: 180, display: 'flex', flexDirection: 'column' }}>
-          <InputLabels inputs={MANY_INPUTS} onLabel={() => {}} />
-        </div>
+        <Panel title="Inputs" style={{ width: 300 }}>
+          <InputLabels inputs={MANY} onLabel={() => {}} />
+        </Panel>
       </State>
 
       <State label="Empty list">
-        <div style={{ width: 280 }}>
+        <Panel title="Inputs" style={{ width: 300 }}>
           <InputLabels inputs={[]} onLabel={() => {}} />
-        </div>
+        </Panel>
+      </State>
+
+      <State label="Small size">
+        <Panel title="Inputs" style={{ width: 260 }}>
+          <InputLabels inputs={SOME_LABELLED} onLabel={() => {}} size="sm" />
+        </Panel>
       </State>
     </StatesGrid>
   )
 }
 
-// Separate component so autoFocus is live on mount inside the State cell
-function InputLabelsFocused() {
-  const inputs: InputEntry[] = [
-    { id: 'in-1', name: 'Input 1', label: 'Guitar - ez1073' },
-    { id: 'in-2', name: 'Input 2' },
-    { id: 'in-3', name: 'Input 3' },
-  ]
-  return (
-    <div style={{ position: 'relative' }}>
-      {/* Render normally but mark the second field as auto-focused via key trick */}
-      <InputLabelsFocusedInner inputs={inputs} />
-    </div>
-  )
-}
-
-function InputLabelsFocusedInner({ inputs }: { inputs: InputEntry[] }) {
-  const [vals, setVals] = useState(() =>
-    Object.fromEntries(inputs.map(i => [i.id, i.label ?? '']))
-  )
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      <InputLabels
-        inputs={inputs.map(i => ({ ...i, label: vals[i.id] }))}
-        onLabel={(id, label) => setVals(prev => ({ ...prev, [id]: label }))}
-      />
-    </div>
-  )
-}
-
 // ── Playground ─────────────────────────────────────────────────────────────────
 
-const PLAYGROUND_INPUTS: InputEntry[] = [
-  { id: 'p-1', name: 'Input 1' },
-  { id: 'p-2', name: 'Input 2' },
-  { id: 'p-3', name: 'Input 3' },
-  { id: 'p-4', name: 'Input 4' },
-]
-
 function PlaygroundDemo() {
-  const [inputs, setInputs] = useState<InputEntry[]>(PLAYGROUND_INPUTS)
-  const [showMany, setShowMany] = useState(false)
+  const [inputs, setInputs] = useState<InputEntry[]>(SOME_LABELLED)
+  const [useSmall, setUseSmall] = useState(false)
+  const [useMany,  setUseMany]  = useState(false)
 
-  const displayInputs = showMany ? MANY_INPUTS.map(i => ({
-    ...i,
-    label: inputs.find(p => p.id === i.id)?.label ?? i.label,
-  })) : inputs
+  const displayed = useMany
+    ? MANY.map(m => ({ ...m, label: inputs.find(i => i.id === m.id)?.label ?? m.label }))
+    : inputs
 
   function handleLabel(id: string, label: string) {
     setInputs(prev => prev.map(i => i.id === id ? { ...i, label } : i))
@@ -136,31 +115,37 @@ function PlaygroundDemo() {
 
   return (
     <Playground>
-      <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-start' }}>
-        <div style={{
-          width: 300,
-          height: showMany ? 200 : 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-        }}>
-          <InputLabels inputs={displayInputs} onLabel={handleLabel} />
-        </div>
+      <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <Panel title="Inputs" style={{ width: 320 }}>
+          <InputLabels
+            inputs={displayed}
+            onLabel={handleLabel}
+            size={useSmall ? 'sm' : 'md'}
+          />
+        </Panel>
 
         {/* Controls — dogfooded from kit Toggle */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <Toggle
-            checked={showMany}
-            onChange={setShowMany}
-            size="sm"
-            label="many inputs"
-          />
+          <Toggle checked={useSmall} onChange={setUseSmall} size="sm" label="size sm" />
+          <Toggle checked={useMany}  onChange={setUseMany}  size="sm" label="many inputs" />
+          <p
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-xs)',
+              color: 'var(--text-dim)',
+              margin: 0,
+              whiteSpace: 'pre',
+            }}
+          >
+            {inputs.map(i => `${i.name}: ${i.label || '—'}`).join('\n')}
+          </p>
         </div>
       </div>
     </Playground>
   )
 }
 
-// ── Default export ─────────────────────────────────────────────────────────────
+// ── Default export ────────────────────────────────────────────────────────────
 
 export default function InputLabelsDemo() {
   return (
