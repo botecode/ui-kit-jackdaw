@@ -112,6 +112,18 @@ describe('SupportFlow — dialog', () => {
     expect(screen.getByTestId('amount-display')).toHaveTextContent('$25')
   })
 
+  it('amount-value carries data-zero attribute at $0 (drives contrast token)', () => {
+    render(<SupportFlow {...DIALOG} />)
+    expect(screen.getByTestId('amount-value')).toHaveAttribute('data-zero')
+  })
+
+  it('amount-value has no data-zero attribute when amount > $0', () => {
+    render(<SupportFlow {...DIALOG} />)
+    const slider = screen.getByRole('slider', { name: 'Donation amount' })
+    fireEvent.keyDown(slider, { key: 'ArrowRight' })
+    expect(screen.getByTestId('amount-value')).not.toHaveAttribute('data-zero')
+  })
+
   it('Esc key calls onContinueFree (Dialog onClose passthrough)', () => {
     const onContinueFree = vi.fn()
     render(<SupportFlow {...DIALOG} onContinueFree={onContinueFree} />)
