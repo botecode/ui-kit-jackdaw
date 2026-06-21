@@ -70,6 +70,11 @@ describe('Dialog — rendering', () => {
     render(<Dialog {...BASE} />)
     expect(screen.getByRole('dialog')).toHaveAttribute('data-size', 'md')
   })
+
+  it('forwards style to the dialog element', () => {
+    render(<Dialog {...BASE} style={{ width: '720px' }} />)
+    expect(screen.getByRole('dialog')).toHaveStyle({ width: '720px' })
+  })
 })
 
 // ── Keyboard ──────────────────────────────────────────────────────────────────
