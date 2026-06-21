@@ -4,7 +4,6 @@ import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
-import { Toggle } from '../Toggle'
 import { THEMES } from '../../tokens/themes'
 import { useTheme } from '../../theme/ThemeProvider'
 import { LookAndFeelPanel } from '../LookAndFeelPanel'
@@ -19,14 +18,6 @@ export const meta: DemoMeta = {
   route: '/preferences',
   order: 65,
 }
-
-// ── Sections ──────────────────────────────────────────────────────────────────
-
-const SECTIONS: PreferencesSection[] = [
-  { id: 'input',         label: 'Input' },
-  { id: 'look-and-feel', label: 'Look and feel' },
-  { id: 'shortcuts',     label: 'Shortcuts' },
-]
 
 // ── Stub data ─────────────────────────────────────────────────────────────────
 
@@ -70,141 +61,36 @@ function InputPanel() {
   )
 }
 
-// ── Trigger button ────────────────────────────────────────────────────────────
+// ── States ────────────────────────────────────────────────────────────────────
 
-const BTN_STYLE: React.CSSProperties = {
-  appearance: 'none',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius)',
-  cursor: 'pointer',
-  fontFamily: 'var(--font-ui)',
-  fontSize: 'var(--text-sm)',
-  fontWeight: 'var(--weight-medium)',
-  padding: 'var(--space-2) var(--space-4)',
-  lineHeight: 1,
-  background: 'var(--surface)',
-  color: 'var(--text)',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)',
-  outline: 'none',
-}
-
-// ── State cards ───────────────────────────────────────────────────────────────
-
-function ClosedCard() {
-  const [open, setOpen] = useState(false)
-  return (
-    <State label="Closed">
-      <button style={BTN_STYLE} onClick={() => setOpen(true)}>
-        Open Preferences
-      </button>
-      <Preferences
-        open={open}
-        onClose={() => setOpen(false)}
-        sections={SECTIONS}
-        active="input"
-        onSelect={() => {}}
-      >
-        <InputPanel />
-      </Preferences>
-    </State>
-  )
-}
-
-function InputActiveCard() {
-  const [open, setOpen] = useState(false)
-  return (
-    <State label="Open — Input section">
-      <button style={BTN_STYLE} onClick={() => setOpen(true)}>
-        Open (Input)
-      </button>
-      <Preferences
-        open={open}
-        onClose={() => setOpen(false)}
-        sections={SECTIONS}
-        active="input"
-        onSelect={() => {}}
-      >
-        <InputPanel />
-      </Preferences>
-    </State>
-  )
-}
-
-function LookActiveCard() {
-  const [open, setOpen] = useState(false)
+function AllClosedCard() {
   const { theme, setTheme } = useTheme()
-  return (
-    <State label="Open — Look and feel section">
-      <button style={BTN_STYLE} onClick={() => setOpen(true)}>
-        Open (Look and feel)
-      </button>
-      <Preferences
-        open={open}
-        onClose={() => setOpen(false)}
-        sections={SECTIONS}
-        active="look-and-feel"
-        onSelect={() => {}}
-      >
-        <LookAndFeelPanel
-          themes={THEMES}
-          active={theme}
-          onSelect={setTheme}
-        />
-      </Preferences>
-    </State>
-  )
-}
-
-function ShortcutsActiveCard() {
-  const [open, setOpen] = useState(false)
   const [actions, setActions] = useState(SHORTCUT_ACTIONS)
-  return (
-    <State label="Open — Shortcuts section">
-      <button style={BTN_STYLE} onClick={() => setOpen(true)}>
-        Open (Shortcuts)
-      </button>
-      <Preferences
-        open={open}
-        onClose={() => setOpen(false)}
-        sections={SECTIONS}
-        active="shortcuts"
-        onSelect={() => {}}
-      >
+
+  const sections: PreferencesSection[] = [
+    { id: 'input',         label: 'Input',         panel: <InputPanel /> },
+    { id: 'look-and-feel', label: 'Look and feel', panel: <LookAndFeelPanel themes={THEMES} active={theme} onSelect={setTheme} /> },
+    { id: 'shortcuts',     label: 'Shortcuts',      panel: (
         <Shortcuts
           actions={actions}
-          onRebind={(id, key) =>
-            setActions(prev =>
-              prev.map(a => a.id === id ? { ...a, bindings: [key] } : a)
-            )
-          }
+          onRebind={(id, key) => setActions(prev => prev.map(a => a.id === id ? { ...a, bindings: [key] } : a))}
           onCreateMacro={() => {}}
         />
-      </Preferences>
-    </State>
-  )
-}
+      ),
+    },
+  ]
 
-// ── States grid ───────────────────────────────────────────────────────────────
-
-function StatesDemo() {
   return (
-    <StatesGrid>
-      <ClosedCard />
-      <InputActiveCard />
-      <LookActiveCard />
-      <ShortcutsActiveCard />
-    </StatesGrid>
+    <State label="All closed — click gear to open menu">
+      <Preferences sections={sections} />
+    </State>
   )
 }
 
 // ── Playground ────────────────────────────────────────────────────────────────
 
-type SectionId = 'input' | 'look-and-feel' | 'shortcuts'
-
 function PlaygroundDemo() {
   const { theme, setTheme } = useTheme()
-  const [open,    setOpen]    = useState(false)
-  const [section, setSection] = useState<SectionId>('input')
   const [actions, setActions] = useState(SHORTCUT_ACTIONS)
 
   function handleRebind(id: string, key: string) {
@@ -213,49 +99,43 @@ function PlaygroundDemo() {
 
   function handleCreateMacro(_name: string, _steps: MacroStep[], _key: string) {}
 
-  function renderPanel() {
-    if (section === 'input')         return <InputPanel />
-    if (section === 'look-and-feel') return <LookAndFeelPanel themes={THEMES} active={theme} onSelect={setTheme} />
-    return <Shortcuts actions={actions} onRebind={handleRebind} onCreateMacro={handleCreateMacro} />
-  }
+  const sections: PreferencesSection[] = [
+    {
+      id:    'input',
+      label: 'Input',
+      panel: <InputPanel />,
+    },
+    {
+      id:    'look-and-feel',
+      label: 'Look and feel',
+      panel: <LookAndFeelPanel themes={THEMES} active={theme} onSelect={setTheme} />,
+    },
+    {
+      id:    'shortcuts',
+      label: 'Shortcuts',
+      panel: (
+        <Shortcuts
+          actions={actions}
+          onRebind={handleRebind}
+          onCreateMacro={handleCreateMacro}
+        />
+      ),
+    },
+  ]
 
   return (
     <Playground>
-      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <button style={BTN_STYLE} onClick={() => setOpen(true)}>
-          Open Preferences
-        </button>
-
-        <Preferences
-          open={open}
-          onClose={() => setOpen(false)}
-          sections={SECTIONS}
-          active={section}
-          onSelect={(id) => setSection(id as SectionId)}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+        <Preferences sections={sections} />
+        <span
+          style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--text-muted)',
+          }}
         >
-          {renderPanel()}
-        </Preferences>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          <Toggle
-            checked={section === 'input'}
-            onChange={() => setSection('input')}
-            size="sm"
-            label="Input tab"
-          />
-          <Toggle
-            checked={section === 'look-and-feel'}
-            onChange={() => setSection('look-and-feel')}
-            size="sm"
-            label="Look and feel tab"
-          />
-          <Toggle
-            checked={section === 'shortcuts'}
-            onChange={() => setSection('shortcuts')}
-            size="sm"
-            label="Shortcuts tab"
-          />
-        </div>
+          Click the gear to open Preferences
+        </span>
       </div>
     </Playground>
   )
@@ -266,7 +146,9 @@ function PlaygroundDemo() {
 export default function PreferencesDemo() {
   return (
     <DemoShell meta={meta}>
-      <StatesDemo />
+      <StatesGrid>
+        <AllClosedCard />
+      </StatesGrid>
       <PlaygroundDemo />
     </DemoShell>
   )

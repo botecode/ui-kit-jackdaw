@@ -1,6 +1,7 @@
 // src/components/Dialog/Dialog.tsx
 import { useEffect, useRef, useId } from 'react'
 import { createPortal } from 'react-dom'
+import { X } from '@phosphor-icons/react'
 import { usePortalTarget } from '../../theme/ThemeProvider'
 import styles from './Dialog.module.css'
 
@@ -12,6 +13,7 @@ export interface DialogProps {
   actions?: React.ReactNode
   size?: 'sm' | 'md'
   dismissible?: boolean
+  showCloseButton?: boolean
   'aria-label'?: string
   style?: React.CSSProperties
   bodyStyle?: React.CSSProperties
@@ -38,6 +40,7 @@ export function Dialog({
   actions,
   size = 'md',
   dismissible = true,
+  showCloseButton = false,
   'aria-label': ariaLabel,
   style,
   bodyStyle,
@@ -138,6 +141,16 @@ export function Dialog({
         {title && (
           <div className={styles.header}>
             <h2 id={titleId} className={styles.title}>{title}</h2>
+            {showCloseButton && (
+              <button
+                type="button"
+                className={styles.closeBtn}
+                aria-label="Close"
+                onClick={onClose}
+              >
+                <X weight="bold" size={14} />
+              </button>
+            )}
           </div>
         )}
         <div className={styles.body} style={bodyStyle}>{children}</div>
