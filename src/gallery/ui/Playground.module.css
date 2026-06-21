@@ -1,6 +1,12 @@
 /* src/gallery/ui/Playground.module.css */
 .section {
+  /* Playground is a flex item in DemoShell.body (flex column). Flex items
+     have min-width: auto by default, which lets content push the section wider
+     than the available stage width. Setting both width: 100% and min-width: 0
+     ensures the section is always clamped to the column width; overflow is
+     handled by overflow-x: auto on .controls below. */
   width: 100%;
+  min-width: 0;
 }
 
 .heading {
