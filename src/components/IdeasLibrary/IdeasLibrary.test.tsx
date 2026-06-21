@@ -621,6 +621,20 @@ describe('IdeasLibrary — QR empty state', () => {
     expect(onGetApp).toHaveBeenCalledOnce()
   })
 
+  it('QR voice panel shows the Jackdaw brand mark', () => {
+    renderLibrary([IDEA_1])
+    fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))
+    const panel = screen.getByTestId('qr-empty-voice')
+    expect(panel.querySelector('[aria-label="Jackdaw"]')).toBeInTheDocument()
+  })
+
+  it('QR lyric panel shows the Jackdaw brand mark', () => {
+    renderLibrary([IDEA_1])
+    fireEvent.click(screen.getByRole('radio', { name: 'Lyrics' }))
+    const panel = screen.getByTestId('qr-empty-lyric')
+    expect(panel.querySelector('[aria-label="Jackdaw"]')).toBeInTheDocument()
+  })
+
   it('shows no-match when searching within empty voice kind', () => {
     renderLibrary([IDEA_1])
     fireEvent.click(screen.getByRole('radio', { name: 'Voice recordings' }))

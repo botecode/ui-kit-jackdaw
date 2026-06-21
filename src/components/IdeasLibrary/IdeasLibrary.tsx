@@ -4,6 +4,7 @@ import { MagnifyingGlass, DotsSixVertical, Play, Stop, Trash, Lightbulb } from '
 import { encode } from 'uqr'
 import { Clip } from '../Clip'
 import { TextField } from '../TextField'
+import { BrandMark } from '../BrandMark'
 import styles from './IdeasLibrary.module.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -229,6 +230,7 @@ function QrEmptyPanel({ kind, appSyncUrl, onGetApp }: QrEmptyPanelProps) {
     : { title: 'No captured lyrics yet', hint: 'Capture lyrics on the go — scan to get the Jackdaw app' }
   return (
     <div className={styles.qrPanel} data-testid={`qr-empty-${kind}`}>
+      <BrandMark variant="mark" size={28} />
       <div className={styles.qrCode}>
         <QrCodeSvg url={appSyncUrl} size={96} />
       </div>
