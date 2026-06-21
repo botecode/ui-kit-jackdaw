@@ -1,0 +1,151 @@
+/* src/components/ShareLink/ShareLink.module.css */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+/* ── Link well ────────────────────────────────────────────────────────────── */
+/*
+  Recessed dark stage well holding the mono deep link, like an address readout.
+  data-active: accent LED bloom on the border — incandescent fast attack / slow
+  decay (matches the Share code well).
+*/
+
+.well {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--border);
+  padding: var(--space-4) var(--space-4);
+  transition: box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+.well[data-active] {
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--accent),
+    0 0 12px 2px color-mix(in srgb, var(--accent) 20%, transparent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.linkText {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--stage-text);
+  letter-spacing: 0.01em;
+  line-height: var(--leading-sm);
+  word-break: break-all;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+.root[data-size='sm'] .linkText { font-size: var(--text-sm); }
+
+/* Inline copy button: ghost icon button on the stage. On-stage (light) glyph so
+   it reads against the dark well — never --text (dark-on-dark). */
+.copyBtn {
+  flex-shrink: 0;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, var(--stage-text) 16%, transparent);
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  background: color-mix(in srgb, var(--stage-text) 6%, transparent);
+  color: var(--stage-text);
+  outline: none;
+  transition:
+    background   var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.copyBtn:hover {
+  background: color-mix(in srgb, var(--stage-text) 12%, transparent);
+  border-color: color-mix(in srgb, var(--stage-text) 28%, transparent);
+}
+
+.copyBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.copyBtn:active { filter: brightness(0.92); }
+
+/* ── QR ───────────────────────────────────────────────────────────────────── */
+
+.qrRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Paper chip: a light field (stable across themes) that gives the QR its quiet
+   zone and a tactile, embedded-card feel against the dark well above. */
+.qrChip {
+  width: var(--_qr-size, 132px);
+  height: var(--_qr-size, 132px);
+  box-sizing: content-box;
+  padding: var(--space-3);
+  background: var(--stage-text);
+  border-radius: var(--radius);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.qr {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.qrModules {
+  fill: var(--stage);
+}
+
+.qrHint {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
+/* ── Copied toast ─────────────────────────────────────────────────────────── */
+
+.copiedToast {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--led-green);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: sharelink-toast-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes sharelink-toast-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copiedToast { animation: none; }
+}
