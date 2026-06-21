@@ -1,7 +1,7 @@
 // src/gallery/Sidebar.tsx
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { DEMOS, type DemoMeta } from './registry'
-import { PLANNED } from './planned'
+import { PLANNED, subtractBuilt } from './planned'
 import { ThemeSwitcher } from './ui/ThemeSwitcher'
 import { useHashRoute } from './useHashRoute'
 import { SidebarSearch } from './SidebarSearch'
@@ -56,8 +56,9 @@ export function Sidebar() {
   }, [])
 
   const plannedByGroup = useMemo(() => {
+    const builtNames = new Set(DEMOS.map(d => d.meta.name))
     const map: Record<Group, typeof PLANNED> = { Foundations: [], Primitives: [], Composites: [] }
-    for (const p of PLANNED) map[p.group].push(p)
+    for (const p of subtractBuilt(PLANNED, builtNames)) map[p.group].push(p)
     return map
   }, [])
 
