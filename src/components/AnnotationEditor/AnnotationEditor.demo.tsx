@@ -125,7 +125,11 @@ function StatesDemo() {
         editMode
       />
       <EditorCard
-        label="Tabs — monospace field"
+        label="Create — tabs (empty)"
+        type="tabs"
+      />
+      <EditorCard
+        label="Edit — tabs (monospace, pre-filled)"
         type="tabs"
         value={"e|--0--2--3--|\nB|--1--3--5--|"}
         editMode

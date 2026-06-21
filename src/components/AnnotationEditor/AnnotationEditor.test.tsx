@@ -137,7 +137,7 @@ describe('AnnotationEditor — comment', () => {
   it('shows play chip when value is an AudioRef', () => {
     const audioRef = { url: 'blob:test', durationMs: 3400 }
     render(<AnnotationEditor {...makeProps({ type: 'comment', value: audioRef })} />)
-    expect(screen.getByLabelText('Recorded audio')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Recorded audio' })).toBeInTheDocument()
     expect(screen.getByText('3.4s')).toBeInTheDocument()
   })
 
@@ -149,7 +149,7 @@ describe('AnnotationEditor — comment', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Record audio comment' }))
     await vi.waitFor(() => {
-      expect(screen.getByLabelText('Recorded audio')).toBeInTheDocument()
+      expect(screen.getByRole('img', { name: 'Recorded audio' })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
@@ -165,7 +165,7 @@ describe('AnnotationEditor — comment', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Comment' }), { target: { value: 'great take' } })
     fireEvent.click(screen.getByRole('button', { name: 'Record audio comment' }))
     await vi.waitFor(() => {
-      expect(screen.getByLabelText('Recorded audio')).toBeInTheDocument()
+      expect(screen.getByRole('img', { name: 'Recorded audio' })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
@@ -179,12 +179,29 @@ describe('AnnotationEditor — comment', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Record audio comment' }))
     await vi.waitFor(() => {
-      expect(screen.getByLabelText('Recorded audio')).toBeInTheDocument()
+      expect(screen.getByRole('img', { name: 'Recorded audio' })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove recording' }))
-    expect(screen.queryByLabelText('Recorded audio')).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: 'Recorded audio' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Record audio comment' })).toBeInTheDocument()
+  })
+
+  it('disables the record button and sets data-recording while capture is in progress', async () => {
+    let resolve: (v: { url: string; durationMs: number }) => void = () => {}
+    const onRecord = vi.fn(() => new Promise<{ url: string; durationMs: number }>(r => { resolve = r }))
+    render(<AnnotationEditor {...makeProps({ type: 'comment', onRecord })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record audio comment' }))
+
+    const btn = screen.getByRole('button', { name: 'Record audio comment' })
+    expect(btn).toBeDisabled()
+    expect(btn).toHaveAttribute('data-recording')
+
+    resolve({ url: 'blob:test', durationMs: 1000 })
+    await vi.waitFor(() => {
+      expect(screen.getByRole('img', { name: 'Recorded audio' })).toBeInTheDocument()
+    })
   })
 
   it('Record button is disabled when no onRecord handler', () => {

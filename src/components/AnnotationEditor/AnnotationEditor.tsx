@@ -147,7 +147,7 @@ export function AnnotationEditor({
             <div className={styles.audioSection}>
               {audioRef ? (
                 // Play chip: shown once a recording exists
-                <div className={styles.playChip} aria-label="Recorded audio">
+                <div className={styles.playChip} role="img" aria-label="Recorded audio">
                   <span className={styles.playChipIcon} aria-hidden="true">▶</span>
                   <span className={styles.playChipLabel}>
                     {formatDuration(audioRef.durationMs)}
