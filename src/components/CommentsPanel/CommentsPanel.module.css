@@ -2,12 +2,6 @@
 
 /* ─── Panel shell ────────────────────────────────────────────────────────── */
 
-/*
-  The shell is the full side panel — a warm, textured surface that reads
-  as a physical notebook clipped to the desk, not a browser sidebar.
-  It fills its container: the parent sets width + height.
-*/
-
 .root {
   display: flex;
   flex-direction: column;
@@ -51,7 +45,6 @@
   line-height: 1;
 }
 
-/* Unread / active-thread count badge */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -80,7 +73,6 @@
   min-height: 0;
 }
 
-/* Recessed scrollbar — same groove recipe as ScrollArea */
 .threadList::-webkit-scrollbar { width: 6px; }
 
 .threadList::-webkit-scrollbar-track {
@@ -120,80 +112,53 @@
   opacity: 0.35;
 }
 
-/* ─── Comment card ───────────────────────────────────────────────────────── */
+/* ─── Comment card — chat row ────────────────────────────────────────────── */
 
 /*
-  Each card is a warm inset pocket — slightly recessed vs. the panel bg.
-  Resolved cards dim to 55 % opacity: still readable, clearly de-emphasised.
-  No collapse — visible-but-dimmed is the right affordance for a record
-  of resolved discussions.
+  Each comment is a flex row: avatarCol (collaborators) | contentCol.
+  "me" messages flip to row-reverse (no avatar) so the bubble sits on the right.
+  Background and border live on .bubble, not here — the card itself is transparent.
 */
 
 .commentCard {
-  position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-end;
   gap: var(--space-2);
-  padding: var(--space-3);
-  /* Seat on --stage with a very subtle author-accent tint (5 %) */
-  background: color-mix(
-    in srgb,
-    var(--_author-accent, transparent) 5%,
-    color-mix(in srgb, var(--surface) 65%, var(--stage) 35%)
-  );
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  /* Hairline top-highlight for seated-card warmth */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
-  transition:
-    opacity var(--dur-slow) var(--ease-out),
-    background var(--dur-slow) var(--ease-out);
 }
 
-/* Author-accent spine — pseudo-element stays inside the radius */
-.commentCard::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--_author-accent, transparent);
-  border-radius: var(--radius) 0 0 var(--radius);
-  pointer-events: none;
-}
-
-/* Own comment: slightly stronger tint (8 % vs 5 %) so "mine" reads at a glance */
+/* Own (me) — flip row so bubble is right-aligned */
 .commentCard[data-own] {
-  background: color-mix(
-    in srgb,
-    var(--_author-accent, transparent) 8%,
-    color-mix(in srgb, var(--surface) 65%, var(--stage) 35%)
-  );
+  flex-direction: row-reverse;
 }
 
+/* Consecutive same-author message: pull up tight (counteracts threadList gap) */
+.commentCard[data-grouped] {
+  margin-top: calc(var(--space-1) - var(--space-3));
+}
+
+/* Resolved: whole row dims */
 .commentCard[data-resolved] {
-  opacity: 0.5;
-  background: color-mix(in srgb, var(--surface) 30%, var(--stage) 70%);
+  opacity: 0.45;
 }
 
-/* ─── Comment header (avatar + meta) ────────────────────────────────────── */
+/* ─── Avatar column ──────────────────────────────────────────────────────── */
 
-.commentHeader {
+.avatarCol {
+  flex-shrink: 0;
+  width: 28px;
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+/* Spacer holds the column width when the avatar is suppressed in a group */
+.avatarSpacer {
+  width: 28px;
+  height: 1px;
+  flex-shrink: 0;
 }
 
 /* ─── Avatar (initials circle) ───────────────────────────────────────────── */
-
-/*
-  28 × 28 circle — same visual family as track header initials.
-  --_avatar-color drives the outer ring; falls back to --border when absent.
-  Inset shadow creates the recessed-groove feel consistent with other controls.
-*/
 
 .avatar {
   width: 28px;
@@ -227,32 +192,72 @@
   object-fit: cover;
 }
 
-/* ─── Author meta (name + time) ──────────────────────────────────────────── */
+/* ─── Content column ─────────────────────────────────────────────────────── */
 
-.authorMeta {
+.contentCol {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
+/* "me" — bubble and actions hug the right edge */
+.commentCard[data-own] .contentCol {
+  align-items: flex-end;
+}
+
+/* ─── Author name (above bubble, first in group, collaborators only) ─────── */
+
 .authorName {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--_author-accent, var(--text));
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--_author-accent, var(--text-muted));
   line-height: 1.2;
+  padding-left: var(--space-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.commentTime {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-  letter-spacing: 0.02em;
-  line-height: 1;
+/* ─── Bubble ─────────────────────────────────────────────────────────────── */
+
+/*
+  The actual message surface. Warm, seated — slightly darker than --surface
+  with a faint author-accent tint. Hairline top-highlight for the warm card feel.
+  max-width keeps long messages from stretching edge-to-edge.
+*/
+
+.bubble {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: color-mix(
+    in srgb,
+    var(--_author-accent, transparent) 6%,
+    color-mix(in srgb, var(--surface) 58%, var(--stage) 42%)
+  );
+  border-radius: calc(var(--radius) * 1.5);
+  border: 1px solid var(--border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+  max-width: 88%;
+  word-break: break-word;
+  transition:
+    background var(--dur-slow) var(--ease-out),
+    opacity var(--dur-slow) var(--ease-out);
+}
+
+/* "me" bubble — slightly stronger accent tint to read as "mine" */
+.commentCard[data-own] .bubble {
+  background: color-mix(
+    in srgb,
+    var(--_author-accent, transparent) 11%,
+    color-mix(in srgb, var(--surface) 58%, var(--stage) 42%)
+  );
 }
 
 /* ─── Comment body (text) ────────────────────────────────────────────────── */
@@ -265,14 +270,20 @@
   margin: 0;
 }
 
-/* ─── Audio play chip ────────────────────────────────────────────────────── */
+/* ─── Timestamp (inside bubble, whisper-quiet) ───────────────────────────── */
 
-/*
-  Compact pill — same family as the AnnotationEditor play chip.
-  Accent-tint background (not full accent fill) keeps it clearly secondary.
-  data-playing: LED bloom on the accent color (green = play; per KIT-LEAD §6,
-  green = play/rolling — using accent here since this isn't record-arm).
-*/
+.commentTime {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  opacity: 0.65;
+  align-self: flex-end;
+  margin-top: 2px;
+}
+
+/* ─── Audio play chip ────────────────────────────────────────────────────── */
 
 .playChip {
   display: inline-flex;
@@ -315,7 +326,6 @@
   justify-content: center;
 }
 
-/* Waveform bars — decorative, not data-driven */
 .waveform {
   display: flex;
   align-items: center;
@@ -370,7 +380,15 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  padding-top: var(--space-1);
+  padding-top: 2px;
+  /* Actions fade in on hover — accessible regardless (just dimmed) */
+  opacity: 0.45;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.commentCard:hover .commentActions,
+.commentCard:focus-within .commentActions {
+  opacity: 1;
 }
 
 .actionBtn {
@@ -400,49 +418,76 @@
   outline-offset: 2px;
 }
 
-/* Resolve button — accent tint when resolved (dimmed card is already a signal) */
 .resolveBtn[data-resolved] {
   color: var(--accent);
 }
 
 /* ─── Replies ─────────────────────────────────────────────────────────────── */
 
+/*
+  Replies live inside contentCol. A faint connector line in the parent author's
+  accent anchors them visually in the parent's lane.
+*/
+
 .replies {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  /* Indent under avatar (28px) + gap (var(--space-2) = 8px) = 36px */
-  margin-left: calc(28px + var(--space-2));
+  margin-top: var(--space-1);
   padding-left: var(--space-3);
-  /* Thread connector in the parent author's accent */
-  border-left: 1px solid var(--_reply-accent, var(--border));
+  border-left: 1.5px solid color-mix(in srgb, var(--_reply-accent, var(--border)) 35%, transparent);
 }
 
+/* Each reply: flex column — author name (for others) then bubble */
 .replyCard {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* "me" reply: bubble sits on the right within the thread lane */
+.replyCard[data-own] {
+  align-items: flex-end;
+}
+
+/* Reply author name — only shown for collaborators */
+.replyAuthorName {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--_author-accent, var(--text-muted));
+  line-height: 1.2;
+  padding-left: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Reply bubble — slightly smaller padding, same warm surface */
+.replyBubble {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding-left: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: color-mix(
+    in srgb,
+    var(--_author-accent, transparent) 5%,
+    color-mix(in srgb, var(--surface) 54%, var(--stage) 46%)
+  );
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  max-width: 92%;
+  word-break: break-word;
 }
 
-/* Each reply's own author-accent spine — hairline so it reads within the thread */
-.replyCard::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 1.5px;
-  background: var(--_author-accent, transparent);
-  border-radius: 2px;
-  pointer-events: none;
-}
-
-.replyHeader {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+/* "me" reply — accent tint */
+.replyCard[data-own] .replyBubble {
+  background: color-mix(
+    in srgb,
+    var(--_author-accent, transparent) 9%,
+    color-mix(in srgb, var(--surface) 54%, var(--stage) 46%)
+  );
 }
 
 /* ─── Inline reply composer ───────────────────────────────────────────────── */
@@ -451,12 +496,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-left: calc(28px + var(--space-2));
   padding: var(--space-2);
   background: var(--stage);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.28);
+  margin-top: var(--space-1);
 }
 
 .replyInput {
@@ -548,7 +593,6 @@
   opacity: 1;
 }
 
-/* Audio draft preview in composer */
 .composerAudioDraft {
   display: flex;
   align-items: center;
@@ -574,7 +618,7 @@
   gap: var(--space-2);
 }
 
-/* ─── Ghost button (cancel / secondary) ──────────────────────────────────── */
+/* ─── Ghost button ───────────────────────────────────────────────────────── */
 
 .ghostBtn {
   display: inline-flex;
@@ -608,7 +652,7 @@
   pointer-events: none;
 }
 
-/* ─── Accent button (post / send) ────────────────────────────────────────── */
+/* ─── Accent button ──────────────────────────────────────────────────────── */
 
 .accentBtn {
   display: inline-flex;
@@ -650,7 +694,7 @@
   pointer-events: none;
 }
 
-/* ─── Record button — recessed idle, red LED bloom when recording ────────── */
+/* ─── Record button ──────────────────────────────────────────────────────── */
 
 .recordBtn {
   display: inline-flex;
@@ -687,7 +731,6 @@
   pointer-events: none;
 }
 
-/* Recording: semantic red LED (arm/record per KIT-LEAD §6) */
 .recordBtn[data-recording] {
   color: var(--led-red);
   box-shadow:
@@ -722,10 +765,11 @@
 /* ─── Reduced-motion: snap decorative transitions ────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .commentCard,
+  .bubble,
   .playChip,
   .jumpTo,
   .actionBtn,
+  .commentActions,
   .ghostBtn,
   .accentBtn,
   .recordBtn,

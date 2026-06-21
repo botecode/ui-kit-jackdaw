@@ -4,19 +4,18 @@
 // AnnotationEditor — this is the persistent project thread panel mounted
 // in the shell. No overlay/portal needed.
 //
-// Design decisions recorded here (not relitigated in future):
-// - Avatar: initials circle with --_avatar-color ring derived from the
-//   same accent as the comment spine — always in sync.
-// - Author accent: derived deterministically from a 6-slot track-color
-//   palette keyed by author.id; respects author.color if already set.
-//   Current user's comments use --accent so "mine" reads at a glance.
+// Design decisions:
+// - Chat bubble layout: avatarCol (collaborators) | contentCol (name + bubble + actions).
+//   "Me" messages flip to row-reverse with no avatar — classic chat ownership signal.
+// - Consecutive messages from the same author group tightly (2 px gap vs 12 px).
+//   Avatar + name only rendered for the first message in each group.
+// - Timestamp lives inside the bubble (bottom-right), quiet mono, ~9px.
+// - Replies: indented under contentCol with a parent-accent connector line.
+//   No avatar in replies — the connector carries the threading context.
+// - Author accent: deterministic 6-slot palette keyed by author.id; "me" → --accent.
 // - Waveform: 12-bar static decorative SVG; real playback is app-level.
-// - Thread depth: 1 level of indented replies (no recursive threading).
-// - Composer: raw <textarea> — TextField is single-line; multi-line is
-//   the correct affordance here.
-// - Badge: inline unresolved-count chip (Badge not yet built in kit).
-// - Play chip: accent bloom on data-playing; accent color (not green LED)
-//   because this is playback not transport-arm state.
+// - Composer: raw <textarea> — multi-line is the right affordance.
+// - Badge: inline unresolved-count chip.
 
 import { useState } from 'react'
 import {
@@ -34,15 +33,13 @@ import styles from './CommentsPanel.module.css'
 
 // ── Author accent palette ─────────────────────────────────────────────────────
 
-// 6-slot palette using track-color tokens — same family as clip/track spines.
-// Ordered to maximise perceptual distance between adjacent indices.
 const AUTHOR_PALETTE = [
-  'var(--track-color-1)', // warm orange
-  'var(--track-color-3)', // sky blue
-  'var(--track-color-4)', // violet
-  'var(--track-color-2)', // sage green
-  'var(--track-color-5)', // amber
-  'var(--track-color-6)', // rose red
+  'var(--track-color-1)',
+  'var(--track-color-3)',
+  'var(--track-color-4)',
+  'var(--track-color-2)',
+  'var(--track-color-5)',
+  'var(--track-color-6)',
 ]
 
 function hashAuthorId(id: string): number {
@@ -118,7 +115,6 @@ function formatTimeline(secs: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-// Static bar heights — decorative waveform, not data-driven
 const WAVE_BARS = [4, 8, 12, 10, 14, 9, 6, 11, 13, 7, 5, 10]
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
@@ -227,13 +223,20 @@ interface CommentCardProps {
   onJumpTo?: (timelineAt: number) => void
   onRecord?: () => Promise<AudioRef>
   currentUserId?: string
+  isFirstInGroup?: boolean
 }
 
-function CommentCard({ comment, onReply, onResolve, onJumpTo, currentUserId }: CommentCardProps) {
+function CommentCard({
+  comment,
+  onReply,
+  onResolve,
+  onJumpTo,
+  currentUserId,
+  isFirstInGroup = true,
+}: CommentCardProps) {
   const [replyOpen, setReplyOpen] = useState(false)
 
   const isMe = !!currentUserId && comment.author.id === currentUserId
-  // Current user's comments use --accent so "mine" is immediately distinct.
   const accent = isMe ? 'var(--accent)' : authorAccent(comment.author)
 
   function handleReplySubmit(id: string, content: string | AudioRef) {
@@ -246,109 +249,111 @@ function CommentCard({ comment, onReply, onResolve, onJumpTo, currentUserId }: C
       className={styles.commentCard}
       data-resolved={comment.resolved || undefined}
       data-own={isMe || undefined}
+      data-grouped={!isFirstInGroup || undefined}
       data-testid={`comment-card-${comment.id}`}
       style={{ '--_author-accent': accent } as React.CSSProperties}
     >
-      {/* Header: avatar + author + time */}
-      <div className={styles.commentHeader}>
-        <Avatar author={comment.author} accent={accent} />
-        <div className={styles.authorMeta}>
+      {/* Avatar column — collaborators only; spacer when grouped (preserves alignment) */}
+      {!isMe && (
+        <div className={styles.avatarCol}>
+          {isFirstInGroup
+            ? <Avatar author={comment.author} accent={accent} />
+            : <div className={styles.avatarSpacer} />
+          }
+        </div>
+      )}
+
+      {/* Content column: name → bubble → actions → replies */}
+      <div className={styles.contentCol}>
+        {/* Author name — first in group, collaborators only */}
+        {!isMe && isFirstInGroup && (
           <span className={styles.authorName}>{comment.author.name}</span>
+        )}
+
+        {/* Bubble: text / audio / jump-to / timestamp */}
+        <div className={styles.bubble}>
+          {comment.text && <p className={styles.commentBody}>{comment.text}</p>}
+          {comment.audio && !comment.text && <PlayChip audio={comment.audio} />}
+          {comment.timelineAt !== undefined && onJumpTo && (
+            <button
+              className={styles.jumpTo}
+              onClick={() => onJumpTo(comment.timelineAt!)}
+              type="button"
+              aria-label={`Jump to ${formatTimeline(comment.timelineAt)}`}
+            >
+              <Clock weight="bold" size={10} aria-hidden="true" />
+              {formatTimeline(comment.timelineAt)}
+            </button>
+          )}
           <span className={styles.commentTime}>{formatTime(comment.time)}</span>
         </div>
-      </div>
 
-      {/* Body: text or audio chip */}
-      {comment.text && (
-        <p className={styles.commentBody}>{comment.text}</p>
-      )}
-      {comment.audio && !comment.text && (
-        <PlayChip audio={comment.audio} />
-      )}
+        {/* Actions */}
+        <div className={styles.commentActions}>
+          <button
+            className={styles.actionBtn}
+            onClick={() => setReplyOpen(r => !r)}
+            type="button"
+            aria-label={`Reply to ${comment.author.name}`}
+          >
+            <ArrowBendUpLeft weight="bold" size={11} aria-hidden="true" />
+            Reply
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.resolveBtn}`}
+            data-resolved={comment.resolved || undefined}
+            onClick={() => onResolve(comment.id, !comment.resolved)}
+            type="button"
+            aria-label={comment.resolved ? 'Unresolve comment' : 'Resolve comment'}
+          >
+            <CheckCircle
+              weight={comment.resolved ? 'fill' : 'regular'}
+              size={11}
+              aria-hidden="true"
+            />
+            {comment.resolved ? 'Unresolve' : 'Resolve'}
+          </button>
+        </div>
 
-      {/* Timeline anchor — only when onJumpTo handler is wired */}
-      {comment.timelineAt !== undefined && onJumpTo && (
-        <button
-          className={styles.jumpTo}
-          onClick={() => onJumpTo(comment.timelineAt!)}
-          type="button"
-          aria-label={`Jump to ${formatTimeline(comment.timelineAt)}`}
-        >
-          <Clock weight="bold" size={10} aria-hidden="true" />
-          {formatTimeline(comment.timelineAt)}
-        </button>
-      )}
-
-      {/* Actions */}
-      <div className={styles.commentActions}>
-        <button
-          className={styles.actionBtn}
-          onClick={() => setReplyOpen(r => !r)}
-          type="button"
-          aria-label={`Reply to ${comment.author.name}`}
-        >
-          <ArrowBendUpLeft weight="bold" size={11} aria-hidden="true" />
-          Reply
-        </button>
-        <button
-          className={`${styles.actionBtn} ${styles.resolveBtn}`}
-          data-resolved={comment.resolved || undefined}
-          onClick={() => onResolve(comment.id, !comment.resolved)}
-          type="button"
-          aria-label={comment.resolved ? 'Unresolve comment' : 'Resolve comment'}
-        >
-          <CheckCircle
-            weight={comment.resolved ? 'fill' : 'regular'}
-            size={11}
-            aria-hidden="true"
-          />
-          {comment.resolved ? 'Unresolve' : 'Resolve'}
-        </button>
-      </div>
-
-      {/* Replies — thread connector uses parent accent; each reply gets its own spine */}
-      {comment.replies && comment.replies.length > 0 && (
-        <div
-          className={styles.replies}
-          style={{ '--_reply-accent': accent } as React.CSSProperties}
-        >
-          {comment.replies.map(reply => {
-            const replyIsMe = !!currentUserId && reply.author.id === currentUserId
-            const replyAccent = replyIsMe ? 'var(--accent)' : authorAccent(reply.author)
-            return (
-              <div
-                key={reply.id}
-                className={styles.replyCard}
-                data-own={replyIsMe || undefined}
-                style={{ '--_author-accent': replyAccent } as React.CSSProperties}
-              >
-                <div className={styles.replyHeader}>
-                  <Avatar author={reply.author} accent={replyAccent} />
-                  <div className={styles.authorMeta}>
-                    <span className={styles.authorName}>{reply.author.name}</span>
+        {/* Replies — connector line in parent accent; no avatar (lane stays parent's) */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div
+            className={styles.replies}
+            style={{ '--_reply-accent': accent } as React.CSSProperties}
+          >
+            {comment.replies.map(reply => {
+              const replyIsMe = !!currentUserId && reply.author.id === currentUserId
+              const replyAccent = replyIsMe ? 'var(--accent)' : authorAccent(reply.author)
+              return (
+                <div
+                  key={reply.id}
+                  className={styles.replyCard}
+                  data-own={replyIsMe || undefined}
+                  style={{ '--_author-accent': replyAccent } as React.CSSProperties}
+                >
+                  {!replyIsMe && (
+                    <span className={styles.replyAuthorName}>{reply.author.name}</span>
+                  )}
+                  <div className={styles.replyBubble}>
+                    {reply.text && <p className={styles.commentBody}>{reply.text}</p>}
+                    {reply.audio && !reply.text && <PlayChip audio={reply.audio} />}
                     <span className={styles.commentTime}>{formatTime(reply.time)}</span>
                   </div>
                 </div>
-                {reply.text && (
-                  <p className={styles.commentBody}>{reply.text}</p>
-                )}
-                {reply.audio && !reply.text && (
-                  <PlayChip audio={reply.audio} />
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
 
-      {/* Inline reply composer */}
-      {replyOpen && (
-        <ReplyComposer
-          commentId={comment.id}
-          onReply={handleReplySubmit}
-          onCancel={() => setReplyOpen(false)}
-        />
-      )}
+        {/* Inline reply composer */}
+        {replyOpen && (
+          <ReplyComposer
+            commentId={comment.id}
+            onReply={handleReplySubmit}
+            onCancel={() => setReplyOpen(false)}
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -473,6 +478,12 @@ export function CommentsPanel({
 }: CommentsPanelProps) {
   const unresolvedCount = comments.filter(c => !c.resolved).length
 
+  // Compute group membership: first message in a same-author run shows avatar + name.
+  const grouped = comments.map((comment, i) => ({
+    comment,
+    isFirstInGroup: i === 0 || comments[i - 1].author.id !== comment.author.id,
+  }))
+
   return (
     <div className={styles.root} data-testid="comments-panel">
       {/* Header */}
@@ -494,10 +505,11 @@ export function CommentsPanel({
             <span>No comments yet</span>
           </div>
         ) : (
-          comments.map(comment => (
+          grouped.map(({ comment, isFirstInGroup }) => (
             <CommentCard
               key={comment.id}
               comment={comment}
+              isFirstInGroup={isFirstInGroup}
               onReply={onReply}
               onResolve={onResolve}
               onJumpTo={onJumpTo}
