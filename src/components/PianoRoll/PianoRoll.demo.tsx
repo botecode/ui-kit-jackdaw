@@ -1,6 +1,7 @@
 // src/components/PianoRoll/PianoRoll.demo.tsx
 import { useState, useCallback } from 'react'
 import type { DemoMeta }  from '../../gallery/registry'
+import { ThemeProvider }  from '../../theme/ThemeProvider'
 import { DemoShell }      from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground }     from '../../gallery/ui/Playground'
@@ -137,15 +138,21 @@ function StatesDemo() {
         </RollWrap>
       </State>
 
-      <State label="zoomed in — 96 px/beat">
-        <RollWrap height={200}>
-          <PianoRoll
-            notes={MELODY.slice(0, 4)}
-            pxPerBeat={96}
-            pitchRange={[57, 72]}
-            durationBeats={6}
-          />
-        </RollWrap>
+      <State label="theme compare — chroma (light) vs nocturne (dark)">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <ThemeProvider theme="chroma">
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', marginBottom: 2 }}>chroma</div>
+            <RollWrap height={130}>
+              <PianoRoll notes={MELODY.slice(0, 5)} pxPerBeat={40} pitchRange={[57, 72]} durationBeats={8} />
+            </RollWrap>
+          </ThemeProvider>
+          <ThemeProvider theme="nocturne">
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', marginBottom: 2 }}>nocturne</div>
+            <RollWrap height={130}>
+              <PianoRoll notes={MELODY.slice(0, 5)} pxPerBeat={40} pitchRange={[57, 72]} durationBeats={8} />
+            </RollWrap>
+          </ThemeProvider>
+        </div>
       </State>
 
       <State label="disabled — no interactions">
