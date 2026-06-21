@@ -216,18 +216,20 @@ function PlaygroundDemo() {
             />
           </div>
 
-          <label style={labelStyle}>
+          <div style={labelStyle}>
             content
-            <select
+            <SegmentedControl
+              options={[
+                { value: 'text', label: 'text' },
+                { value: 'icon', label: 'icon' },
+                { value: 'both', label: 'icon+lbl' },
+              ]}
               value={mode}
-              onChange={e => { setMode(e.target.value as typeof mode) }}
-              style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)' }}
-            >
-              <option value="text">text</option>
-              <option value="icon">icon</option>
-              <option value="both">icon + label</option>
-            </select>
-          </label>
+              onChange={v => setMode(v as typeof mode)}
+              size="sm"
+              aria-label="Content mode"
+            />
+          </div>
         </div>
       </div>
     </Playground>
