@@ -57,3 +57,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.deviceName {
+  margin-left: 0.35em;
+  color: color-mix(in srgb, var(--stage-text) 45%, transparent);
+}

@@ -17,15 +17,16 @@ export const meta: DemoMeta = {
 }
 
 const BASIC_OPTIONS: InputSelectOption[] = [
-  { id: 'in-1', label: 'Input 1' },
+  { id: 'in-1', label: 'Vocals', inputName: 'Input 1 – ez1073' },
   { id: 'in-2', label: 'Input 2' },
-  { id: 'in-3', label: 'Input 3 (Guitar)' },
+  { id: 'in-3', label: 'Guitar', inputName: 'Input 3' },
   { id: 'in-4', label: 'Input 4' },
 ]
 
 const LONG_OPTIONS: InputSelectOption[] = Array.from({ length: 20 }, (_, i) => ({
   id: `in-${i + 1}`,
-  label: i === 0 ? 'Input 1 (Vocal mic)' : `Input ${i + 1}`,
+  label: i === 0 ? 'Vocal mic' : i === 4 ? 'Kick' : i === 7 ? 'Overhead L' : `Input ${i + 1}`,
+  inputName: `Input ${i + 1}`,
 }))
 
 // ── States grid ───────────────────────────────────────────────────────────────

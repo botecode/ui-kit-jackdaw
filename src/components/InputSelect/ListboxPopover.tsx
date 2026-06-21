@@ -5,6 +5,7 @@ import styles from './ListboxPopover.module.css'
 export interface ListboxOption {
   id: string
   label: string
+  inputName?: string
 }
 
 export interface ListboxPopoverProps {
@@ -44,7 +45,12 @@ export function ListboxPopover({ id, options, selectedId, activeId, onSelect }: 
           onMouseDown={e => { e.preventDefault(); onSelect(opt.id) }}
         >
           <span className={styles.check} aria-hidden="true">✓</span>
-          <span className={styles.label}>{opt.label}</span>
+          <span className={styles.label}>
+            {opt.label}
+            {opt.inputName && (
+              <span className={styles.deviceName}>({opt.inputName})</span>
+            )}
+          </span>
         </div>
       ))}
     </div>
