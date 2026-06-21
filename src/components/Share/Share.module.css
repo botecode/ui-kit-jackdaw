@@ -1,0 +1,331 @@
+/* src/components/Share/Share.module.css */
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Scope row ────────────────────────────────────────────────────────────── */
+
+.scopeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fieldLabel {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Segmented scope control ──────────────────────────────────────────────── */
+
+/*
+  Two buttons on a recessed rail. Selected = accent bloom; inactive = matte stage.
+  role="radio" within role="group" communicates selection to assistive tech.
+  Tab moves between options; clicking fires onScopeChange.
+*/
+
+.scopeControl {
+  display: inline-flex;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--border);
+}
+
+.scopeControl[data-disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.scopeOption {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  transition:
+    color      var(--dur-led-off) var(--ease-out),
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+.scopeOption:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+  border-radius: calc(var(--radius) - 1px);
+}
+
+/* Selected: accent surface + LED bloom — fast attack */
+.scopeOption[data-selected] {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow:
+    0 0 8px 2px color-mix(in srgb, var(--accent) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition:
+    color      var(--dur-led-on) var(--ease-out),
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* ── Generating indicator ─────────────────────────────────────────────────── */
+
+.generating {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Breathing dot — warm indeterminate pulse */
+.spinnerDot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50%       { opacity: 1;   transform: scale(1.1);  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinnerDot { animation: none; opacity: 0.8; }
+}
+
+/* ── Status / done / error labels ─────────────────────────────────────────── */
+
+.statusLabel {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-base);
+}
+
+.doneLabel {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--led-green);
+  line-height: var(--leading-base);
+}
+
+.errorLabel {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--led-red);
+  line-height: var(--leading-base);
+}
+
+/* ── Code hero ────────────────────────────────────────────────────────────── */
+
+/*
+  The code is the instrument face — large mono in a recessed stage well.
+  user-select:all so a single click selects the entire code for easy copying.
+*/
+
+.codeWell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--border);
+  padding: var(--space-4) var(--space-6);
+  min-height: 64px;
+}
+
+.codeHero {
+  font-family: var(--font-mono);
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  color: var(--stage-text);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+/* ── Copy row ─────────────────────────────────────────────────────────────── */
+
+.copyRow {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+/* ── Copy button ──────────────────────────────────────────────────────────── */
+
+.copyBtn {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: var(--space-2) var(--space-5);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  outline: none;
+  transition:
+    filter     var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.copyBtn:hover { filter: brightness(1.1); }
+
+.copyBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.copyBtn:active { filter: brightness(0.92); }
+
+/* ── Copied toast ─────────────────────────────────────────────────────────── */
+
+.copiedToast {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--led-green);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: toast-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copiedToast { animation: none; }
+}
+
+/* ── Generate button ──────────────────────────────────────────────────────── */
+
+.generateBtn {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: var(--space-2) var(--space-5);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  align-self: flex-end;
+  outline: none;
+  transition: filter var(--dur-base) var(--ease-out);
+}
+
+.generateBtn:hover { filter: brightness(1.1); }
+
+.generateBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.generateBtn:active { filter: brightness(0.92); }
+
+/* ── Cancel / close button ────────────────────────────────────────────────── */
+
+.cancelBtn {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: var(--space-2) var(--space-4);
+  background: var(--stage);
+  color: var(--stage-text);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+  outline: none;
+  transition: filter var(--dur-base) var(--ease-out);
+}
+
+.cancelBtn:hover { filter: brightness(1.1); }
+
+.cancelBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ── Transfer progress ────────────────────────────────────────────────────── */
+
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.progressTrack {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--border);
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: var(--led-orange);
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--led-orange) 40%, transparent);
+  border-radius: 2px;
+  transform-origin: left center;
+  transform: scaleX(var(--_progress, 0));
+  transition: transform var(--dur-slow) linear;
+}
+
+.progressLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  align-self: flex-end;
+}
