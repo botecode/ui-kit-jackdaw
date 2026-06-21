@@ -7,6 +7,7 @@ import { PanKnob } from '../PanKnob'
 import { Meter } from '../Meter/Meter'
 import { FxChip } from '../FxChip'
 import type { FxPlugin } from '../FxChip'
+import { Badge } from '../Badge'
 import styles from './FolderTrackHeader.module.css'
 
 export type { FxPlugin }
@@ -109,7 +110,7 @@ function FolderCollapsedRow({
       <FolderSimple size={12} className={styles.glyph} aria-hidden />
       <span className={styles.collapsedName}>{name}</span>
       {childCount > 0 && (
-        <span className={styles.childCount} aria-hidden>{childCount}</span>
+        <Badge variant="count" count={childCount} size="sm" tone="default" />
       )}
       <div className={styles.stateDots} aria-hidden>
         <span className={styles.stateDot} data-dot="mute" data-active={muted || undefined}>M</span>

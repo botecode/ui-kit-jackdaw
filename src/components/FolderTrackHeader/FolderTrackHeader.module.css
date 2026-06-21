@@ -155,19 +155,6 @@
   color: var(--text);
 }
 
-/* Child count badge — small recessed pill showing number of children */
-.childCount {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-normal);
-  color: var(--text-muted);
-  background: color-mix(in srgb, var(--stage) 30%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-  border-radius: 3px;
-  padding: 0 4px;
-  line-height: 16px;
-}
 
 .stateDots {
   display: flex;
