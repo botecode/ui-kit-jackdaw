@@ -23,6 +23,7 @@ const BASE = {
   onNewFromCode: vi.fn(),
   onOpen:        vi.fn(),
   onBrowse:      vi.fn(),
+  onPreview:     vi.fn(),
 }
 
 beforeEach(() => {
@@ -73,6 +74,14 @@ describe('ProjectPicker — rendering', () => {
     const listbox = screen.getByRole('listbox')
     for (const p of PROJECTS) {
       expect(within(listbox).getByText(p.name)).toBeInTheDocument()
+    }
+  })
+
+  it('renders a play button for each project', () => {
+    render(<ProjectPicker {...BASE} />)
+    const listbox = screen.getByRole('listbox')
+    for (const p of PROJECTS) {
+      expect(within(listbox).getByRole('button', { name: `Preview ${p.name}` })).toBeInTheDocument()
     }
   })
 
@@ -310,6 +319,59 @@ describe('ProjectPicker — project list keyboard navigation', () => {
 
     expect(options[2]).toHaveAttribute('aria-selected', 'true')
     expect(options[0]).toHaveAttribute('aria-selected', 'false')
+  })
+})
+
+// ── Preview / play button ─────────────────────────────────────────────────────
+
+describe('ProjectPicker — preview', () => {
+  it('renders a "Preview <name>" button for each project', () => {
+    render(<ProjectPicker {...BASE} />)
+    for (const p of PROJECTS) {
+      expect(screen.getByRole('button', { name: `Preview ${p.name}` })).toBeInTheDocument()
+    }
+  })
+
+  it('clicking a play button calls onPreview with the project id', () => {
+    render(<ProjectPicker {...BASE} />)
+    const btn = screen.getByRole('button', { name: `Preview ${PROJECTS[1].name}` })
+    fireEvent.click(btn)
+    expect(BASE.onPreview).toHaveBeenCalledWith(PROJECTS[1].id)
+  })
+
+  it('clicking play does NOT call onOpen', () => {
+    render(<ProjectPicker {...BASE} />)
+    const btn = screen.getByRole('button', { name: `Preview ${PROJECTS[0].name}` })
+    fireEvent.click(btn)
+    expect(BASE.onOpen).not.toHaveBeenCalled()
+  })
+
+  it('shows "Stop preview" button when previewingId matches the card', () => {
+    render(<ProjectPicker {...BASE} previewingId={PROJECTS[1].id} />)
+    expect(screen.getByRole('button', { name: 'Stop preview' })).toBeInTheDocument()
+  })
+
+  it('clicking "Stop preview" calls onPreview(null)', () => {
+    render(<ProjectPicker {...BASE} previewingId={PROJECTS[0].id} />)
+    const btn = screen.getByRole('button', { name: 'Stop preview' })
+    fireEvent.click(btn)
+    expect(BASE.onPreview).toHaveBeenCalledWith(null)
+  })
+
+  it('card has data-playing attribute when previewingId matches', () => {
+    render(<ProjectPicker {...BASE} previewingId={PROJECTS[2].id} />)
+    const options = screen.getAllByRole('option')
+    expect(options[2]).toHaveAttribute('data-playing')
+    expect(options[0]).not.toHaveAttribute('data-playing')
+    expect(options[1]).not.toHaveAttribute('data-playing')
+  })
+
+  it('only one card is playing at a time', () => {
+    render(<ProjectPicker {...BASE} previewingId={PROJECTS[1].id} />)
+    const options = screen.getAllByRole('option')
+    const playingCards = options.filter(o => o.hasAttribute('data-playing'))
+    expect(playingCards).toHaveLength(1)
+    expect(playingCards[0]).toBe(options[1])
   })
 })
 
