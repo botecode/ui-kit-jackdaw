@@ -1,0 +1,109 @@
+/* src/components/ThemeSwitcher/ThemeSwitcher.module.css */
+
+/* ─── Root (scrollable card list) ───────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  overflow-y: auto;
+  max-height: 360px;
+}
+
+/* ─── Card (one theme row) ───────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text);
+  transition:
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+/* ─── Hover ──────────────────────────────────────────────────────────────────── */
+
+.card:hover {
+  background: var(--surface-2);
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────────── */
+
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ─── Active / selected state ────────────────────────────────────────────────── */
+
+.card[data-selected] {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+/* ─── Swatch strip ───────────────────────────────────────────────────────────── */
+
+/*
+  No fixed width: caller determines swatch count; strip grows with its children.
+  Hairline box-shadow reads on any background without an opaque border.
+*/
+
+.swatches {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.swatch {
+  display: block;
+  width: 14px;
+  height: 22px;
+}
+
+/* ─── Theme name ─────────────────────────────────────────────────────────────── */
+
+.name {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Active checkmark ───────────────────────────────────────────────────────── */
+
+.check {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}
