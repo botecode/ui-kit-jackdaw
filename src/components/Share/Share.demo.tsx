@@ -6,7 +6,7 @@ import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { Toggle } from '../Toggle'
 import { Share } from './Share'
-import type { TransferRole, TransferPhase, ErrorKind, TakeManifest } from './Share'
+import type { TransferRole, TransferPhase, ErrorKind, TakeManifest, IncomingManifestData } from './Share'
 
 export const meta: DemoMeta = {
   name: 'Share (Take)',
@@ -27,6 +27,15 @@ const MANIFEST: TakeManifest = {
   hasLyrics:       true,
   hasChords:       true,
 }
+
+const INCOMING: IncomingManifestData = {
+  trackName:       'Lead Vocal',
+  clipCount:       8,
+  durationSeconds: 183,
+  songName:        'Summer Drift',
+}
+
+const LINK = 'jackdaw://share/7-tuna-zebra-piano'
 
 const TRIGGER: React.CSSProperties = {
   appearance: 'none',
@@ -250,6 +259,99 @@ function ReceiverErrorCard() {
   )
 }
 
+// ── Transparent-receive state cards ─────────────────────────────────────────────
+
+function SenderLinkCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="sender · link + QR">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'code' }}
+        manifest={MANIFEST} code="7-tuna-zebra-piano" link={LINK}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function SenderSetPasswordCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="sender · set password (toggle)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Send Take…</button>
+      <Share open={open} transfer={{ role: 'sender', phase: 'code' }}
+        manifest={MANIFEST} code="7-tuna-zebra-piano" link={LINK}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP} onSetPassword={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverIncomingCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · incoming manifest">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'manifest' }}
+        incoming={INCOMING} peerName="Alice"
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverImportFirstCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · import-first (missing song)">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'import-first' }}
+        incoming={{ ...INCOMING, needsImport: true }}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP} onImport={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverImportBusyCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · importing…">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'import-first' }}
+        incoming={{ ...INCOMING, needsImport: true }} importBusy
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP} onImport={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverPasswordCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · enter password">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'password' }}
+        incoming={INCOMING}
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP} onSubmitPassword={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
+function ReceiverPasswordErrorCard() {
+  const [open, setOpen] = useState(false)
+  return (
+    <State label="receiver · wrong password">
+      <button style={TRIGGER} onClick={() => setOpen(true)}>Receive Take…</button>
+      <Share open={open} transfer={{ role: 'receiver', phase: 'password' }}
+        incoming={INCOMING} passwordError="Wrong password — try again."
+        onGenerateCode={NOOP} onSend={NOOP} onEnterCode={NOOP} onSubmitPassword={NOOP}
+        onAccept={NOOP} onCancel={() => setOpen(false)} onRetry={NOOP} />
+    </State>
+  )
+}
+
 // ── States grid ────────────────────────────────────────────────────────────────
 
 function StatesDemo() {
@@ -273,6 +375,14 @@ function StatesDemo() {
       <ReceiverConfirmCard />
       <ReceiverAppliedCard />
       <ReceiverErrorCard />
+      {/* Transparent receive: link/QR + password (set) · incoming → import-first / password → apply */}
+      <SenderLinkCard />
+      <SenderSetPasswordCard />
+      <ReceiverIncomingCard />
+      <ReceiverImportFirstCard />
+      <ReceiverImportBusyCard />
+      <ReceiverPasswordCard />
+      <ReceiverPasswordErrorCard />
     </StatesGrid>
   )
 }
@@ -280,7 +390,7 @@ function StatesDemo() {
 // ── Playground — dogfoods Toggle for all controls ──────────────────────────────
 
 const SENDER_PHASES: TransferPhase[]   = ['idle', 'manifest', 'code', 'connecting', 'transferring', 'success', 'error']
-const RECEIVER_PHASES: TransferPhase[] = ['idle', 'manifest', 'connecting', 'transferring', 'confirm', 'applied', 'error']
+const RECEIVER_PHASES: TransferPhase[] = ['idle', 'manifest', 'import-first', 'password', 'connecting', 'transferring', 'confirm', 'applied', 'error']
 const ERROR_KINDS: ErrorKind[] = ['expired', 'no-peer', 'dropped', 'failed', 'version-mismatch']
 
 const ERROR_MESSAGES: Record<ErrorKind, string> = {
@@ -318,14 +428,20 @@ function PlaygroundDemo() {
           open={open}
           transfer={transfer}
           manifest={MANIFEST}
+          incoming={INCOMING}
           code="7-tuna-zebra-piano"
+          link={LINK}
           peerName="Alice"
+          passwordError={phase === 'password' ? 'Wrong password — try again.' : undefined}
           onGenerateCode={NOOP}
           onSend={NOOP}
           onEnterCode={NOOP}
           onAccept={NOOP}
           onCancel={() => setOpen(false)}
           onRetry={NOOP}
+          onSetPassword={NOOP}
+          onSubmitPassword={NOOP}
+          onImport={NOOP}
         />
 
         {/* Controls — dogfood Toggle for every knob */}

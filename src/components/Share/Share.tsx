@@ -3,7 +3,16 @@ import { useState, useRef } from 'react'
 import { Copy, Check, ArrowsClockwise } from '@phosphor-icons/react'
 import { Dialog } from '../Dialog'
 import { TextField } from '../TextField'
+import { Toggle } from '../Toggle'
+import { ShareLink } from '../ShareLink'
+import { PasswordEntry } from '../PasswordEntry'
+import { ImportFirst } from '../ImportFirst'
+import { IncomingManifest } from '../IncomingManifest'
+import type { IncomingManifestData } from '../IncomingManifest'
 import styles from './Share.module.css'
+
+// Re-export the receive-side manifest shape so consumers can type against Share alone.
+export type { IncomingManifestData } from '../IncomingManifest'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,6 +28,9 @@ export type TransferPhase =
   | 'error'
   | 'confirm'
   | 'applied'
+  // Transparent-receive additions:
+  | 'import-first' // receiver: the target song isn't in the project yet
+  | 'password'     // receiver: the take is password-protected — enter to continue
 
 export type ErrorKind =
   | 'expired'
@@ -58,6 +70,22 @@ export interface ShareProps {
   onAccept: () => void
   onCancel: () => void
   onRetry: () => void
+
+  // ── Transparent-receive composition (all optional / additive) ──────────────
+  /** Full deep link (`jackdaw://share/<code>`). When set, the sender readout shows link + QR. */
+  link?: string
+  /** Receive-side "what's coming" view (track · clips · duration → song). */
+  incoming?: IncomingManifestData
+  /** Import-first prompt: import in progress (disables actions, shows "Importing…"). */
+  importBusy?: boolean
+  /** Wrong-password message for the receiver's password phase. */
+  passwordError?: string | boolean
+  /** Sender opted to protect the take — fired when a content password is set. Enables the toggle. */
+  onSetPassword?: (password: string) => void
+  /** Receiver submits the content password to unlock the take. */
+  onSubmitPassword?: (password: string) => void
+  /** Receiver imports the missing target song (import-first prompt). */
+  onImport?: () => void
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -280,9 +308,19 @@ export function Share({
   onAccept,
   onCancel,
   onRetry,
+  link,
+  incoming,
+  importBusy,
+  passwordError,
+  onSetPassword,
+  onSubmitPassword,
+  onImport,
 }: ShareProps) {
   const { role, phase, progress = 0, error } = transfer
   const [codeInput, setCodeInput] = useState('')
+  // Password input state — shared by the sender "set" toggle and receiver "enter" phase.
+  const [protect, setProtect]   = useState(false)
+  const [password, setPassword] = useState('')
 
   const isSender   = role === 'sender'
   const isReceiver = role === 'receiver'
@@ -292,6 +330,9 @@ export function Share({
 
   // LED bloom active when there's a live pairing code (sender side)
   const codeActive = phase === 'connecting' || phase === 'transferring'
+
+  // The song the incoming take belongs to (for import-first / password context).
+  const songName = incoming?.songName ?? manifest?.songName ?? 'this song'
 
   const TITLE: Record<TransferPhase, string> = {
     idle:         isSender ? 'Send a Take' : 'Receive a Take',
@@ -303,6 +344,8 @@ export function Share({
     error:        isSender ? 'Send Failed' : 'Receive Failed',
     confirm:      'Apply Take?',
     applied:      'Take Applied',
+    'import-first': 'Import Song First',
+    password:       'Enter Password',
   }
 
   function handleConnect() {
@@ -360,8 +403,9 @@ export function Share({
           </div>
         )}
 
-        {/* ── Manifest card (both roles in manifest phase; sender also in code) ── */}
-        {manifest && (phase === 'manifest' || (isSender && phase === 'code')) && (
+        {/* ── Manifest card (both roles in manifest phase; sender also in code).
+              Receiver prefers the IncomingManifest view when `incoming` is set. ── */}
+        {manifest && !(isReceiver && incoming) && (phase === 'manifest' || (isSender && phase === 'code')) && (
           <TakeManifestCard manifest={manifest} />
         )}
 
@@ -370,6 +414,11 @@ export function Share({
           <button className={styles.primaryBtn} onClick={onGenerateCode}>
             Generate code
           </button>
+        )}
+
+        {/* ── Receiver: incoming manifest view (track · clips · duration → song) ── */}
+        {isReceiver && incoming && (phase === 'manifest' || phase === 'confirm' || phase === 'password') && (
+          <IncomingManifest manifest={incoming} />
         )}
 
         {/* ── Receiver: manifest — accept action ────────────────────────── */}
@@ -381,9 +430,60 @@ export function Share({
           </div>
         )}
 
-        {/* ── Code readout (sender: code + connecting + transferring) ──────── */}
-        {isSender && code && (phase === 'code' || phase === 'connecting' || phase === 'transferring') && (
+        {/* ── Receiver: import-first — target song not in the project ──────── */}
+        {isReceiver && phase === 'import-first' && (
+          <ImportFirst
+            songName={songName}
+            busy={importBusy}
+            onImport={onImport ?? onAccept}
+            onCancel={onCancel}
+          />
+        )}
+
+        {/* ── Receiver: password — unlock a protected take ─────────────────── */}
+        {isReceiver && phase === 'password' && (
+          <div className={styles.passwordEnter}>
+            <p className={styles.passwordHint}>This take is password-protected.</p>
+            <PasswordEntry
+              mode="enter"
+              value={password}
+              onChange={setPassword}
+              onSubmit={onSubmitPassword ?? (() => {})}
+              error={passwordError}
+              autoFocus
+            />
+          </div>
+        )}
+
+        {/* ── Link/QR readout (sender, when a deep link is available) ──────── */}
+        {isSender && link && (phase === 'code' || phase === 'connecting' || phase === 'transferring') && (
+          <ShareLink link={link} active={codeActive} />
+        )}
+
+        {/* ── Code readout (sender, fallback when no link) ─────────────────── */}
+        {isSender && !link && code && (phase === 'code' || phase === 'connecting' || phase === 'transferring') && (
           <ShareCodeReadout code={code} active={codeActive} />
+        )}
+
+        {/* ── Sender: code — optional content password (set) ───────────────── */}
+        {isSender && phase === 'code' && onSetPassword && (
+          <div className={styles.passwordSet}>
+            <Toggle
+              checked={protect}
+              onChange={setProtect}
+              size="sm"
+              label="Password-protect this take"
+            />
+            {protect && (
+              <PasswordEntry
+                mode="set"
+                size="sm"
+                value={password}
+                onChange={setPassword}
+                onSubmit={onSetPassword}
+              />
+            )}
+          </div>
         )}
 
         {/* ── Sender: code — waiting hint ────────────────────────────────── */}
