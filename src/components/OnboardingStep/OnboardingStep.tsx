@@ -1,5 +1,6 @@
 // src/components/OnboardingStep/OnboardingStep.tsx
 import { useId } from 'react'
+import { BrandMark } from '../BrandMark'
 import styles from './OnboardingStep.module.css'
 
 export interface ActionChoice {
@@ -61,6 +62,10 @@ export function OnboardingStep({
       role="region"
       aria-labelledby={headlineId}
     >
+      <div className={styles.header}>
+        <BrandMark variant="mark" size={20} />
+      </div>
+
       <div className={styles.body}>
         <h2 id={headlineId} className={styles.headline}>{step.text}</h2>
         <p className={styles.subtitle}>{step.subtitle}</p>
