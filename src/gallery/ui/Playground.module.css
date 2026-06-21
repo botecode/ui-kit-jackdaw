@@ -14,9 +14,16 @@
 .controls {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: var(--space-4);
   padding: var(--space-6);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+/* when a single wrapper div is the only child, let it fill the available width */
+.controls > :only-child {
+  flex: 1;
+  min-width: 0;
 }
