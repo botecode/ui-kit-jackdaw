@@ -1,0 +1,149 @@
+/* src/components/TextField/TextField.module.css */
+
+/* ─── Root ──────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* ─── Label ─────────────────────────────────────────────────────────────────── */
+
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+}
+
+/* ─── Field (the recessed well) ─────────────────────────────────────────────── */
+
+/*
+  Same recessed-well recipe as Fader channel / Checkbox box / Toggle pill.
+  :has(:focus-visible) is the keyboard-only focus ring when the focusable
+  element is a child of the wrapper — correct per the kit ":focus-visible only"
+  convention (never :focus-within, which fires on mouse focus too).
+*/
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--stage);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--border);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+/* ─── Focus ring — lit accent border, keyboard-only ──────────────────────────── */
+
+.field:has(:focus-visible) {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--accent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Error border ───────────────────────────────────────────────────────────── */
+
+.root[data-error] .field {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--led-red);
+}
+
+/* Error + focus: keep red, add a subtle red glow (error takes priority) */
+.root[data-error] .field:has(:focus-visible) {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--led-red),
+    0 0 6px 1px color-mix(in srgb, var(--led-red) 30%, transparent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Disabled ───────────────────────────────────────────────────────────────── */
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Sizes ──────────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] .field {
+  height: 32px;
+  padding: 0 var(--space-2);
+  gap: var(--space-2);
+}
+
+.root[data-size="sm"] .field {
+  height: 24px;
+  padding: 0 var(--space-1);
+  gap: var(--space-1);
+}
+
+/* ─── Input ──────────────────────────────────────────────────────────────────── */
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-ui);
+  color: var(--text);
+  caret-color: var(--accent);
+  padding: 0;
+}
+
+.root[data-size="md"] .input {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+}
+
+.root[data-size="sm"] .input {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+/* ─── Placeholder ────────────────────────────────────────────────────────────── */
+
+.input::placeholder {
+  color: var(--text-dim);
+  opacity: 1; /* Firefox reduces placeholder opacity to 0.54 by default */
+}
+
+/* ─── Leading / trailing icon slots ─────────────────────────────────────────── */
+
+.leading,
+.trailing {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+
+/* ─── Error message text ─────────────────────────────────────────────────────── */
+
+.errorText {
+  margin: 0;
+  font-family: var(--font-ui);
+  color: var(--led-red);
+  line-height: 1.3;
+}
+
+.root[data-size="md"] .errorText {
+  font-size: var(--text-sm);
+}
+
+.root[data-size="sm"] .errorText {
+  font-size: var(--text-xs);
+}
