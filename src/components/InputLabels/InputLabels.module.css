@@ -33,8 +33,8 @@
   display: grid;
   grid-template-columns: 72px 1fr;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
 
 /* hairline separator between rows */
@@ -47,12 +47,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* ── Name label ──────────────────────────────────────────────────────────────── */
-
-/*
-  Acts as an HTML <label> (htmlFor wired to the TextField id), so clicking
-  "Input 1" focuses the editable field. cursor:text reinforces this.
-*/
+/* ── Name caption ────────────────────────────────────────────────────────────── */
 
 .name {
   font-size: var(--text-sm);
@@ -62,18 +57,110 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: text;
   user-select: none;
   line-height: 1;
+  cursor: default;
 }
 
-/* ── Size variant: sm squeezes the name col slightly ─────────────────────────── */
-
-.root[data-size="sm"] .name {
+.row[data-size="sm"] .name {
   font-size: var(--text-xs);
 }
 
-/* ── Empty state ─────────────────────────────────────────────────────────────── */
+/* ── Pill input ──────────────────────────────────────────────────────────────── */
+
+/*
+  The <input> is always in the DOM and always accessible via htmlFor.
+  Visual states are driven purely by CSS:
+    :placeholder-shown  → empty (no label set)
+    :not(:placeholder-shown) → labeled
+    :focus-visible      → editing — LED accent bloom, incandescent attack timing
+    :hover              → subtle surface lift
+    :disabled           → see .root[data-disabled]
+*/
+
+.pill {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  border: none;
+  outline: none;
+
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text);
+  caret-color: var(--accent);
+  line-height: 1;
+
+  /* Recessed well — labeled state */
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--border);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+  cursor: text;
+}
+
+/* Empty state: lighter surface, hairline only — signals "add something here" */
+.pill:placeholder-shown {
+  background: transparent;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.14);
+}
+
+.pill::placeholder {
+  color: var(--text-dim);
+  opacity: 1; /* Firefox */
+  font-style: italic;
+}
+
+/* Hover: warm surface lift to invite interaction */
+.pill:hover:not(:focus-visible):not(:disabled) {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* Empty + hover: keep the lighter base but add the same warm lift */
+.pill:placeholder-shown:hover:not(:focus-visible):not(:disabled) {
+  background: transparent;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+    0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* Focus / editing: LED accent bloom — keyboard-only, fast-attack incandescent */
+.pill:focus-visible {
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 0 0 2px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 28%, transparent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* ── Size sm ─────────────────────────────────────────────────────────────────── */
+
+.row[data-size="sm"] .pill {
+  height: 18px;
+  font-size: var(--text-xs);
+  padding: 0 var(--space-1);
+}
+
+/* ── Disabled ────────────────────────────────────────────────────────────────── */
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ── Empty state (no inputs) ─────────────────────────────────────────────────── */
 
 .empty {
   margin: 0;
@@ -86,5 +173,5 @@
 /* ── Reduced motion ──────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  /* no transitions in this component */
+  /* no decorative transitions in this component */
 }

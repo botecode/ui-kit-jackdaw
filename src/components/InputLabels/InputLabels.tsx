@@ -1,6 +1,5 @@
 // src/components/InputLabels/InputLabels.tsx
 import { useEffect, useId, useRef, useState } from 'react'
-import { TextField } from '../TextField'
 import styles from './InputLabels.module.css'
 
 export interface InputEntry {
@@ -13,6 +12,7 @@ export interface InputLabelsProps {
   inputs: InputEntry[]
   onLabel: (id: string, label: string) => void
   size?: 'sm' | 'md'
+  disabled?: boolean
 }
 
 // ── Row ───────────────────────────────────────────────────────────────────────
@@ -21,9 +21,10 @@ interface LabelRowProps {
   input: InputEntry
   size: 'sm' | 'md'
   onLabel: (id: string, label: string) => void
+  disabled?: boolean
 }
 
-function LabelRow({ input, size, onLabel }: LabelRowProps) {
+function LabelRow({ input, size, onLabel, disabled }: LabelRowProps) {
   const inputId = useId()
   const [draft, setDraft] = useState(input.label ?? '')
   const savedRef = useRef(input.label ?? '')
@@ -55,16 +56,19 @@ function LabelRow({ input, size, onLabel }: LabelRowProps) {
   }
 
   return (
-    <li className={styles.row} onKeyDown={handleKeyDown} onBlur={commit}>
+    <li className={styles.row} data-size={size}>
       <label className={styles.name} htmlFor={inputId}>
         {input.name}
       </label>
-      <TextField
+      <input
         id={inputId}
+        className={styles.pill}
         value={draft}
-        onChange={(v) => setDraft(v)}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKeyDown}
         placeholder="add a label…"
-        size={size}
+        disabled={disabled}
       />
     </li>
   )
@@ -72,12 +76,12 @@ function LabelRow({ input, size, onLabel }: LabelRowProps) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-export function InputLabels({ inputs, onLabel, size = 'md' }: InputLabelsProps) {
+export function InputLabels({ inputs, onLabel, size = 'md', disabled }: InputLabelsProps) {
   return (
-    <div className={styles.root} data-size={size}>
+    <div className={styles.root} data-size={size} data-disabled={disabled || undefined}>
       <ul className={styles.list} aria-label="Input labels">
         {inputs.map((input) => (
-          <LabelRow key={input.id} input={input} size={size} onLabel={onLabel} />
+          <LabelRow key={input.id} input={input} size={size} onLabel={onLabel} disabled={disabled} />
         ))}
       </ul>
       {inputs.length === 0 && (
