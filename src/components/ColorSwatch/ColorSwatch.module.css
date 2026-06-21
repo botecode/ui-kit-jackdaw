@@ -1,0 +1,182 @@
+/* src/components/ColorSwatch/ColorSwatch.module.css */
+
+/* ── ColorSwatch (single chip) ───────────────────────────────────────────────
+   A rounded color square with a hardware-recessed off-state and a crisp
+   outline ring + LED glow when selected. No background-color dependency for
+   the ring — outline-offset provides the gap, so it works on any surface
+   (stage, surface, bg) without --_ring-gap tricks.                           */
+
+.swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: var(--radius);
+  background: var(--_swatch-color, var(--stage));
+  /* Recessed off-state: inner shadow gives the chip depth */
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.40),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    box-shadow var(--dur-base) var(--ease-out),
+    filter     var(--dur-fast) var(--ease-out);
+}
+
+/* ── Sizes ───────────────────────────────────────────────────────────────── */
+
+.swatch[data-size="md"] { width: 22px; height: 22px; }
+.swatch[data-size="sm"] { width: 16px; height: 16px; }
+
+/* ── Hover ───────────────────────────────────────────────────────────────── */
+
+.swatch:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+/* ── Selected ────────────────────────────────────────────────────────────── */
+
+/* outline-offset: 2px creates a natural gap without depending on the parent
+   background color — context-independent, works on any surface.             */
+
+.swatch[data-selected] {
+  /* Lift the inner shadow slightly — chip reads as "raised" when chosen */
+  box-shadow:
+    inset 0 1px 1px rgba(0, 0, 0, 0.20),
+    0 0 0 1px rgba(0, 0, 0, 0.15),
+    0 0 8px 3px color-mix(in srgb, var(--_swatch-color) 45%, transparent);
+  outline: 2px solid var(--_swatch-color);
+  outline-offset: 2px;
+  transition:
+    box-shadow var(--dur-led-on) var(--ease-out),
+    outline    var(--dur-led-on) var(--ease-out);
+}
+
+/* ── Focus ring (focus-visible only, never :focus) ────────────────────────── */
+
+/* When focused AND unselected: accent ring */
+.swatch:focus-visible:not([data-selected]) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* When focused AND selected: push the chip-color ring outward so focus is
+   still visible without introducing a second overlay color.                  */
+.swatch:focus-visible[data-selected] {
+  outline-offset: 4px;
+}
+
+/* ── Disabled ─────────────────────────────────────────────────────────────── */
+
+.swatch:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Checkmark glyph (SVG centered inside the chip) ──────────────────────── */
+
+.check {
+  width: 10px;
+  height: 8px;
+  /* White stroke with a shadow so it reads on any hue */
+  color: white;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.6));
+  flex-shrink: 0;
+}
+
+.swatch[data-size="sm"] .check {
+  width: 7px;
+  height: 6px;
+}
+
+/* ── SwatchPalette ───────────────────────────────────────────────────────────
+   A 3-column grid — compact palette layout for both inline use and the
+   popover.  Gap is constant regardless of size (the swatches themselves
+   shrink/grow but the visual rhythm stays tight).                            */
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: var(--space-2);
+}
+
+/* ── SwatchPicker ────────────────────────────────────────────────────────────
+   Compact trigger showing the current selected color.  The trigger wraps a
+   `.triggerChip` span that expresses the color (so the outer button can hold
+   the ARIA state without mixing color + chrome in one element).              */
+
+.picker {
+  display: inline-block;
+  position: relative;
+}
+
+/* Trigger button: minimal chrome — just enough to reveal interactivity */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  border-radius: calc(var(--radius) + 2px);
+  outline: none;
+  /* Subtle ring shows it's a picker, not a static badge */
+  box-shadow: 0 0 0 1px var(--border);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+.trigger:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.trigger:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* When open: ring brightens so trigger and popover read as one unit */
+.trigger[data-open] {
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* The colored chip inside the trigger */
+.triggerChip {
+  display: block;
+  border-radius: calc(var(--radius) - 1px);
+  background: var(--_swatch-color, var(--stage));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.trigger[data-size="md"] .triggerChip { width: 22px; height: 22px; }
+.trigger[data-size="sm"] .triggerChip { width: 16px; height: 16px; }
+
+/* Empty/unset state: recessed well with a dashed hint */
+.triggerChip[data-empty] {
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* ── Popover content shell ───────────────────────────────────────────────── */
+
+.popoverContent {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  box-shadow: var(--shadow-md);
+}
