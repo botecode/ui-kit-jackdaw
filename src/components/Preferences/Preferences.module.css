@@ -1,0 +1,201 @@
+/* src/components/Preferences/Preferences.module.css */
+
+/* ─── Scrim ─────────────────────────────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  animation: scrim-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Shell ──────────────────────────────────────────────────────────────────── */
+
+.shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 720px;
+  height: 480px;
+  max-width: calc(100vw - var(--space-8));
+  max-height: calc(100vh - var(--space-8));
+
+  background-color: var(--surface);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    var(--shadow-lg);
+
+  /* Programmatically focused; ring via :focus-visible only */
+  outline: none;
+
+  animation: shell-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes shell-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────────────── */
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  height: 44px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    color     var(--dur-base) var(--ease-out);
+}
+
+.closeBtn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ─── Body ────────────────────────────────────────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Sidebar nav (recessed panel — slightly deeper than shell surface) ──────── */
+
+.sidebar {
+  flex-shrink: 0;
+  width: 176px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  border-right: 1px solid var(--border);
+  background-color: var(--surface-2);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  overflow-y: auto;
+}
+
+/* ─── Nav items ───────────────────────────────────────────────────────────────── */
+
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius) - 1px);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-sm);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    color     var(--dur-base) var(--ease-out);
+}
+
+.navItem:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+}
+
+.navItem[data-active] {
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Left accent bar on active item */
+.navItem[data-active]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 0 1px 1px 0;
+}
+
+.navItem:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.navLabel {
+  line-height: var(--leading-sm);
+}
+
+/* ─── Content area ────────────────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5);
+}
