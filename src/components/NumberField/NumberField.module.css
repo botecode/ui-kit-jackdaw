@@ -150,9 +150,16 @@
 
 /* ─── Value text — mono digital readout ──────────────────────────────────────── */
 
+/*
+  --stage-text is the correct token for text on a dark --stage well.
+  --text is calibrated for the light --bg surface and is near-black in light
+  themes (e.g. Chroma #222820 on #0A0A08 ≈ invisible).
+  font-weight: bold matches the TransportBar BPM readout pattern.
+*/
 .valueText {
   font-family: var(--font-mono);
-  color: var(--text);
+  font-weight: var(--weight-bold);
+  color: var(--stage-text);
   text-align: right;
   white-space: nowrap;
   letter-spacing: -0.01em;
@@ -193,7 +200,8 @@
   border: none;
   outline: none;
   font-family: var(--font-mono);
-  color: var(--text);
+  font-weight: var(--weight-bold);
+  color: var(--stage-text);
   caret-color: var(--accent);
   text-align: right;
   padding: 0;
