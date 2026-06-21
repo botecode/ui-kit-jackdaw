@@ -108,10 +108,17 @@ ship() {
   ( cd "$wt" && npm install --silent && npx tsc --noEmit && npx vitest run ) \
     || { echo "✗ gate failed (tsc/vitest red) — $br left for inspection, NOT merged." >&2; return 1; }
 
-  # Merge into main in place (ff if we can, else a merge commit), then push + tear down.
+  # Merge into main in place (ff if we can, else a merge commit). On conflict ABORT so main is NEVER
+  # left mid-conflict — that's what stranded files + broke the next run.
   echo "▶ merging $br → main"
-  git -C "$R" merge --ff-only "$br" 2>/dev/null || git -C "$R" merge --no-edit "$br" \
-    || { echo "✗ merge into main failed — resolve in $R, then retry." >&2; return 1; }
+  if ! git -C "$R" merge --ff-only "$br" 2>/dev/null; then
+    git -C "$R" merge --no-edit "$br" || {
+      git -C "$R" merge --abort 2>/dev/null || true
+      echo "✗ merge into main conflicted — aborted, main restored clean. '$br' kept for review." >&2
+      echo "  (usually means '$name' was already built/merged — its card should be Done, not Next.)" >&2
+      return 1
+    }
+  fi
   git -C "$R" push origin main 2>/dev/null && echo "  · pushed origin main" \
     || echo "  · (didn't push origin main — push manually to back it up)"
   git -C "$R" worktree remove --force "$wt" 2>/dev/null || true
