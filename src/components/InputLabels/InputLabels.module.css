@@ -1,0 +1,80 @@
+/* src/components/InputLabels/InputLabels.module.css */
+
+/* ── Root: scrollable recessed well ─────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-ui);
+  overflow-y: auto;
+  background: var(--stage);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 0 0 1px var(--border);
+}
+
+/* ── Row: input-name + field ─────────────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* hairline highlight on first row */
+.row:first-child {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.row:last-of-type {
+  border-bottom: none;
+}
+
+/* ── Input name (the dim left column) ───────────────────────────────────────── */
+
+.inputName {
+  flex-shrink: 0;
+  width: 72px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+  /* vertically align with the field's text */
+  padding-top: 1px;
+}
+
+/* ── Field wrapper: grows to fill the row ───────────────────────────────────── */
+
+.fieldWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Stretch the TextField root (inline-flex by default) to fill the wrapper */
+.fieldWrap > * {
+  width: 100%;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────────── */
+
+.empty {
+  padding: var(--space-4) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}
