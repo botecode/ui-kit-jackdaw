@@ -289,3 +289,22 @@ describe('AnnotationEditor — keyboard', () => {
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 })
+
+// ── Popover anchor positioning ────────────────────────────────────────────────
+// Guards against callers passing container-relative coords instead of viewport
+// coords, which would always pin the editor to the viewport corner.
+
+describe('AnnotationEditor — positioning', () => {
+  it('positions the popover shell at the provided viewport anchor coordinates', () => {
+    // jsdom getBoundingClientRect returns 0×0, so computePosition falls through
+    // to the anchor directly (no overflow flip needed at 300,400 in 1024×768).
+    render(<AnnotationEditor {...makeProps({ anchor: { x: 300, y: 400 } })} />)
+    // The Popover portals a div with inline left/top onto document.body
+    const portalShell = Array.from(document.body.children).find(
+      el => (el as HTMLElement).style?.left === '300px',
+    ) as HTMLElement | undefined
+    expect(portalShell).toBeTruthy()
+    expect(portalShell!.style.top).toBe('400px')
+    expect(portalShell!.style.visibility).toBe('visible')
+  })
+})
