@@ -29,33 +29,38 @@ export interface FolderTrack {
 }
 
 export interface FolderTrackHeaderProps {
-  track:             FolderTrack
-  onRename:          (name: string) => void
-  onMute:            () => void
-  onSolo:            () => void
-  onVolume:          (db: number) => void
-  onPan:             (pan: number) => void
-  onToggleChain:     (next: boolean) => void
-  onTogglePlugin:    (id: string, next: boolean) => void
-  onReorder:         (from: number, to: number) => void
-  onRemovePlugin:    (id: string) => void
-  onAddPlugin:       () => void
-  onOpenPlugin:      (id: string) => void
-  onSelect:          () => void
-  onToggleCollapse?: (collapsed: boolean) => void
-  meterLevel?:       number
-  meterLevelL?:      number
-  meterLevelR?:      number
-  anySoloActive?:    boolean
-  disabled?:         boolean
-  clipping?:         boolean
-  showAllMeters?:    boolean
+  track:              FolderTrack
+  onRename:           (name: string) => void
+  onMute:             () => void
+  onSolo:             () => void
+  onVolume:           (db: number) => void
+  onPan:              (pan: number) => void
+  onToggleChain:      (next: boolean) => void
+  onTogglePlugin:     (id: string, next: boolean) => void
+  onReorder:          (from: number, to: number) => void
+  onRemovePlugin:     (id: string) => void
+  onAddPlugin:        () => void
+  onOpenPlugin:       (id: string) => void
+  onSelect:           () => void
+  onToggleCollapse?:  (collapsed: boolean) => void
+  meterLevel?:        number
+  meterLevelL?:       number
+  meterLevelR?:       number
+  anySoloActive?:     boolean
+  disabled?:          boolean
+  clipping?:          boolean
+  showAllMeters?:     boolean
+  /** Controlled minimized state (collapses to compact row). When omitted, managed internally via localStorage. */
+  minimized?:         boolean
+  /** Fires when the minimized state changes via double-click. */
+  onToggleMinimized?: (minimized: boolean) => void
 }
 
 // ── Shared scale + localStorage helpers ───────────────────────────────────────
 
 const DB_SCALE = dbScale()
 
+// Open/close (show/hide children)
 function lsKey(id: string) { return `jackdaw.folder.${id}.open` }
 
 function readOpen(id: string): boolean {
@@ -67,6 +72,62 @@ function readOpen(id: string): boolean {
 
 function writeOpen(id: string, open: boolean) {
   try { localStorage.setItem(lsKey(id), String(open)) } catch {}
+}
+
+// Minimized (compact row height)
+function lsMinimizedKey(id: string) { return `jackdaw.folder.${id}.minimized` }
+
+function readMinimized(id: string): boolean {
+  try { return localStorage.getItem(lsMinimizedKey(id)) === 'true' } catch { return false }
+}
+
+function writeMinimized(id: string, v: boolean) {
+  try { localStorage.setItem(lsMinimizedKey(id), String(v)) } catch {}
+}
+
+// ── FolderCollapsedRow ────────────────────────────────────────────────────────
+
+interface FolderCollapsedRowProps {
+  name:         string
+  childCount:   number
+  muted:        boolean
+  soloed:       boolean
+  clipping:     boolean
+  meterLevel?:  number
+  meterLevelL?: number
+  meterLevelR?: number
+}
+
+function FolderCollapsedRow({
+  name, childCount, muted, soloed, clipping,
+  meterLevel, meterLevelL, meterLevelR,
+}: FolderCollapsedRowProps) {
+  const showMeter = clipping && (meterLevel !== undefined || meterLevelL !== undefined || meterLevelR !== undefined)
+
+  return (
+    <div className={styles.collapsedRow}>
+      <FolderSimple size={12} className={styles.glyph} aria-hidden />
+      <span className={styles.collapsedName}>{name}</span>
+      {childCount > 0 && (
+        <span className={styles.childCount} aria-hidden>{childCount}</span>
+      )}
+      <div className={styles.stateDots} aria-hidden>
+        <span className={styles.stateDot} data-dot="mute" data-active={muted || undefined}>M</span>
+        <span className={styles.stateDot} data-dot="solo" data-active={soloed || undefined}>S</span>
+      </div>
+      {showMeter && (
+        <Meter
+          value={meterLevel}
+          valueL={meterLevelL}
+          valueR={meterLevelR}
+          clipLatch
+          orientation="vertical"
+          size="sm"
+          aria-label="Level"
+        />
+      )}
+    </div>
+  )
 }
 
 // ── FolderTopBar ──────────────────────────────────────────────────────────────
@@ -137,7 +198,8 @@ function FolderTopBar({
         <span
           className={styles.name}
           tabIndex={0}
-          onDoubleClick={startEdit}
+          data-no-collapse
+          onDoubleClick={e => { e.stopPropagation(); startEdit() }}
           onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEdit() }
           }}
@@ -269,13 +331,21 @@ export function FolderTrackHeader({
   disabled = false,
   clipping = false,
   showAllMeters = false,
+  minimized,
+  onToggleMinimized,
 }: FolderTrackHeaderProps) {
   const [open, setOpen] = useState(() => readOpen(track.id))
+  const [minimizedInternal, setMinimizedInternal] = useState(() => readMinimized(track.id))
+  const isMinimized = minimized ?? minimizedInternal
+
   const showMeter = track.selected || clipping || showAllMeters
 
   useEffect(() => {
     setOpen(readOpen(track.id))
-  }, [track.id])
+    if (minimized === undefined) {
+      setMinimizedInternal(readMinimized(track.id))
+    }
+  }, [track.id, minimized])
 
   function handleToggleOpen() {
     const next = !open
@@ -284,10 +354,20 @@ export function FolderTrackHeader({
     onToggleCollapse?.(!next)
   }
 
+  function handleDoubleClick(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest('button, input, [role="slider"], [data-no-collapse]')) return
+    const next = !isMinimized
+    if (minimized === undefined) {
+      setMinimizedInternal(next)
+      writeMinimized(track.id, next)
+    }
+    onToggleMinimized?.(next)
+  }
+
   return (
     <div
       role="group"
-      aria-label={track.name}
+      aria-label={isMinimized ? `${track.name}, minimized` : track.name}
       className={styles.root}
       data-variant="folder"
       data-muted={track.muted || undefined}
@@ -295,42 +375,60 @@ export function FolderTrackHeader({
       data-selected={track.selected || undefined}
       data-clipping={clipping || undefined}
       data-disabled={disabled || undefined}
+      data-minimized={isMinimized || undefined}
       style={{ '--track-color': track.color } as CSSProperties}
       onClick={onSelect}
+      onDoubleClick={handleDoubleClick}
     >
       <div className={styles.keyline} aria-hidden />
-      <FolderTopBar
-        name={track.name}
-        plugins={track.plugins}
-        chainEnabled={track.chainEnabled}
-        open={open}
-        disabled={disabled}
-        onRename={onRename}
-        onToggleOpen={handleToggleOpen}
-        onToggleChain={onToggleChain}
-        onTogglePlugin={onTogglePlugin}
-        onReorder={onReorder}
-        onRemovePlugin={onRemovePlugin}
-        onAddPlugin={onAddPlugin}
-        onOpenPlugin={onOpenPlugin}
-      />
-      <FolderControlStrip
-        muted={track.muted}
-        soloed={track.soloed}
-        volumeDb={track.volumeDb}
-        pan={track.pan}
-        color={track.color}
-        showMeter={showMeter}
-        meterLevel={meterLevel}
-        meterLevelL={meterLevelL}
-        meterLevelR={meterLevelR}
-        anySoloActive={anySoloActive}
-        disabled={disabled}
-        onMute={onMute}
-        onSolo={onSolo}
-        onVolume={onVolume}
-        onPan={onPan}
-      />
+
+      {isMinimized ? (
+        <FolderCollapsedRow
+          name={track.name}
+          childCount={track.childCount}
+          muted={track.muted}
+          soloed={track.soloed}
+          clipping={clipping}
+          meterLevel={meterLevel}
+          meterLevelL={meterLevelL}
+          meterLevelR={meterLevelR}
+        />
+      ) : (
+        <>
+          <FolderTopBar
+            name={track.name}
+            plugins={track.plugins}
+            chainEnabled={track.chainEnabled}
+            open={open}
+            disabled={disabled}
+            onRename={onRename}
+            onToggleOpen={handleToggleOpen}
+            onToggleChain={onToggleChain}
+            onTogglePlugin={onTogglePlugin}
+            onReorder={onReorder}
+            onRemovePlugin={onRemovePlugin}
+            onAddPlugin={onAddPlugin}
+            onOpenPlugin={onOpenPlugin}
+          />
+          <FolderControlStrip
+            muted={track.muted}
+            soloed={track.soloed}
+            volumeDb={track.volumeDb}
+            pan={track.pan}
+            color={track.color}
+            showMeter={showMeter}
+            meterLevel={meterLevel}
+            meterLevelL={meterLevelL}
+            meterLevelR={meterLevelR}
+            anySoloActive={anySoloActive}
+            disabled={disabled}
+            onMute={onMute}
+            onSolo={onSolo}
+            onVolume={onVolume}
+            onPan={onPan}
+          />
+        </>
+      )}
     </div>
   )
 }

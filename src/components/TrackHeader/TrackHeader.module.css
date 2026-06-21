@@ -138,6 +138,80 @@
   flex-shrink: 0;
 }
 
+/* ── Collapsed row ────────────────────────────────────────────────────────── */
+
+/* Single-line compact row: color spine + glyph + name + R/M/S dots + [clip meter].
+   40px = var(--space-10) on the 4px grid — exactly half the default 88px row. */
+
+.collapsedRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-2) 0 calc(var(--space-3) + 3px);
+}
+
+.collapsedName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.stateDots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* Monospace letter labels (R / M / S) double as LED indicators.
+   Dim when inactive; glow on active with incandescent timing. */
+
+.stateDot {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  width: 12px;
+  text-align: center;
+  color: color-mix(in srgb, var(--text-muted) 50%, transparent);
+  transition:
+    color var(--dur-led-off) var(--ease-out),
+    text-shadow var(--dur-led-off) var(--ease-out);
+}
+
+/* Armed: red (arm / record semantic) */
+.stateDot[data-dot="arm"][data-active] {
+  color: var(--led-red-core);
+  text-shadow: 0 0 6px var(--led-red);
+  transition:
+    color var(--dur-led-on) var(--ease-out),
+    text-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* Muted: orange / amber (attention semantic) */
+.stateDot[data-dot="mute"][data-active] {
+  color: var(--led-orange-core);
+  text-shadow: 0 0 6px var(--led-orange);
+  transition:
+    color var(--dur-led-on) var(--ease-out),
+    text-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* Soloed: yellow (solo semantic) */
+.stateDot[data-dot="solo"][data-active] {
+  color: var(--led-yellow-core);
+  text-shadow: 0 0 6px var(--led-yellow);
+  transition:
+    color var(--dur-led-on) var(--ease-out),
+    text-shadow var(--dur-led-on) var(--ease-out);
+}
+
 /* ── States ───────────────────────────────────────────────────────────────── */
 
 /* selected: accent inset ring + full-brightness keyline */
@@ -155,14 +229,28 @@
   background: color-mix(in srgb, var(--led-red) 8%, var(--strip-bg));
 }
 
-/* muted: dim control strip */
+/* muted: dim control strip and collapsed row */
 .root[data-muted] .controlStrip {
+  opacity: 0.7;
+}
+
+.root[data-muted] .collapsedRow {
   opacity: 0.7;
 }
 
 /* soloed: warm glow on keyline */
 .root[data-soloed] .keyline {
   box-shadow: 0 0 6px var(--led-yellow);
+}
+
+/* minimized: keyline stays full-brightness (color spine is the visual anchor) */
+.root[data-minimized] .keyline {
+  background: color-mix(in srgb, var(--track-color, var(--accent)) 60%, transparent);
+}
+
+.root[data-minimized][data-selected] .keyline {
+  background: var(--track-color, var(--accent));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--track-color, var(--accent)) 60%, transparent);
 }
 
 /* disabled */
@@ -205,13 +293,15 @@
 
 /* Offset content past the wider 6px keyline */
 .root[data-variant="folder"] .topBar,
-.root[data-variant="folder"] .controlStrip {
+.root[data-variant="folder"] .controlStrip,
+.root[data-variant="folder"] .collapsedRow {
   padding-left: calc(var(--space-3) + 6px);
 }
 
 /* Bolder name — weight only; InputSelect removal already frees enough horizontal room */
 .root[data-variant="folder"] .name,
-.root[data-variant="folder"] .nameInput {
+.root[data-variant="folder"] .nameInput,
+.root[data-variant="folder"] .collapsedName {
   font-weight: var(--weight-bold);
 }
 

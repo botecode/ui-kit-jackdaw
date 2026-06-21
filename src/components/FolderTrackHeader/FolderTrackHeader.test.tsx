@@ -250,3 +250,115 @@ describe('FolderTrackHeader — meter visibility (ears-first)', () => {
     expect(screen.queryByRole('meter')).not.toBeInTheDocument()
   })
 })
+
+describe('FolderTrackHeader — minimized (compact row)', () => {
+  it('is not minimized by default', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    expect(screen.getByRole('group', { name: 'Drums Bus' })).not.toHaveAttribute('data-minimized')
+  })
+
+  it('double-click on root sets data-minimized', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Drums Bus' }))
+    expect(screen.getByRole('group', { name: 'Drums Bus, minimized' })).toHaveAttribute('data-minimized')
+  })
+
+  it('double-click again removes data-minimized (toggle)', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Drums Bus' }))
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Drums Bus, minimized' }))
+    expect(screen.getByRole('group', { name: 'Drums Bus' })).not.toHaveAttribute('data-minimized')
+  })
+
+  it('double-click on name span does NOT minimize', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByText('Drums Bus'))
+    expect(screen.getByRole('group', { name: 'Drums Bus' })).not.toHaveAttribute('data-minimized')
+    expect(screen.getByRole('textbox', { name: /track name/i })).toBeInTheDocument()
+  })
+
+  it('disclosure button click does NOT minimize (only toggles open/close)', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    fireEvent.click(screen.getByRole('button', { name: /collapse drums bus/i }))
+    expect(screen.getByRole('group', { name: 'Drums Bus' })).not.toHaveAttribute('data-minimized')
+  })
+
+  it('minimized state persists to localStorage (separate key from open/close)', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Drums Bus' }))
+    expect(localStorage.getItem('jackdaw.folder.f1.minimized')).toBe('true')
+    // open/close key must not be affected
+    expect(localStorage.getItem('jackdaw.folder.f1.open')).toBeNull()
+  })
+
+  it('reads initial minimized state from localStorage', () => {
+    localStorage.setItem('jackdaw.folder.f1.minimized', 'true')
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    expect(screen.getByRole('group', { name: 'Drums Bus, minimized' })).toHaveAttribute('data-minimized')
+  })
+
+  it('fires onToggleMinimized(true) when collapsing', () => {
+    const onToggleMinimized = vi.fn()
+    render(<FolderTrackHeader {...BASE_PROPS} onToggleMinimized={onToggleMinimized} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Drums Bus' }))
+    expect(onToggleMinimized).toHaveBeenCalledWith(true)
+  })
+
+  it('fires onToggleMinimized(false) when expanding', () => {
+    localStorage.setItem('jackdaw.folder.f1.minimized', 'true')
+    const onToggleMinimized = vi.fn()
+    render(<FolderTrackHeader {...BASE_PROPS} onToggleMinimized={onToggleMinimized} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Drums Bus, minimized' }))
+    expect(onToggleMinimized).toHaveBeenCalledWith(false)
+  })
+
+  it('controlled: minimized=true shows compact row', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} minimized />)
+    expect(screen.getByRole('group', { name: 'Drums Bus, minimized' })).toHaveAttribute('data-minimized')
+  })
+
+  it('when minimized, normal controls (fader, mute, fx) are not in DOM', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} minimized />)
+    expect(screen.queryByRole('slider', { name: /group volume/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /mute/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /fx chain/i })).not.toBeInTheDocument()
+  })
+
+  it('when minimized, folder name is visible in compact row', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} minimized />)
+    expect(screen.getByText('Drums Bus')).toBeInTheDocument()
+  })
+
+  it('when minimized, child count badge is rendered', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} minimized />)
+    const root = document.querySelector('[data-minimized]')!
+    // childCount=4 is shown
+    expect(root.textContent).toContain('4')
+  })
+
+  it('when minimized, M/S dots present but no R dot (folders have no arm)', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} minimized />)
+    const root = document.querySelector('[data-minimized]')!
+    expect(root.querySelector('[data-dot="mute"]')).toBeInTheDocument()
+    expect(root.querySelector('[data-dot="solo"]')).toBeInTheDocument()
+    expect(root.querySelector('[data-dot="arm"]')).not.toBeInTheDocument()
+  })
+
+  it('when minimized and clipping, meter is shown', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} minimized clipping meterLevel={2} />)
+    expect(screen.getByRole('meter')).toBeInTheDocument()
+  })
+
+  it('when minimized and NOT clipping, meter is NOT shown', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} minimized meterLevel={-12} />)
+    expect(screen.queryByRole('meter')).not.toBeInTheDocument()
+  })
+
+  it('open/close state is preserved independently from minimized state', () => {
+    localStorage.setItem('jackdaw.folder.f1.open', 'false')
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    // Not minimized — disclosure shows "expand" (open=false)
+    expect(screen.getByRole('button', { name: /expand drums bus/i })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Drums Bus' })).not.toHaveAttribute('data-minimized')
+  })
+})

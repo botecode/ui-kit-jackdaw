@@ -120,8 +120,25 @@ const AMBIENT_TRACK: ArrangementTrack = {
   ],
 }
 
-const FEW_TRACKS    = [GUITAR_TRACK, BASS_TRACK, DRUMS_TRACK]
-const MANY_TRACKS   = [GUITAR_TRACK, BASS_TRACK, KEYS_TRACK, DRUMS_TRACK, VOCAL_TRACK, SYNTH_TRACK, FX_TRACK, AMBIENT_TRACK]
+// ── Folder (bus) tracks ───────────────────────────────────────────────────────
+
+const DRUMS_BUS_TRACK: ArrangementTrack = {
+  id: 'drums-bus', name: 'Drums Bus', color: 'var(--chroma-orange)',
+  type: 'audio', isFolder: true, armed: false, muted: false, soloed: false,
+  volumeDb: -2, pan: 0, inputId: null, plugins: [], chainEnabled: true,
+  clips: [],
+}
+
+const SYNTH_BUS_TRACK: ArrangementTrack = {
+  id: 'synth-bus', name: 'Synth Bus', color: 'var(--chroma-teal)',
+  type: 'audio', isFolder: true, armed: false, muted: false, soloed: false,
+  volumeDb: -4, pan: 0, inputId: null, plugins: [], chainEnabled: true,
+  clips: [],
+}
+
+const FEW_TRACKS         = [GUITAR_TRACK, BASS_TRACK, DRUMS_TRACK]
+const MANY_TRACKS        = [GUITAR_TRACK, BASS_TRACK, KEYS_TRACK, DRUMS_TRACK, VOCAL_TRACK, SYNTH_TRACK, FX_TRACK, AMBIENT_TRACK]
+const TRACKS_WITH_FOLDERS = [DRUMS_BUS_TRACK, DRUMS_TRACK, GUITAR_TRACK, SYNTH_BUS_TRACK, SYNTH_TRACK, KEYS_TRACK, BASS_TRACK]
 
 const NOOP_CALLBACKS: Omit<ArrangementProps,
   'tracks' | 'bpm' | 'numerator' | 'denominator' | 'pxPerBeat' | 'division' |
@@ -338,18 +355,52 @@ function StatesDemo() {
           />
         </Frame>
       </State>
+
+      {/* Folder tracks — collapse-all button visible in ruler spacer */}
+      <State label="with folder tracks — collapse-all button">
+        <Frame height={380}>
+          <Arrangement
+            {...STATIC}
+            {...NOOP_CALLBACKS}
+            tracks={TRACKS_WITH_FOLDERS}
+            playheadSeconds={0}
+            getPlayheadSeconds={GET_ZERO}
+          />
+        </Frame>
+      </State>
+
+      {/* All folders collapsed — compact rows for bus tracks */}
+      <State label="all folders collapsed (compact rows)">
+        <CollapsedFoldersArrangement />
+      </State>
     </StatesGrid>
+  )
+}
+
+// Sub-component so collapse-all interaction is self-contained
+function CollapsedFoldersArrangement() {
+  return (
+    <Frame height={320}>
+      <Arrangement
+        {...STATIC}
+        {...NOOP_CALLBACKS}
+        tracks={TRACKS_WITH_FOLDERS}
+        playheadSeconds={0}
+        getPlayheadSeconds={GET_ZERO}
+      />
+    </Frame>
   )
 }
 
 // ─── Playground ───────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [playing,       setPlaying]       = useState(false)
-  const [showSelection, setShowSelection] = useState(false)
-  const [focusedId,     setFocusedId]     = useState<string | null>(null)
-  const [showMeters,    setShowMeters]    = useState(false)
-  const [manyTracks,    setManyTracks]    = useState(false)
+  const [playing,        setPlaying]        = useState(false)
+  const [showSelection,  setShowSelection]  = useState(false)
+  const [focusedId,      setFocusedId]      = useState<string | null>(null)
+  const [showMeters,     setShowMeters]     = useState(false)
+  const [manyTracks,     setManyTracks]     = useState(false)
+  const [withFolders,    setWithFolders]    = useState(false)
 
   // Playhead simulation
   const playStartRef    = useRef(performance.now())
@@ -390,7 +441,7 @@ function PlaygroundDemo() {
     setSelection(next ? { start: bar(3), end: bar(5) } : null)
   }
 
-  const tracks = manyTracks ? MANY_TRACKS : FEW_TRACKS
+  const tracks = withFolders ? TRACKS_WITH_FOLDERS : manyTracks ? MANY_TRACKS : FEW_TRACKS
 
   return (
     <>
@@ -427,8 +478,14 @@ function PlaygroundDemo() {
         />
         <Toggle
           checked={manyTracks}
-          onChange={setManyTracks}
+          onChange={next => { setManyTracks(next); if (next) setWithFolders(false) }}
           label="Many tracks (8)"
+          size="sm"
+        />
+        <Toggle
+          checked={withFolders}
+          onChange={next => { setWithFolders(next); if (next) setManyTracks(false) }}
+          label="With folder tracks"
           size="sm"
         />
       </Playground>

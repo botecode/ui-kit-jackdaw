@@ -45,12 +45,58 @@
 }
 
 /* Spacer above the header list — height-matches the ruler row for vertical
-   alignment of the first track header with the first track lane. */
+   alignment of the first track header with the first track lane.
+   Also hosts the collapse-all-folders control when folder tracks are present. */
 .rulerSpacer {
   flex-shrink: 0;
   height: var(--ruler-height);
   background: var(--rail-bg);
   border-bottom: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--space-2);
+}
+
+/* Small collapse-all-folders toggle button — sits in the ruler spacer.
+   aria-pressed reflects whether all folders are currently minimized. */
+.collapseFoldersBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.collapseFoldersBtn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.collapseFoldersBtn[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.collapseFoldersBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.collapseFoldersBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* overflow-y: scroll + hidden scrollbar = JS can set scrollTop; user cannot

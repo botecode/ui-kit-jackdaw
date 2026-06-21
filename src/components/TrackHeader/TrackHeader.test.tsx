@@ -1,8 +1,25 @@
 // src/components/TrackHeader/TrackHeader.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { TrackHeader } from './TrackHeader'
 import type { Track } from './TrackHeader'
+
+// ── localStorage mock ─────────────────────────────────────────────────────────
+
+const makeLocalStorageMock = () => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: (key: string): string | null => store[key] ?? null,
+    setItem: (key: string, value: string): void => { store[key] = String(value) },
+    removeItem: (key: string): void => { delete store[key] },
+    clear: (): void => { store = {} },
+    get length(): number { return Object.keys(store).length },
+    key: (index: number): string | null => Object.keys(store)[index] ?? null,
+  }
+}
+const localStorageMock = makeLocalStorageMock()
+beforeAll(() => { vi.stubGlobal('localStorage', localStorageMock) })
+beforeEach(() => { localStorage.clear() })
 
 const BASE_TRACK: Track = {
   id: 't1', name: 'Vocals', color: '#e8a87c', type: 'audio',
@@ -279,6 +296,108 @@ describe('TrackHeader — meter visibility (ears-first)', () => {
     const strip = document.querySelector('[data-section="strip"]')
     expect(strip).toBeInTheDocument()
     // Meter absent, strip still present
+    expect(screen.queryByRole('meter')).not.toBeInTheDocument()
+  })
+})
+
+describe('TrackHeader — minimized (compact row)', () => {
+  it('is not minimized by default', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    expect(screen.getByRole('group', { name: 'Vocals' })).not.toHaveAttribute('data-minimized')
+  })
+
+  it('double-click on root sets data-minimized', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Vocals' }))
+    expect(screen.getByRole('group', { name: 'Vocals, minimized' })).toHaveAttribute('data-minimized')
+  })
+
+  it('double-click again removes data-minimized (toggle)', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    const root = screen.getByRole('group', { name: 'Vocals' })
+    fireEvent.dblClick(root)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Vocals, minimized' }))
+    expect(screen.getByRole('group', { name: 'Vocals' })).not.toHaveAttribute('data-minimized')
+  })
+
+  it('double-click on name span does NOT minimize (only renames)', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByText('Vocals'))
+    expect(screen.getByRole('group', { name: 'Vocals' })).not.toHaveAttribute('data-minimized')
+    expect(screen.getByRole('textbox', { name: /track name/i })).toBeInTheDocument()
+  })
+
+  it('minimized state persists to localStorage', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Vocals' }))
+    expect(localStorage.getItem('jackdaw.track.t1.minimized')).toBe('true')
+  })
+
+  it('reads initial minimized state from localStorage', () => {
+    localStorage.setItem('jackdaw.track.t1.minimized', 'true')
+    render(<TrackHeader {...BASE_PROPS} />)
+    expect(screen.getByRole('group', { name: 'Vocals, minimized' })).toHaveAttribute('data-minimized')
+  })
+
+  it('fires onToggleMinimized(true) when collapsing', () => {
+    const onToggleMinimized = vi.fn()
+    render(<TrackHeader {...BASE_PROPS} onToggleMinimized={onToggleMinimized} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Vocals' }))
+    expect(onToggleMinimized).toHaveBeenCalledWith(true)
+  })
+
+  it('fires onToggleMinimized(false) when expanding', () => {
+    localStorage.setItem('jackdaw.track.t1.minimized', 'true')
+    const onToggleMinimized = vi.fn()
+    render(<TrackHeader {...BASE_PROPS} onToggleMinimized={onToggleMinimized} />)
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Vocals, minimized' }))
+    expect(onToggleMinimized).toHaveBeenCalledWith(false)
+  })
+
+  it('controlled: minimized=true shows compact row without double-click', () => {
+    render(<TrackHeader {...BASE_PROPS} minimized />)
+    expect(screen.getByRole('group', { name: 'Vocals, minimized' })).toHaveAttribute('data-minimized')
+  })
+
+  it('when minimized, normal controls (fader, arm, fx) are not in DOM', () => {
+    render(<TrackHeader {...BASE_PROPS} minimized />)
+    expect(screen.queryByRole('slider', { name: /volume/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /arm for recording/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /fx chain/i })).not.toBeInTheDocument()
+  })
+
+  it('when minimized, track name is visible in compact row', () => {
+    render(<TrackHeader {...BASE_PROPS} minimized />)
+    expect(screen.getByText('Vocals')).toBeInTheDocument()
+  })
+
+  it('when minimized, R/M/S state dots are rendered (aria-hidden)', () => {
+    render(<TrackHeader {...BASE_PROPS} minimized />)
+    const root = screen.getByRole('group', { name: 'Vocals, minimized' })
+    // State dots are aria-hidden; query by text content
+    const rDot = root.querySelector('[data-dot="arm"]')
+    const mDot = root.querySelector('[data-dot="mute"]')
+    const sDot = root.querySelector('[data-dot="solo"]')
+    expect(rDot).toBeInTheDocument()
+    expect(mDot).toBeInTheDocument()
+    expect(sDot).toBeInTheDocument()
+  })
+
+  it('when minimized with variant=folder, no R dot (no arm)', () => {
+    render(<TrackHeader {...BASE_PROPS} minimized variant="folder" onToggleFolder={noop} />)
+    const root = document.querySelector('[data-minimized]')!
+    expect(root.querySelector('[data-dot="arm"]')).not.toBeInTheDocument()
+    expect(root.querySelector('[data-dot="mute"]')).toBeInTheDocument()
+    expect(root.querySelector('[data-dot="solo"]')).toBeInTheDocument()
+  })
+
+  it('when minimized and clipping, meter is shown', () => {
+    render(<TrackHeader {...BASE_PROPS} minimized clipping meterLevel={2} />)
+    expect(screen.getByRole('meter')).toBeInTheDocument()
+  })
+
+  it('when minimized and NOT clipping, meter is NOT shown', () => {
+    render(<TrackHeader {...BASE_PROPS} minimized meterLevel={-12} />)
     expect(screen.queryByRole('meter')).not.toBeInTheDocument()
   })
 })

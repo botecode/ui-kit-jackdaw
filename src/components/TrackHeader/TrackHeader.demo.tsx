@@ -59,6 +59,78 @@ function StatesDemo() {
           />
         </div>
       </State>
+
+      <State label="minimized (compact row)">
+        <div style={{ width: 200 }}>
+          <TrackHeader
+            track={makeTrack({ name: 'Vocals', type: 'audio' })}
+            onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop} onSelectInput={noopId}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
+            inputOptions={INPUT_OPTIONS}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · armed + muted + soloed">
+        <div style={{ width: 200 }}>
+          <TrackHeader
+            track={makeTrack({ name: 'Drums', color: 'var(--track-color-2)', armed: true, muted: true, soloed: true })}
+            onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop} onSelectInput={noopId}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
+            inputOptions={INPUT_OPTIONS}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · clipping (meter latched)">
+        <div style={{ width: 200 }}>
+          <TrackHeader
+            track={makeTrack({ name: 'Guitar', color: 'var(--track-color-6)', type: 'instrument' })}
+            onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop} onSelectInput={noopId}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
+            inputOptions={INPUT_OPTIONS}
+            minimized clipping meterLevel={2}
+          />
+        </div>
+      </State>
+
+      <State label="minimized · folder variant">
+        <div style={{ width: 200 }}>
+          <TrackHeader
+            track={makeTrack({ name: 'Group Bus', color: 'var(--track-color-3)' })}
+            variant="folder" folderOpen onToggleFolder={noop}
+            onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop} onSelectInput={noopId}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
+            inputOptions={INPUT_OPTIONS}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · selected (focused while collapsed)">
+        <div style={{ width: 200 }}>
+          <TrackHeader
+            track={makeTrack({ name: 'Bass', color: 'var(--track-color-4)', selected: true })}
+            onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop} onSelectInput={noopId}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
+            inputOptions={INPUT_OPTIONS}
+            minimized
+          />
+        </div>
+      </State>
+
       <State label="armed (R/M/S cluster + meter)">
         <div style={{ width: 200 }}>
           <TrackHeader
@@ -71,6 +143,7 @@ function StatesDemo() {
           />
         </div>
       </State>
+
       <State label="selected (meter visible)">
         <div style={{ width: 200 }}>
           <TrackHeader
@@ -83,6 +156,7 @@ function StatesDemo() {
           />
         </div>
       </State>
+
       <State label="clipping (meter latched)">
         <div style={{ width: 200 }}>
           <TrackHeader
@@ -95,6 +169,7 @@ function StatesDemo() {
           />
         </div>
       </State>
+
       <State label="muted + soloed">
         <div style={{ width: 200 }}>
           <TrackHeader
@@ -107,6 +182,7 @@ function StatesDemo() {
           />
         </div>
       </State>
+
       <State label="folder vs track">
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <div>
@@ -138,66 +214,34 @@ function StatesDemo() {
           </div>
         </div>
       </State>
-      <State label="folder · selected (meter visible)">
-        <div style={{ width: 200 }}>
-          <TrackHeader
-            track={makeTrack({ name: 'Drums Bus', color: 'var(--track-color-4)', selected: true })}
-            variant="folder" folderOpen={false}
-            onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
-            onVolume={noop} onPan={noop} onSelectInput={noopId}
-            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
-            onToggleFolder={noop} inputOptions={INPUT_OPTIONS} meterLevel={-8}
-          />
-        </div>
-      </State>
-      <State label="writer vs producer (no input)">
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <div style={{ width: 200 }}>
-            <TrackHeader
-              track={makeTrack({ name: 'Bass', inputId: null })}
-              mode="writer"
-              onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
-              onVolume={noop} onPan={noop} onSelectInput={noopId}
-              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
-              inputOptions={INPUT_OPTIONS}
-            />
+
+      <State label="normal vs minimized side-by-side">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>normal</div>
+            <div style={{ width: 200 }}>
+              <TrackHeader
+                track={makeTrack({ name: 'Synth', color: 'var(--track-color-5)' })}
+                onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop} onSelectInput={noopId}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
+                inputOptions={INPUT_OPTIONS}
+              />
+            </div>
           </div>
-          <div style={{ width: 200 }}>
-            <TrackHeader
-              track={makeTrack({ name: 'Bass', inputId: null })}
-              mode="producer"
-              onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
-              onVolume={noop} onPan={noop} onSelectInput={noopId}
-              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
-              inputOptions={INPUT_OPTIONS}
-            />
-          </div>
-        </div>
-      </State>
-      <State label="narrow (140px) vs wide (280px)">
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <div style={{ width: 140 }}>
-            <TrackHeader
-              track={makeTrack({ name: 'Synth', color: 'var(--track-color-3)' })}
-              onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
-              onVolume={noop} onPan={noop} onSelectInput={noopId}
-              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
-              inputOptions={INPUT_OPTIONS}
-            />
-          </div>
-          <div style={{ width: 280 }}>
-            <TrackHeader
-              track={makeTrack({ name: 'Synth', color: 'var(--track-color-3)', selected: true })}
-              onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
-              onVolume={noop} onPan={noop} onSelectInput={noopId}
-              onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
-              onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
-              inputOptions={INPUT_OPTIONS} meterLevel={-24}
-            />
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>minimized</div>
+            <div style={{ width: 200 }}>
+              <TrackHeader
+                track={makeTrack({ name: 'Synth', color: 'var(--track-color-5)', soloed: true })}
+                onRename={noopId} onArm={noop} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop} onSelectInput={noopId}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId} onSelect={noop}
+                inputOptions={INPUT_OPTIONS} minimized
+              />
+            </div>
           </div>
         </div>
       </State>
@@ -230,6 +274,7 @@ function PlaygroundDemo() {
   const [anySoloActive, setAnySoloActive] = useState(false)
   const [clipping,      setClipping]      = useState(false)
   const [showAllMeters, setShowAllMeters] = useState(false)
+  const [minimized,     setMinimized]     = useState(false)
   const [volumeDb,      setVolumeDb]      = useState(-6)
   const [pan,           setPan]           = useState(0)
   const [inputId,       setInputId]       = useState<string | null>('in-1')
@@ -277,6 +322,7 @@ function PlaygroundDemo() {
             onOpenPlugin={id => console.log('open plugin', id)}
             onSelect={() => setSelected(s => !s)}
             onToggleFolder={() => setFolderOpen(o => !o)}
+            onToggleMinimized={setMinimized}
             mode={mode}
             variant={variant}
             folderOpen={folderOpen}
@@ -284,22 +330,24 @@ function PlaygroundDemo() {
             anySoloActive={anySoloActive}
             clipping={clipping}
             showAllMeters={showAllMeters}
+            minimized={minimized}
             meterLevel={meterLevel}
           />
         </div>
 
         {/* Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <Toggle checked={armed}          onChange={(next) => setArmed(next)}          size="sm" label="armed" />
-          <Toggle checked={muted}          onChange={(next) => setMuted(next)}          size="sm" label="muted" />
-          <Toggle checked={soloed}         onChange={(next) => setSoloed(next)}         size="sm" label="soloed" />
-          <Toggle checked={selected}       onChange={(next) => setSelected(next)}       size="sm" label="selected" />
-          <Toggle checked={clipping}       onChange={(next) => setClipping(next)}       size="sm" label="clipping" />
-          <Toggle checked={showAllMeters}  onChange={(next) => setShowAllMeters(next)}  size="sm" label="showAllMeters" />
+          <Toggle checked={minimized}       onChange={setMinimized}                              size="sm" label="minimized" />
+          <Toggle checked={armed}           onChange={next => setArmed(next)}                    size="sm" label="armed" />
+          <Toggle checked={muted}           onChange={next => setMuted(next)}                    size="sm" label="muted" />
+          <Toggle checked={soloed}          onChange={next => setSoloed(next)}                   size="sm" label="soloed" />
+          <Toggle checked={selected}        onChange={next => setSelected(next)}                 size="sm" label="selected" />
+          <Toggle checked={clipping}        onChange={next => setClipping(next)}                 size="sm" label="clipping" />
+          <Toggle checked={showAllMeters}   onChange={next => setShowAllMeters(next)}            size="sm" label="showAllMeters" />
           <Toggle checked={mode === 'producer'} onChange={next => setMode(next ? 'producer' : 'writer')} size="sm" label="mode=producer" />
           <Toggle checked={variant === 'folder'} onChange={next => setVariant(next ? 'folder' : 'track')} size="sm" label="variant=folder" />
-          <Toggle checked={folderOpen}     onChange={(next) => setFolderOpen(next)}     size="sm" label="folderOpen" />
-          <Toggle checked={anySoloActive}  onChange={(next) => setAnySoloActive(next)}  size="sm" label="anySoloActive" />
+          <Toggle checked={folderOpen}      onChange={next => setFolderOpen(next)}               size="sm" label="folderOpen" />
+          <Toggle checked={anySoloActive}   onChange={next => setAnySoloActive(next)}            size="sm" label="anySoloActive" />
           <Toggle checked={type === 'midi'} onChange={next => setType(next ? 'midi' : 'audio')} size="sm" label="type=midi" />
           <Toggle checked={type === 'instrument'} onChange={next => setType(next ? 'instrument' : 'audio')} size="sm" label="type=instrument" />
 

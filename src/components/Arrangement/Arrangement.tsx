@@ -1,5 +1,6 @@
 // src/components/Arrangement/Arrangement.tsx
-import { useRef, useCallback, type CSSProperties, type ReactNode } from 'react'
+import { useRef, useCallback, useState, type CSSProperties, type ReactNode } from 'react'
+import { FolderSimple } from '@phosphor-icons/react'
 import { TrackHeader } from '../TrackHeader'
 import type { InputSelectOption } from '../InputSelect'
 import type { FxPlugin } from '../FxChip'
@@ -36,6 +37,8 @@ export interface ArrangementTrack {
   meterLevelL?: number
   meterLevelR?: number
   clipping?:    boolean
+  /** Folder tracks show a wider keyline and no arm/input controls. */
+  isFolder?:    boolean
 }
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
@@ -89,6 +92,8 @@ export interface ArrangementProps {
   onAddPlugin:        (id: string) => void
   onOpenPlugin:       (id: string, pluginId: string) => void
   onToggleFolder?:    (id: string) => void
+  /** Fires when a track's minimized (compact row) state changes via double-click. */
+  onToggleMinimized?: (id: string, minimized: boolean) => void
   onClipMove?:        (trackId: string, intent: ClipMoveIntent) => void
   onClipTrimStart?:   (trackId: string, intent: ClipTrimIntent) => void
   onClipTrimEnd?:     (trackId: string, intent: ClipTrimIntent) => void
@@ -97,8 +102,21 @@ export interface ArrangementProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DEFAULT_TRACK_HEIGHT = 88
-const DEFAULT_HEADER_WIDTH = 200
+const DEFAULT_TRACK_HEIGHT    = 88
+const DEFAULT_HEADER_WIDTH    = 200
+const COLLAPSED_TRACK_HEIGHT  = 40
+
+// ─── localStorage helpers (arrangement-scoped keys, separate from standalone) ─
+
+function lsMinKey(id: string) { return `jackdaw.arrangement.${id}.minimized` }
+
+function readArrangementMinimized(id: string): boolean {
+  try { return localStorage.getItem(lsMinKey(id)) === 'true' } catch { return false }
+}
+
+function writeArrangementMinimized(id: string, v: boolean) {
+  try { localStorage.setItem(lsMinKey(id), String(v)) } catch {}
+}
 
 // ─── Arrangement ──────────────────────────────────────────────────────────────
 
@@ -142,6 +160,7 @@ export function Arrangement({
   onAddPlugin,
   onOpenPlugin,
   onToggleFolder,
+  onToggleMinimized,
   onClipMove,
   onClipTrimStart,
   onClipTrimEnd,
@@ -149,6 +168,51 @@ export function Arrangement({
 }: ArrangementProps) {
   const scrollBoxRef     = useRef<HTMLDivElement>(null)
   const headersScrollRef = useRef<HTMLDivElement>(null)
+
+  // ── Minimized state (localStorage-backed, arrangement-scoped) ──────────────
+  const [minimizedTracks, setMinimizedTracks] = useState<Set<string>>(() => {
+    const set = new Set<string>()
+    tracks.forEach(t => { if (readArrangementMinimized(t.id)) set.add(t.id) })
+    return set
+  })
+
+  function handleToggleMinimized(id: string, minimized: boolean) {
+    setMinimizedTracks(prev => {
+      const next = new Set(prev)
+      if (minimized) next.add(id)
+      else next.delete(id)
+      return next
+    })
+    writeArrangementMinimized(id, minimized)
+    onToggleMinimized?.(id, minimized)
+  }
+
+  // ── Collapse all folders ────────────────────────────────────────────────────
+  const folderTracks  = tracks.filter(t => t.isFolder)
+  const hasFolders    = folderTracks.length > 0
+  const allFoldersMin = hasFolders && folderTracks.every(t => minimizedTracks.has(t.id))
+
+  function handleCollapseAllFolders() {
+    const folderIds = folderTracks.map(t => t.id)
+    const next      = !allFoldersMin
+    setMinimizedTracks(prev => {
+      const updated = new Set(prev)
+      folderIds.forEach(id => {
+        if (next) updated.add(id)
+        else updated.delete(id)
+      })
+      return updated
+    })
+    folderIds.forEach(id => {
+      writeArrangementMinimized(id, next)
+      onToggleMinimized?.(id, next)
+    })
+  }
+
+  // ── Per-track height ────────────────────────────────────────────────────────
+  function rowHeight(track: ArrangementTrack): number {
+    return minimizedTracks.has(track.id) ? COLLAPSED_TRACK_HEIGHT : trackHeight
+  }
 
   // Memoized time↔px mapping — one source of truth shared by ruler, playhead,
   // edit-cursor, time-selection. Recreates only when zoom/bpm changes.
@@ -165,8 +229,6 @@ export function Arrangement({
   const isEmpty    = tracks.length === 0
 
   // Sync header-column vertical scroll with main timeline scroll (one-way: JS only).
-  // The header column uses overflow-y:scroll with a hidden scrollbar so scrollTop
-  // can be set programmatically. Users can only scroll via the timeline pane.
   function handleScrollBoxScroll() {
     const box     = scrollBoxRef.current
     const headers = headersScrollRef.current
@@ -197,8 +259,20 @@ export function Arrangement({
         role="group"
         aria-label="Track headers"
       >
-        {/* Spacer aligns vertically with the TimelineRuler row */}
-        <div className={styles.rulerSpacer} aria-hidden="true" />
+        {/* Ruler-height spacer; houses the collapse-all-folders control */}
+        <div className={styles.rulerSpacer}>
+          {hasFolders && (
+            <button
+              className={styles.collapseFoldersBtn}
+              aria-label={allFoldersMin ? 'Expand all folders' : 'Collapse all folders'}
+              aria-pressed={allFoldersMin}
+              onClick={handleCollapseAllFolders}
+              disabled={disabled}
+            >
+              <FolderSimple size={12} />
+            </button>
+          )}
+        </div>
 
         {/* Vertically-synced scroll container (scrollbar hidden) */}
         <div ref={headersScrollRef} className={styles.headersScroll}>
@@ -206,7 +280,7 @@ export function Arrangement({
             <div
               key={track.id}
               className={styles.headerRow}
-              style={{ height: trackHeight }}
+              style={{ height: rowHeight(track) }}
             >
               <TrackHeader
                 track={{
@@ -232,6 +306,9 @@ export function Arrangement({
                 meterLevelR={track.meterLevelR}
                 clipping={track.clipping}
                 disabled={disabled}
+                variant={track.isFolder ? 'folder' : 'track'}
+                minimized={minimizedTracks.has(track.id)}
+                onToggleMinimized={min => handleToggleMinimized(track.id, min)}
                 onSelect={() => onSelectTrack(track.id)}
                 onRename={name => onRenameTrack(track.id, name)}
                 onArm={() => onArmTrack(track.id)}
@@ -299,7 +376,7 @@ export function Arrangement({
                       denominator={denominator}
                       pxPerBeat={pxPerBeat}
                       division={division}
-                      height={trackHeight}
+                      height={rowHeight(track)}
                       selected={focusedTrackId === track.id}
                       disabled={disabled}
                       onClipMove={onClipMove
@@ -314,7 +391,6 @@ export function Arrangement({
                       onClipDelete={onClipDelete
                         ? clipId => onClipDelete!(track.id, clipId)
                         : undefined}
-                      // Clicking empty lane space seeks + selects this track.
                       onSetCursor={s => {
                         onSeek(s)
                         onSelectTrack(track.id)

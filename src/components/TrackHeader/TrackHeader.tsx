@@ -1,5 +1,5 @@
 // src/components/TrackHeader/TrackHeader.tsx
-import { CSSProperties, useState, useRef } from 'react'
+import { CSSProperties, useState, useRef, useEffect } from 'react'
 import {
   Waveform, PianoKeys, MusicNote, FolderSimple, CaretRight,
 } from '@phosphor-icons/react'
@@ -35,40 +35,109 @@ export interface Track {
 }
 
 export interface TrackHeaderProps {
-  track:           Track
-  onRename:        (name: string) => void
-  onArm:           () => void
-  onMute:          () => void
-  onSolo:          () => void
-  onVolume:        (db: number) => void
-  onPan:           (pan: number) => void
-  onSelectInput:   (id: string) => void
-  onToggleChain:   (next: boolean) => void
-  onTogglePlugin:  (id: string, next: boolean) => void
-  onReorder:       (from: number, to: number) => void
-  onRemovePlugin:  (id: string) => void
-  onAddPlugin:     () => void
-  onOpenPlugin:    (id: string) => void
-  onSelect:        () => void
-  onToggleFolder?: () => void
-  folderOpen?:     boolean
-  mode?:           'writer' | 'producer'
-  variant?:        'track' | 'folder'
-  meterLevel?:     number
-  meterLevelL?:    number
-  meterLevelR?:    number
-  inputOptions:    InputSelectOption[]
-  anySoloActive?:  boolean
-  disabled?:       boolean
+  track:              Track
+  onRename:           (name: string) => void
+  onArm:              () => void
+  onMute:             () => void
+  onSolo:             () => void
+  onVolume:           (db: number) => void
+  onPan:              (pan: number) => void
+  onSelectInput:      (id: string) => void
+  onToggleChain:      (next: boolean) => void
+  onTogglePlugin:     (id: string, next: boolean) => void
+  onReorder:          (from: number, to: number) => void
+  onRemovePlugin:     (id: string) => void
+  onAddPlugin:        () => void
+  onOpenPlugin:       (id: string) => void
+  onSelect:           () => void
+  onToggleFolder?:    () => void
+  folderOpen?:        boolean
+  mode?:              'writer' | 'producer'
+  variant?:           'track' | 'folder'
+  meterLevel?:        number
+  meterLevelL?:       number
+  meterLevelR?:       number
+  inputOptions:       InputSelectOption[]
+  anySoloActive?:     boolean
+  disabled?:          boolean
   /** Track has clipped — shows meter with latched clip indicator even when not armed/selected. */
-  clipping?:       boolean
+  clipping?:          boolean
   /** Show meters on all tracks regardless of armed/selected/clipping state. */
-  showAllMeters?:  boolean
+  showAllMeters?:     boolean
+  /** Controlled minimized state (collapses to compact row). When omitted, managed internally via localStorage. */
+  minimized?:         boolean
+  /** Fires when the minimized state changes via double-click. */
+  onToggleMinimized?: (minimized: boolean) => void
 }
 
 // ── Shared scale (module-level to avoid recreating per render) ────────────────
 
 const DB_SCALE = dbScale()
+
+// ── localStorage helpers ──────────────────────────────────────────────────────
+
+function lsMinimizedKey(id: string) { return `jackdaw.track.${id}.minimized` }
+
+function readMinimized(id: string): boolean {
+  try { return localStorage.getItem(lsMinimizedKey(id)) === 'true' } catch { return false }
+}
+
+function writeMinimized(id: string, v: boolean) {
+  try { localStorage.setItem(lsMinimizedKey(id), String(v)) } catch {}
+}
+
+// ── CollapsedRow ──────────────────────────────────────────────────────────────
+
+interface CollapsedRowProps {
+  name:         string
+  type:         'audio' | 'midi' | 'instrument' | 'folder'
+  showArm:      boolean
+  armed:        boolean
+  muted:        boolean
+  soloed:       boolean
+  clipping:     boolean
+  meterLevel?:  number
+  meterLevelL?: number
+  meterLevelR?: number
+}
+
+function CollapsedRow({
+  name, type, showArm, armed, muted, soloed, clipping,
+  meterLevel, meterLevelL, meterLevelR,
+}: CollapsedRowProps) {
+  const TypeGlyph =
+    type === 'folder'     ? FolderSimple
+    : type === 'audio'    ? Waveform
+    : type === 'midi'     ? PianoKeys
+    :                       MusicNote
+
+  const showMeter = clipping && (meterLevel !== undefined || meterLevelL !== undefined || meterLevelR !== undefined)
+
+  return (
+    <div className={styles.collapsedRow}>
+      <TypeGlyph size={12} className={styles.glyph} aria-hidden />
+      <span className={styles.collapsedName}>{name}</span>
+      <div className={styles.stateDots} aria-hidden>
+        {showArm && (
+          <span className={styles.stateDot} data-dot="arm" data-active={armed || undefined}>R</span>
+        )}
+        <span className={styles.stateDot} data-dot="mute" data-active={muted || undefined}>M</span>
+        <span className={styles.stateDot} data-dot="solo" data-active={soloed || undefined}>S</span>
+      </div>
+      {showMeter && (
+        <Meter
+          value={meterLevel}
+          valueL={meterLevelL}
+          valueR={meterLevelR}
+          clipLatch
+          orientation="vertical"
+          size="sm"
+          aria-label="Level"
+        />
+      )}
+    </div>
+  )
+}
 
 // ── TopBar ────────────────────────────────────────────────────────────────────
 
@@ -153,7 +222,8 @@ function TopBar({
         <span
           className={styles.name}
           tabIndex={0}
-          onDoubleClick={startEdit}
+          data-no-collapse
+          onDoubleClick={e => { e.stopPropagation(); startEdit() }}
           onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEdit() }
           }}
@@ -386,13 +456,35 @@ export function TrackHeader({
   disabled = false,
   clipping = false,
   showAllMeters = false,
+  minimized,
+  onToggleMinimized,
 }: TrackHeaderProps) {
+  const [minimizedInternal, setMinimizedInternal] = useState(() => readMinimized(track.id))
+  const isMinimized = minimized ?? minimizedInternal
+
+  useEffect(() => {
+    if (minimized === undefined) {
+      setMinimizedInternal(readMinimized(track.id))
+    }
+  }, [track.id, minimized])
+
   const showMeter = track.armed || track.selected || clipping || showAllMeters
+
+  function handleDoubleClick(e: React.MouseEvent) {
+    // Don't collapse when interacting with buttons, inputs, sliders, or the name field
+    if ((e.target as HTMLElement).closest('button, input, [role="slider"], [data-no-collapse]')) return
+    const next = !isMinimized
+    if (minimized === undefined) {
+      setMinimizedInternal(next)
+      writeMinimized(track.id, next)
+    }
+    onToggleMinimized?.(next)
+  }
 
   return (
     <div
       role="group"
-      aria-label={track.name}
+      aria-label={isMinimized ? `${track.name}, minimized` : track.name}
       className={styles.root}
       data-variant={variant}
       data-mode={mode}
@@ -402,69 +494,89 @@ export function TrackHeader({
       data-selected={track.selected || undefined}
       data-clipping={clipping || undefined}
       data-disabled={disabled || undefined}
+      data-minimized={isMinimized || undefined}
       style={{ '--track-color': track.color } as CSSProperties}
       onClick={onSelect}
+      onDoubleClick={handleDoubleClick}
     >
       <div className={styles.keyline} aria-hidden />
-      <TopBar
-        name={track.name}
-        type={track.type}
-        inputId={track.inputId}
-        plugins={track.plugins}
-        chainEnabled={track.chainEnabled}
-        mode={mode}
-        variant={variant}
-        folderOpen={folderOpen}
-        inputOptions={inputOptions}
-        disabled={disabled}
-        onSelectInput={onSelectInput}
-        onToggleChain={onToggleChain}
-        onTogglePlugin={onTogglePlugin}
-        onReorder={onReorder}
-        onRemovePlugin={onRemovePlugin}
-        onAddPlugin={onAddPlugin}
-        onOpenPlugin={onOpenPlugin}
-        onToggleFolder={onToggleFolder}
-        onRename={onRename}
-      />
-      {variant === 'track' ? (
-        <ControlStrip
+
+      {isMinimized ? (
+        <CollapsedRow
+          name={track.name}
+          type={variant === 'folder' ? 'folder' : track.type}
+          showArm={variant === 'track'}
           armed={track.armed}
           muted={track.muted}
           soloed={track.soloed}
-          volumeDb={track.volumeDb}
-          pan={track.pan}
-          color={track.color}
-          showMeter={showMeter}
+          clipping={clipping}
           meterLevel={meterLevel}
           meterLevelL={meterLevelL}
           meterLevelR={meterLevelR}
-          anySoloActive={anySoloActive}
-          disabled={disabled}
-          onArm={onArm}
-          onMute={onMute}
-          onSolo={onSolo}
-          onVolume={onVolume}
-          onPan={onPan}
         />
       ) : (
-        <FolderControlStrip
-          muted={track.muted}
-          soloed={track.soloed}
-          volumeDb={track.volumeDb}
-          pan={track.pan}
-          color={track.color}
-          showMeter={showMeter}
-          meterLevel={meterLevel}
-          meterLevelL={meterLevelL}
-          meterLevelR={meterLevelR}
-          anySoloActive={anySoloActive}
-          disabled={disabled}
-          onMute={onMute}
-          onSolo={onSolo}
-          onVolume={onVolume}
-          onPan={onPan}
-        />
+        <>
+          <TopBar
+            name={track.name}
+            type={track.type}
+            inputId={track.inputId}
+            plugins={track.plugins}
+            chainEnabled={track.chainEnabled}
+            mode={mode}
+            variant={variant}
+            folderOpen={folderOpen}
+            inputOptions={inputOptions}
+            disabled={disabled}
+            onSelectInput={onSelectInput}
+            onToggleChain={onToggleChain}
+            onTogglePlugin={onTogglePlugin}
+            onReorder={onReorder}
+            onRemovePlugin={onRemovePlugin}
+            onAddPlugin={onAddPlugin}
+            onOpenPlugin={onOpenPlugin}
+            onToggleFolder={onToggleFolder}
+            onRename={onRename}
+          />
+          {variant === 'track' ? (
+            <ControlStrip
+              armed={track.armed}
+              muted={track.muted}
+              soloed={track.soloed}
+              volumeDb={track.volumeDb}
+              pan={track.pan}
+              color={track.color}
+              showMeter={showMeter}
+              meterLevel={meterLevel}
+              meterLevelL={meterLevelL}
+              meterLevelR={meterLevelR}
+              anySoloActive={anySoloActive}
+              disabled={disabled}
+              onArm={onArm}
+              onMute={onMute}
+              onSolo={onSolo}
+              onVolume={onVolume}
+              onPan={onPan}
+            />
+          ) : (
+            <FolderControlStrip
+              muted={track.muted}
+              soloed={track.soloed}
+              volumeDb={track.volumeDb}
+              pan={track.pan}
+              color={track.color}
+              showMeter={showMeter}
+              meterLevel={meterLevel}
+              meterLevelL={meterLevelL}
+              meterLevelR={meterLevelR}
+              anySoloActive={anySoloActive}
+              disabled={disabled}
+              onMute={onMute}
+              onSolo={onSolo}
+              onVolume={onVolume}
+              onPan={onPan}
+            />
+          )}
+        </>
       )}
     </div>
   )

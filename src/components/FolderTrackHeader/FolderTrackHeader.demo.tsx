@@ -39,7 +39,7 @@ const noopId = (_: string) => {}
 // ── States grid ───────────────────────────────────────────────────────────────
 
 function StatesDemo() {
-  // Seed localStorage so the "collapsed" tile renders collapsed on mount
+  // Seed localStorage so the "folder closed" tile renders closed on mount
   try { localStorage.setItem('jackdaw.folder.f-coll.open', 'false') } catch {}
 
   return (
@@ -57,7 +57,7 @@ function StatesDemo() {
         </div>
       </State>
 
-      <State label="collapsed">
+      <State label="folder closed (disclosure toggled)">
         <div style={{ width: 220 }}>
           <FolderTrackHeader
             track={makeFolder({ id: 'f-coll', name: 'Strings Bus', color: 'var(--track-color-3)' })}
@@ -67,6 +67,94 @@ function StatesDemo() {
             onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
             onSelect={noop}
           />
+        </div>
+      </State>
+
+      <State label="minimized (compact row)">
+        <div style={{ width: 220 }}>
+          <FolderTrackHeader
+            track={makeFolder({ id: 'f-min', name: 'Drums Bus', childCount: 4 })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · muted + soloed (M/S glowing)">
+        <div style={{ width: 220 }}>
+          <FolderTrackHeader
+            track={makeFolder({ id: 'f-min-ms', name: 'Strings Bus', color: 'var(--track-color-3)', muted: true, soloed: true, childCount: 6 })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} anySoloActive
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · clipping (meter latched)">
+        <div style={{ width: 220 }}>
+          <FolderTrackHeader
+            track={makeFolder({ id: 'f-min-clip', name: 'Master Bus', color: 'var(--track-color-6)', childCount: 8 })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} clipping meterLevel={2}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · selected (focused while collapsed)">
+        <div style={{ width: 220 }}>
+          <FolderTrackHeader
+            track={makeFolder({ id: 'f-min-sel', name: 'Vocals Bus', color: 'var(--track-color-1)', selected: true, childCount: 3 })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="expanded vs minimized">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>normal</div>
+            <div style={{ width: 200 }}>
+              <FolderTrackHeader
+                track={makeFolder({ id: 'f-cmp-exp', name: 'Synths Bus', color: 'var(--track-color-4)', childCount: 5 })}
+                onRename={noopId} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+                onSelect={noop}
+              />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>minimized</div>
+            <div style={{ width: 200 }}>
+              <FolderTrackHeader
+                track={makeFolder({ id: 'f-cmp-min', name: 'Synths Bus', color: 'var(--track-color-4)', childCount: 5 })}
+                onRename={noopId} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+                onSelect={noop}
+                minimized
+              />
+            </div>
+          </div>
         </div>
       </State>
 
@@ -171,6 +259,7 @@ function PlaygroundDemo() {
   const [anySoloActive, setAnySoloActive] = useState(false)
   const [clipping,      setClipping]      = useState(false)
   const [showAllMeters, setShowAllMeters] = useState(false)
+  const [minimized,     setMinimized]     = useState(false)
   const [disabled,      setDisabled]      = useState(false)
   const [volumeDb,      setVolumeDb]      = useState(0)
   const [pan,           setPan]           = useState(0)
@@ -216,10 +305,12 @@ function PlaygroundDemo() {
             }
             onOpenPlugin={id => console.log('open plugin', id)}
             onSelect={() => setSelected(s => !s)}
-            onToggleCollapse={collapsed => console.log('collapsed:', collapsed)}
+            onToggleCollapse={collapsed => console.log('folder-closed:', collapsed)}
+            onToggleMinimized={setMinimized}
             anySoloActive={anySoloActive}
             clipping={clipping}
             showAllMeters={showAllMeters}
+            minimized={minimized}
             disabled={disabled}
             meterLevel={meterLevel}
           />
@@ -227,6 +318,7 @@ function PlaygroundDemo() {
 
         {/* Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <Toggle checked={minimized}     onChange={setMinimized}     size="sm" label="minimized" />
           <Toggle checked={muted}         onChange={setMuted}         size="sm" label="muted" />
           <Toggle checked={soloed}        onChange={setSoloed}        size="sm" label="soloed" />
           <Toggle checked={selected}      onChange={setSelected}      size="sm" label="selected" />

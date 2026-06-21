@@ -1,5 +1,5 @@
 // src/components/Arrangement/Arrangement.test.tsx
-import { describe, it, expect, vi, beforeAll } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { Arrangement } from './Arrangement'
 import type { ArrangementProps, ArrangementTrack } from './Arrangement'
@@ -7,7 +7,21 @@ import type { SelectionRange } from '../TimeSelection'
 
 // ─── Environment stubs ────────────────────────────────────────────────────────
 
+const makeLocalStorageMock = () => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: (key: string): string | null => store[key] ?? null,
+    setItem: (key: string, value: string): void => { store[key] = String(value) },
+    removeItem: (key: string): void => { delete store[key] },
+    clear: (): void => { store = {} },
+    get length(): number { return Object.keys(store).length },
+    key: (index: number): string | null => Object.keys(store)[index] ?? null,
+  }
+}
+const localStorageMock = makeLocalStorageMock()
+
 beforeAll(() => {
+  vi.stubGlobal('localStorage', localStorageMock)
   // ResizeObserver — used inside Clip (rendered by TrackLane inside Arrangement)
   ;(globalThis as unknown as Record<string, unknown>).ResizeObserver = class {
     observe()    {}
@@ -20,6 +34,8 @@ beforeAll(() => {
   HTMLElement.prototype.setPointerCapture       = vi.fn()
   HTMLElement.prototype.releasePointerCapture   = vi.fn()
 })
+
+beforeEach(() => { localStorage.clear() })
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -255,5 +271,73 @@ describe('Arrangement — disabled', () => {
   it('root has data-disabled when disabled=true', () => {
     const { getByTestId } = arrangement({ tracks: [TRACK_A], disabled: true })
     expect(getByTestId('arrangement-root')).toHaveAttribute('data-disabled')
+  })
+})
+
+// ─── Track collapse (minimize) ────────────────────────────────────────────────
+
+const FOLDER_TRACK: ArrangementTrack = {
+  ...makeTrack('f1', 'Drums Bus', 'var(--chroma-green)'),
+  isFolder: true,
+}
+
+describe('Arrangement — collapse-all-folders control', () => {
+  it('does NOT render collapse button when no folder tracks', () => {
+    arrangement({ tracks: [TRACK_A, TRACK_B] })
+    expect(screen.queryByRole('button', { name: /collapse all folders/i })).not.toBeInTheDocument()
+  })
+
+  it('renders collapse button when at least one isFolder track is present', () => {
+    arrangement({ tracks: [TRACK_A, FOLDER_TRACK] })
+    expect(screen.getByRole('button', { name: /collapse all folders/i })).toBeInTheDocument()
+  })
+
+  it('collapse button has aria-pressed=false initially', () => {
+    arrangement({ tracks: [FOLDER_TRACK] })
+    const btn = screen.getByRole('button', { name: /collapse all folders/i })
+    expect(btn).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('clicking collapse button sets all folder headers to data-minimized', () => {
+    arrangement({ tracks: [TRACK_A, FOLDER_TRACK] })
+    fireEvent.click(screen.getByRole('button', { name: /collapse all folders/i }))
+    // Folder track header is now minimized
+    expect(screen.getByRole('group', { name: 'Drums Bus, minimized' })).toHaveAttribute('data-minimized')
+    // Regular track is unaffected
+    expect(screen.getByRole('group', { name: 'Guitar' })).not.toHaveAttribute('data-minimized')
+  })
+
+  it('collapse button aria-pressed=true after collapsing all', () => {
+    arrangement({ tracks: [FOLDER_TRACK] })
+    fireEvent.click(screen.getByRole('button', { name: /collapse all folders/i }))
+    expect(screen.getByRole('button', { name: /expand all folders/i })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('clicking again expands all folders', () => {
+    arrangement({ tracks: [FOLDER_TRACK] })
+    const btn = screen.getByRole('button', { name: /collapse all folders/i })
+    fireEvent.click(btn)
+    fireEvent.click(screen.getByRole('button', { name: /expand all folders/i }))
+    expect(screen.getByRole('group', { name: 'Drums Bus' })).not.toHaveAttribute('data-minimized')
+  })
+
+  it('fires onToggleMinimized for each folder track when collapsing all', () => {
+    const FOLDER_B: ArrangementTrack = { ...makeTrack('f2', 'Strings Bus', '#fff'), isFolder: true }
+    const onToggleMinimized = vi.fn()
+    arrangement({ tracks: [FOLDER_TRACK, FOLDER_B], onToggleMinimized })
+    fireEvent.click(screen.getByRole('button', { name: /collapse all folders/i }))
+    expect(onToggleMinimized).toHaveBeenCalledWith('f1', true)
+    expect(onToggleMinimized).toHaveBeenCalledWith('f2', true)
+  })
+})
+
+describe('Arrangement — per-track minimized height', () => {
+  it('double-clicking a folder track header minimizes it and changes row height', () => {
+    arrangement({ tracks: [FOLDER_TRACK], trackHeight: 88 })
+    // headerRow is the direct parent of the TrackHeader group
+    const headerRow = screen.getByRole('group', { name: 'Drums Bus' }).parentElement as HTMLElement
+    expect(headerRow.style.height).toBe('88px')
+    fireEvent.dblClick(screen.getByRole('group', { name: 'Drums Bus' }))
+    expect(headerRow.style.height).toBe('40px')
   })
 })

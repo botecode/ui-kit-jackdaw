@@ -130,6 +130,85 @@
   padding: var(--space-1) var(--space-2) var(--space-2) calc(var(--space-3) + 6px);
 }
 
+/* ── Collapsed row ────────────────────────────────────────────────────────── */
+
+/* 40px compact height — half of the default 88px arrangement row.
+   Shows: folder glyph + name + child count badge + M/S dots + [clip meter]. */
+
+.collapsedRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-2) 0 calc(var(--space-3) + 6px);
+}
+
+.collapsedName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+
+/* Child count badge — small recessed pill showing number of children */
+.childCount {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--stage) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 3px;
+  padding: 0 4px;
+  line-height: 16px;
+}
+
+.stateDots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* Monospace label LEDs — dim when inactive, glow on active */
+
+.stateDot {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  width: 12px;
+  text-align: center;
+  color: color-mix(in srgb, var(--text-muted) 50%, transparent);
+  transition:
+    color var(--dur-led-off) var(--ease-out),
+    text-shadow var(--dur-led-off) var(--ease-out);
+}
+
+/* Muted: orange / amber (attention semantic) */
+.stateDot[data-dot="mute"][data-active] {
+  color: var(--led-orange-core);
+  text-shadow: 0 0 6px var(--led-orange);
+  transition:
+    color var(--dur-led-on) var(--ease-out),
+    text-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* Soloed: yellow (solo semantic) */
+.stateDot[data-dot="solo"][data-active] {
+  color: var(--led-yellow-core);
+  text-shadow: 0 0 6px var(--led-yellow);
+  transition:
+    color var(--dur-led-on) var(--ease-out),
+    text-shadow var(--dur-led-on) var(--ease-out);
+}
+
 /* ── States ───────────────────────────────────────────────────────────────── */
 
 .root[data-selected] {
@@ -145,8 +224,22 @@
   opacity: 0.7;
 }
 
+.root[data-muted] .collapsedRow {
+  opacity: 0.7;
+}
+
 .root[data-soloed] .keyline {
   box-shadow: 0 0 6px var(--led-yellow);
+}
+
+/* Minimized: slightly brighter keyline as visual anchor for the compact row */
+.root[data-minimized] .keyline {
+  background: color-mix(in srgb, var(--track-color, var(--accent)) 80%, transparent);
+}
+
+.root[data-minimized][data-selected] .keyline {
+  background: var(--track-color, var(--accent));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--track-color, var(--accent)) 70%, transparent);
 }
 
 .root[data-disabled] {
