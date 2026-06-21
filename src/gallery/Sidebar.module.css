@@ -76,3 +76,17 @@
   pointer-events: none;
   user-select: none;
 }
+
+.searchWrap {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.emptyState {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+  font-style: italic;
+  margin: 0;
+}
