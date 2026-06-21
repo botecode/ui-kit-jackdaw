@@ -63,6 +63,7 @@ export function SegmentedControl({
             ref={el => { segmentRefs.current[i] = el }}
             role="radio"
             aria-checked={selected}
+            aria-label={opt.icon && !opt.label ? opt.value : undefined}
             data-selected={selected || undefined}
             tabIndex={i === activeIdx ? 0 : -1}
             className={styles.segment}
