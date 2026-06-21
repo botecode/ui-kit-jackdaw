@@ -406,3 +406,39 @@ describe('CommentsPanel — author identity: data-own', () => {
     expect(screen.getByTestId('comment-card-c1')).not.toHaveAttribute('data-own')
   })
 })
+
+// ── Reply card author identity ─────────────────────────────────────────────────
+
+describe('CommentsPanel — reply card author identity', () => {
+  it('sets --_author-accent on a reply card to the reply author accent', () => {
+    render(<CommentsPanel {...makeProps({ comments: [THREAD_COMMENT] })} />)
+    const replyCard = screen.getByTestId('reply-card-r1')
+    // BOB has no color → derived deterministically from palette
+    expect(replyCard.style.getPropertyValue('--_author-accent')).toMatch(/^var\(--track-color-\d\)$/)
+  })
+
+  it('sets data-own on a reply card when reply author is the current user', () => {
+    const threadWithMyReply: Comment = {
+      id: 'c5x',
+      author: ALICE,
+      time: 1_700_000_004_000,
+      text: 'Parent',
+      replies: [{ id: 'r1x', author: ALICE, time: 1_700_000_005_000, text: 'My reply' }],
+    }
+    render(<CommentsPanel {...makeProps({ comments: [threadWithMyReply], currentUserId: 'a1' })} />)
+    expect(screen.getByTestId('reply-card-r1x')).toHaveAttribute('data-own')
+  })
+
+  it('does not set data-own on a reply from a collaborator', () => {
+    render(<CommentsPanel {...makeProps({ comments: [THREAD_COMMENT], currentUserId: 'a1' })} />)
+    // BOB (b1) replied, current user is ALICE (a1)
+    expect(screen.getByTestId('reply-card-r1')).not.toHaveAttribute('data-own')
+  })
+
+  it('sets --_reply-accent on the replies container to the parent author accent', () => {
+    render(<CommentsPanel {...makeProps({ comments: [THREAD_COMMENT] })} />)
+    const repliesContainer = screen.getByTestId('replies-c5')
+    // ALICE has color: '#e8a87c' → authorAccent returns it directly
+    expect(repliesContainer.style.getPropertyValue('--_reply-accent')).toBe('#e8a87c')
+  })
+})
