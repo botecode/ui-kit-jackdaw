@@ -1,11 +1,31 @@
 {
-  "name": "ui-jackdaw",
+  "name": "@jackdaw/kit",
   "version": "1.0.0",
-  "description": "",
+  "description": "Jackdaw UI kit — the Chroma design system, consumed by the DAW.",
   "type": "module",
+  "main": "./dist/jackdaw-kit.js",
+  "module": "./dist/jackdaw-kit.js",
+  "types": "./dist/types/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/jackdaw-kit.js"
+    },
+    "./styles.css": "./dist/jackdaw-kit.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "public/fonts"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:lib": "vite build -c vite.lib.config.ts && npm run build:types",
+    "build:types": "tsc -p tsconfig.lib.json",
     "test": "vitest",
     "preview": "vite preview"
   },
