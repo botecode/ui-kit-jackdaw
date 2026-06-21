@@ -1,0 +1,360 @@
+/* src/components/AnnotationEditor/AnnotationEditor.module.css */
+
+/* ─── Shell (warm writing-surface card) ──────────────────────────────────── */
+
+/*
+  The shell is a warm, paper-textured popover — not a modal, not a browser
+  dialog. It reads like a sticky note on the timeline: structured, compact,
+  tactile. Width is fixed so the popover never reflows under the cursor.
+*/
+
+.shell {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 1px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  /* Slightly darker than the body — same recipe as Panel header */
+  background: color-mix(in srgb, var(--surface) 80%, var(--stage) 20%);
+}
+
+.typeLabel {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+/* Time in monospace so digits don't jitter between values */
+.timeLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* ─── Body ───────────────────────────────────────────────────────────────── */
+
+.body {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ─── Recessed text well ─────────────────────────────────────────────────── */
+
+/*
+  Matches TextField / Checkbox / Toggle: dark inset shadow creates the
+  recessed-groove feel. No border-color token needed — the shadow does the work.
+*/
+
+.textarea,
+.input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--stage);
+  border: none;
+  outline: none;
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--border);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text);
+  caret-color: var(--accent);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+.textarea {
+  padding: var(--space-2);
+  resize: none;
+  line-height: var(--leading-base);
+  min-height: 80px;
+}
+
+/* Tabs: monospace so guitar tab columns align */
+.textarea[data-mono] {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.input {
+  padding: 0 var(--space-2);
+  height: 32px;
+  line-height: 1;
+}
+
+/* ─── Focus ring — keyboard only (:focus-visible, never :focus) ──────────── */
+
+.textarea:focus-visible,
+.input:focus-visible {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--accent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Placeholder ────────────────────────────────────────────────────────── */
+
+.textarea::placeholder,
+.input::placeholder {
+  color: var(--text-dim);
+  opacity: 1; /* Firefox default is 0.54 */
+}
+
+/* ─── Audio section (comment type only) ──────────────────────────────────── */
+
+.audioSection {
+  display: flex;
+  align-items: center;
+}
+
+/* Record button — recessed when idle, red LED bloom when recording */
+
+.recordBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--stage);
+  border: none;
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 0 0 1px var(--border);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    box-shadow var(--dur-led-off) var(--ease-out),
+    color var(--dur-led-off) var(--ease-out);
+}
+
+.recordBtn:focus-visible {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 0 0 2px var(--accent);
+}
+
+.recordBtn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Recording: semantic red LED (arm/record convention per KIT-LEAD §6) */
+.recordBtn[data-recording] {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 0 0 1px var(--border),
+    0 0 8px 2px color-mix(in srgb, var(--led-red) 40%, transparent);
+  color: var(--led-red);
+  transition:
+    box-shadow var(--dur-led-on) var(--ease-out),
+    color var(--dur-led-on) var(--ease-out);
+}
+
+/* Record indicator dot — recessed off / lit red when recording */
+.recordDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+.recordBtn[data-recording] .recordDot {
+  background: var(--led-red);
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--led-red) 60%, transparent);
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* Play chip — compact pill shown once a recording exists */
+
+.playChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: color-mix(in srgb, var(--accent) 12%, var(--stage));
+  border-radius: calc(var(--radius) * 2);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.playChipIcon {
+  font-size: 10px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.playChipLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+
+.clearAudioBtn {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: var(--text-sm);
+  line-height: 1;
+  border-radius: 2px;
+}
+
+.clearAudioBtn:hover {
+  color: var(--text-muted);
+}
+
+.clearAudioBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 80%, var(--stage) 20%);
+  gap: var(--space-2);
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* ─── Shared button base ─────────────────────────────────────────────────── */
+
+.cancelBtn,
+.saveBtn,
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  min-height: 28px;
+  cursor: pointer;
+  border: none;
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+/* Cancel — ghost (recessed surface, muted text) */
+
+.cancelBtn {
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.cancelBtn:hover {
+  color: var(--text);
+}
+
+.cancelBtn:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+  outline: none;
+}
+
+/* Save — accent filled */
+
+.saveBtn {
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.saveBtn:hover {
+  filter: brightness(1.08);
+}
+
+.saveBtn:active {
+  filter: brightness(0.95);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.saveBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Delete — danger red (semantic LED color for destructive action) */
+
+.deleteBtn {
+  background: transparent;
+  color: var(--led-red);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--led-red) 40%, transparent);
+}
+
+.deleteBtn:hover {
+  background: color-mix(in srgb, var(--led-red) 10%, transparent);
+}
+
+.deleteBtn:focus-visible {
+  outline: 2px solid var(--led-red);
+  outline-offset: 2px;
+}
+
+/* ─── Reduced-motion: snap decorative transitions, keep functional ones ──── */
+
+@media (prefers-reduced-motion: reduce) {
+  .textarea,
+  .input,
+  .recordBtn,
+  .recordDot,
+  .cancelBtn,
+  .saveBtn,
+  .deleteBtn {
+    transition: none;
+  }
+}
