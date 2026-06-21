@@ -189,6 +189,16 @@ function ManyIdeasCard() {
   )
 }
 
+function ClipsOnlyCard() {
+  return (
+    <State label="clips only — select Clips in the kind bar">
+      <div style={PANEL}>
+        <IdeasLibrary ideas={FEW_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
+      </div>
+    </State>
+  )
+}
+
 function SearchingCard() {
   const [ideas, setIdeas] = useState(FEW_IDEAS)
   return (
@@ -360,6 +370,7 @@ function StatesDemo() {
     <StatesGrid>
       <EmptyCard />
       <FewIdeasCard />
+      <ClipsOnlyCard />
       <ManyIdeasCard />
       <SearchingCard />
       <PreviewingCard />
