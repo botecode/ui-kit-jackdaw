@@ -115,6 +115,29 @@ describe('SegmentedControl rendering', () => {
     expect(getByText('Alpha')).toBeInTheDocument()
     expect(getByText('Beta')).toBeInTheDocument()
   })
+
+  it('icon-only segment uses value as aria-label for accessible name', () => {
+    const opts: SegmentedControlOption[] = [
+      { value: 'audio', icon: <span>♪</span> },
+      { value: 'midi',  icon: <span>M</span> },
+    ]
+    const { getByRole } = render(
+      <SegmentedControl options={opts} value="audio" onChange={vi.fn()} aria-label="Track type" />,
+    )
+    expect(getByRole('radio', { name: 'audio' })).toBeInTheDocument()
+    expect(getByRole('radio', { name: 'midi' })).toBeInTheDocument()
+  })
+
+  it('segment with both icon and label does not get aria-label override', () => {
+    const opts: SegmentedControlOption[] = [
+      { value: 'audio', icon: <span>♪</span>, label: 'Audio' },
+    ]
+    const { getByRole } = render(
+      <SegmentedControl options={opts} value="audio" onChange={vi.fn()} aria-label="Track type" />,
+    )
+    const radio = getByRole('radio', { name: 'Audio' })
+    expect(radio).not.toHaveAttribute('aria-label')
+  })
 })
 
 // ─── Interaction ─────────────────────────────────────────────────────────────
