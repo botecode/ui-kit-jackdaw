@@ -1,0 +1,380 @@
+// src/components/ReturnTrackHeader/ReturnTrackHeader.demo.tsx
+import { useState } from 'react'
+import type { DemoMeta } from '../../gallery/registry'
+import { DemoShell } from '../../gallery/ui/DemoShell'
+import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
+import { Playground } from '../../gallery/ui/Playground'
+import { Toggle } from '../Toggle'
+import { Fader } from '../Fader'
+import { ReturnTrackHeader } from './ReturnTrackHeader'
+import type { ReturnTrack } from './ReturnTrackHeader'
+import type { FxPlugin } from '../FxChip'
+
+export const meta: DemoMeta = {
+  name: 'ReturnTrackHeader',
+  group: 'Composites',
+  route: '/return-track-header',
+  order: 3,
+}
+
+const STUB_PLUGINS: FxPlugin[] = [
+  { id: 'p1', name: 'Hall Reverb', enabled: true },
+  { id: 'p2', name: 'Limiter',     enabled: true },
+]
+
+function makeReturn(overrides: Partial<ReturnTrack> = {}): ReturnTrack {
+  return {
+    id: 'r-demo', name: 'Reverb', color: 'var(--track-color-3)',
+    kind: 'return',
+    muted: false, soloed: false,
+    volumeDb: -6, pan: 0,
+    plugins: STUB_PLUGINS, chainEnabled: true, selected: false,
+    ...overrides,
+  }
+}
+
+const noop   = () => {}
+const noopId = (_: string) => {}
+
+// ── States grid ───────────────────────────────────────────────────────────────
+
+function StatesDemo() {
+  return (
+    <StatesGrid>
+      <State label="default (named, with FX)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-def', name: 'Reverb' })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop}
+          />
+        </div>
+      </State>
+
+      <State label="fed-by list (routing visible)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({
+              id: 'r-fed', name: 'Parallel Comp',
+              color: 'var(--track-color-4)',
+              feedSources: ['Vocals', 'Guitar', 'Bass'],
+            })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop}
+          />
+        </div>
+      </State>
+
+      <State label="minimized (compact row)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-min', name: 'Reverb' })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · muted + soloed (M/S glowing)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({
+              id: 'r-min-ms', name: 'Parallel Comp',
+              color: 'var(--track-color-4)',
+              muted: true, soloed: true,
+            })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} anySoloActive
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="minimized · clipping (meter latched)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-min-clip', name: 'Master RTN', color: 'var(--track-color-6)' })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} clipping meterLevel={2}
+            minimized
+          />
+        </div>
+      </State>
+
+      <State label="selected (meter visible)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-sel', name: 'Reverb', selected: true })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} meterLevel={-8} meterLevelL={-8} meterLevelR={-10}
+          />
+        </div>
+      </State>
+
+      <State label="muted">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-mut', name: 'Reverb', muted: true })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop}
+          />
+        </div>
+      </State>
+
+      <State label="soloed">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({
+              id: 'r-sol', name: 'Parallel Comp',
+              color: 'var(--track-color-1)',
+              soloed: true,
+            })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} anySoloActive
+          />
+        </div>
+      </State>
+
+      <State label="clipping (meter latched)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-clip', name: 'Master RTN', color: 'var(--track-color-6)' })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} clipping meterLevel={2}
+          />
+        </div>
+      </State>
+
+      <State label="disabled">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-dis', name: 'Reverb', color: 'var(--track-color-5)' })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop} disabled
+          />
+        </div>
+      </State>
+
+      <State label="no plugins (empty FX chain)">
+        <div style={{ width: 220 }}>
+          <ReturnTrackHeader
+            track={makeReturn({ id: 'r-nofx', name: 'main parallel', plugins: [], color: 'var(--track-color-2)' })}
+            onRename={noopId} onMute={noop} onSolo={noop}
+            onVolume={noop} onPan={noop}
+            onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+            onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+            onSelect={noop}
+          />
+        </div>
+      </State>
+
+      <State label="expanded vs minimized">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>normal</div>
+            <div style={{ width: 200 }}>
+              <ReturnTrackHeader
+                track={makeReturn({ id: 'r-cmp-exp', name: 'Reverb', color: 'var(--track-color-3)' })}
+                onRename={noopId} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+                onSelect={noop}
+              />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 4 }}>minimized</div>
+            <div style={{ width: 200 }}>
+              <ReturnTrackHeader
+                track={makeReturn({ id: 'r-cmp-min', name: 'Reverb', color: 'var(--track-color-3)' })}
+                onRename={noopId} onMute={noop} onSolo={noop}
+                onVolume={noop} onPan={noop}
+                onToggleChain={noop} onTogglePlugin={noop} onReorder={noop}
+                onRemovePlugin={noopId} onAddPlugin={noop} onOpenPlugin={noopId}
+                onSelect={noop}
+                minimized
+              />
+            </div>
+          </div>
+        </div>
+      </State>
+    </StatesGrid>
+  )
+}
+
+// ── Playground ────────────────────────────────────────────────────────────────
+
+const TRACK_COLORS = [
+  { label: 'Orange', value: 'var(--track-color-1)' },
+  { label: 'Green',  value: 'var(--track-color-2)' },
+  { label: 'Blue',   value: 'var(--track-color-3)' },
+  { label: 'Purple', value: 'var(--track-color-4)' },
+  { label: 'Yellow', value: 'var(--track-color-5)' },
+  { label: 'Red',    value: 'var(--track-color-6)' },
+]
+
+const FEED_SOURCES_DEMO = ['Vocals', 'Guitar', 'Bass', 'Drums']
+
+function PlaygroundDemo() {
+  const [name,          setName]          = useState('Reverb')
+  const [color,         setColor]         = useState('var(--track-color-3)')
+  const [muted,         setMuted]         = useState(false)
+  const [soloed,        setSoloed]        = useState(false)
+  const [selected,      setSelected]      = useState(false)
+  const [anySoloActive, setAnySoloActive] = useState(false)
+  const [clipping,      setClipping]      = useState(false)
+  const [showAllMeters, setShowAllMeters] = useState(false)
+  const [minimized,     setMinimized]     = useState(false)
+  const [disabled,      setDisabled]      = useState(false)
+  const [showFedBy,     setShowFedBy]     = useState(false)
+  const [volumeDb,      setVolumeDb]      = useState(-6)
+  const [pan,           setPan]           = useState(0)
+  const [plugins,       setPlugins]       = useState<FxPlugin[]>(STUB_PLUGINS)
+  const [chainEnabled,  setChainEnabled]  = useState(true)
+  const [meterLevel,    setMeterLevel]    = useState(-12)
+
+  const track: ReturnTrack = {
+    id: 'pg-return', name, color,
+    kind: 'return',
+    muted, soloed, volumeDb, pan,
+    plugins, chainEnabled, selected,
+    feedSources: showFedBy ? FEED_SOURCES_DEMO : undefined,
+  }
+
+  return (
+    <Playground>
+      <div style={{ display: 'flex', gap: 'var(--space-8)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+        {/* Live instance */}
+        <div style={{ width: 240, flexShrink: 0 }}>
+          <ReturnTrackHeader
+            track={track}
+            onRename={setName}
+            onMute={() => setMuted(m => !m)}
+            onSolo={() => setSoloed(s => !s)}
+            onVolume={setVolumeDb}
+            onPan={setPan}
+            onToggleChain={setChainEnabled}
+            onTogglePlugin={(id, next) =>
+              setPlugins(ps => ps.map(p => p.id === id ? { ...p, enabled: next } : p))
+            }
+            onReorder={(from, to) =>
+              setPlugins(ps => {
+                const arr = [...ps]
+                const [item] = arr.splice(from, 1)
+                arr.splice(to, 0, item)
+                return arr
+              })
+            }
+            onRemovePlugin={id => setPlugins(ps => ps.filter(p => p.id !== id))}
+            onAddPlugin={() =>
+              setPlugins(ps => [...ps, { id: `p${Date.now()}`, name: 'Compressor', enabled: true }])
+            }
+            onOpenPlugin={id => console.log('open plugin', id)}
+            onSelect={() => setSelected(s => !s)}
+            onToggleMinimized={setMinimized}
+            anySoloActive={anySoloActive}
+            clipping={clipping}
+            showAllMeters={showAllMeters}
+            minimized={minimized}
+            disabled={disabled}
+            meterLevel={meterLevel}
+          />
+        </div>
+
+        {/* Controls */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <Toggle checked={minimized}     onChange={setMinimized}     size="sm" label="minimized" />
+          <Toggle checked={muted}         onChange={setMuted}         size="sm" label="muted" />
+          <Toggle checked={soloed}        onChange={setSoloed}        size="sm" label="soloed" />
+          <Toggle checked={selected}      onChange={setSelected}      size="sm" label="selected" />
+          <Toggle checked={clipping}      onChange={setClipping}      size="sm" label="clipping" />
+          <Toggle checked={showAllMeters} onChange={setShowAllMeters} size="sm" label="showAllMeters" />
+          <Toggle checked={anySoloActive} onChange={setAnySoloActive} size="sm" label="anySoloActive" />
+          <Toggle checked={showFedBy}     onChange={setShowFedBy}     size="sm" label="show fed-by" />
+          <Toggle checked={disabled}      onChange={setDisabled}      size="sm" label="disabled" />
+
+          {/* Meter driver */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontFamily: 'var(--font-ui)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+            meter
+            <Fader
+              value={meterLevel}
+              onChange={setMeterLevel}
+              min={-60}
+              max={6}
+              orientation="horizontal"
+              size="sm"
+              aria-label="Meter level"
+            />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', minWidth: '5ch', textAlign: 'right' }}>
+              {meterLevel.toFixed(0)} dB
+            </span>
+          </div>
+
+          {/* Color picker */}
+          <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}>
+            {TRACK_COLORS.map(c => (
+              <button
+                key={c.value}
+                onClick={() => setColor(c.value)}
+                style={{
+                  width: 16, height: 16,
+                  background: c.value,
+                  border: color === c.value ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+                aria-label={`Color: ${c.label}`}
+                aria-pressed={color === c.value}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </Playground>
+  )
+}
+
+// ── Default export ─────────────────────────────────────────────────────────────
+
+export default function ReturnTrackHeaderDemo() {
+  return (
+    <DemoShell meta={meta}>
+      <StatesDemo />
+      <PlaygroundDemo />
+    </DemoShell>
+  )
+}
