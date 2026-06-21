@@ -23,6 +23,62 @@
   --_key-border:       var(--border);
 }
 
+/* ─── Zoom toolbar ─────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px var(--space-2);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--strip-bg);
+  flex-shrink: 0;
+}
+
+.zoomBtn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.5);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  padding: 1px 5px;
+  transition: color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+
+  /* Recessed-well look matching the kit idiom */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 0%, transparent),
+              inset 0 -1px 0 color-mix(in srgb, black 12%, transparent);
+}
+
+.zoomBtn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.zoomBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.zoomBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.zoomLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  min-width: 3ch;
+  text-align: center;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
 /* ─── Scroll container ─────────────────────────────────────────────────────── */
 
 .scrollArea {

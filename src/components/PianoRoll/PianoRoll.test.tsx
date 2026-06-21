@@ -1,8 +1,9 @@
 // src/components/PianoRoll/PianoRoll.test.tsx
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import { PianoRoll } from './PianoRoll'
 import type { PianoNote } from './PianoRoll'
+import { getAllActions, clearAll } from '../../lib/keybindingRegistry'
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -221,20 +222,56 @@ describe('PianoRoll keyboard navigation', () => {
     expect(onMoveNote).toHaveBeenCalledWith('a', 59, 0)
   })
 
-  it('Shift+ArrowUp calls onMoveNote with pitch+12 clamped to hiNote', () => {
+  it('⌘+ArrowUp calls onMoveNote with pitch+12 (octave)', () => {
     const onMoveNote = vi.fn()
-    const { getByTestId } = render(<PianoRoll {...BASE} notes={[NOTE_A]} onMoveNote={onMoveNote} />)
-    fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowUp', shiftKey: true })
-    // pitch 60 + 12 = 72, clamped to hiNote=60 in pitchRange=[36,60]
+    // Use pitch=48 so +12=60 fits within pitchRange [36,60]
+    const note = { ...NOTE_A, pitch: 48 }
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[note]} onMoveNote={onMoveNote} />)
+    fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowUp', metaKey: true })
     expect(onMoveNote).toHaveBeenCalledWith('a', 60, 0)
   })
 
-  it('Shift+ArrowDown calls onMoveNote with pitch-12', () => {
+  it('⌘+ArrowDown calls onMoveNote with pitch-12 (octave)', () => {
+    const onMoveNote = vi.fn()
+    // pitch=60, -12=48, within range [36,60]
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[NOTE_A]} onMoveNote={onMoveNote} />)
+    fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowDown', metaKey: true })
+    expect(onMoveNote).toHaveBeenCalledWith('a', 48, 0)
+  })
+
+  it('⌘+ArrowUp clamps to hiNote when pitch+12 exceeds range', () => {
+    const onMoveNote = vi.fn()
+    // pitch=55, +12=67 > hiNote=60 → clamps to 60
+    const note = { ...NOTE_A, pitch: 55 }
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[note]} onMoveNote={onMoveNote} />)
+    fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowUp', metaKey: true })
+    expect(onMoveNote).toHaveBeenCalledWith('a', 60, 0)
+  })
+
+  it('⌘+ArrowDown clamps to loNote when pitch-12 goes below range', () => {
+    const onMoveNote = vi.fn()
+    // pitch=40, -12=28 < loNote=36 → clamps to 36
+    const note = { ...NOTE_A, pitch: 40 }
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[note]} onMoveNote={onMoveNote} />)
+    fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowDown', metaKey: true })
+    expect(onMoveNote).toHaveBeenCalledWith('a', 36, 0)
+  })
+
+  it('Shift+ArrowUp does not trigger octave move (freed for selection-extend)', () => {
+    const onMoveNote = vi.fn()
+    // pitch=55; if Shift still did octave it would go to 60; if semitone to 56
+    // Shift is freed so nothing should happen
+    const note = { ...NOTE_A, pitch: 55 }
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[note]} onMoveNote={onMoveNote} />)
+    fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowUp', shiftKey: true })
+    expect(onMoveNote).not.toHaveBeenCalled()
+  })
+
+  it('Shift+ArrowDown does not trigger octave move (freed for selection-extend)', () => {
     const onMoveNote = vi.fn()
     const { getByTestId } = render(<PianoRoll {...BASE} notes={[NOTE_A]} onMoveNote={onMoveNote} />)
     fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowDown', shiftKey: true })
-    // pitch 60 - 12 = 48, within range [36,60]
-    expect(onMoveNote).toHaveBeenCalledWith('a', 48, 0)
+    expect(onMoveNote).not.toHaveBeenCalled()
   })
 
   it('ArrowRight calls onMoveNote with start+division', () => {
@@ -294,6 +331,166 @@ describe('PianoRoll keyboard navigation', () => {
     const sc2 = onSelectNote.mock.calls
     const lastCall = sc2[sc2.length - 1]?.[0] as string[]
     expect(lastCall).not.toContain('a')
+  })
+})
+
+// ─── Keybinding registry integration ─────────────────────────────────────────
+
+describe('PianoRoll keybinding registry', () => {
+  afterEach(() => clearAll())
+
+  it('registers piano-roll:note-up-octave on mount', () => {
+    render(<PianoRoll {...BASE} />)
+    const actions = getAllActions()
+    expect(actions.some(a => a.id === 'piano-roll:note-up-octave')).toBe(true)
+  })
+
+  it('registers piano-roll:note-down-octave on mount', () => {
+    render(<PianoRoll {...BASE} />)
+    expect(getAllActions().some(a => a.id === 'piano-roll:note-down-octave')).toBe(true)
+  })
+
+  it('registers piano-roll:note-delete on mount', () => {
+    render(<PianoRoll {...BASE} />)
+    expect(getAllActions().some(a => a.id === 'piano-roll:note-delete')).toBe(true)
+  })
+
+  it('"Note up an octave" label for note-up-octave action', () => {
+    render(<PianoRoll {...BASE} />)
+    const action = getAllActions().find(a => a.id === 'piano-roll:note-up-octave')
+    expect(action?.name).toBe('Note up an octave')
+  })
+
+  it('note-up-octave default binding is ⌘ArrowUp', () => {
+    render(<PianoRoll {...BASE} />)
+    const action = getAllActions().find(a => a.id === 'piano-roll:note-up-octave')
+    expect(action?.bindings).toContain('⌘ArrowUp')
+  })
+
+  it('unregisters piano-roll actions on unmount', () => {
+    const { unmount } = render(<PianoRoll {...BASE} />)
+    unmount()
+    expect(getAllActions().some(a => a.category === 'Piano Roll')).toBe(false)
+  })
+
+  it('all actions are in category "Piano Roll"', () => {
+    render(<PianoRoll {...BASE} />)
+    const pianoActions = getAllActions().filter(a => a.category === 'Piano Roll')
+    expect(pianoActions.length).toBeGreaterThan(0)
+    pianoActions.forEach(a => expect(a.category).toBe('Piano Roll'))
+  })
+})
+
+// ─── Vertical zoom ────────────────────────────────────────────────────────────
+// pitchRange=[36,60] → 2 octaves max. Default visibleOctaves=2 → shows "2oct".
+
+describe('PianoRoll vertical zoom', () => {
+  it('renders octave-count display showing default octave count', () => {
+    const { getByTestId } = render(<PianoRoll {...BASE} />)
+    // pitchRange [36,60] = 24 semitones = 2 octaves
+    expect(getByTestId('piano-roll-octave-count')).toBeInTheDocument()
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('2oct')
+  })
+
+  it('renders zoom-in button', () => {
+    const { getByRole } = render(<PianoRoll {...BASE} />)
+    expect(getByRole('button', { name: /zoom in/i })).toBeInTheDocument()
+  })
+
+  it('renders zoom-out button', () => {
+    const { getByRole } = render(<PianoRoll {...BASE} />)
+    expect(getByRole('button', { name: /zoom out/i })).toBeInTheDocument()
+  })
+
+  it('zoom-in button decreases visible octave count by 1', () => {
+    const { getByRole, getByTestId } = render(<PianoRoll {...BASE} />)
+    fireEvent.click(getByRole('button', { name: /zoom in/i }))
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('1oct')
+  })
+
+  it('zoom-out button increases visible octave count by 1', () => {
+    const { getByRole, getByTestId } = render(<PianoRoll {...BASE} />)
+    // First zoom in to 1 octave, then zoom back out
+    fireEvent.click(getByRole('button', { name: /zoom in/i }))
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('1oct')
+    fireEvent.click(getByRole('button', { name: /zoom out/i }))
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('2oct')
+  })
+
+  it('zoom-in button is disabled at minimum (1 octave)', () => {
+    const { getByRole } = render(<PianoRoll {...BASE} />)
+    // Click twice — 2→1→can't go lower
+    fireEvent.click(getByRole('button', { name: /zoom in/i }))
+    expect(getByRole('button', { name: /zoom in/i })).toBeDisabled()
+  })
+
+  it('zoom-out button is disabled at maximum (full range)', () => {
+    const { getByRole } = render(<PianoRoll {...BASE} />)
+    // At default (2 octaves = max for [36,60]), zoom-out is disabled
+    expect(getByRole('button', { name: /zoom out/i })).toBeDisabled()
+  })
+
+  it('zoom does not affect note selection or callbacks', () => {
+    const onMoveNote = vi.fn()
+    const { getByRole, getByTestId } = render(
+      <PianoRoll {...BASE} notes={[NOTE_A]} onMoveNote={onMoveNote} />
+    )
+    fireEvent.click(getByRole('button', { name: /zoom in/i }))
+    // Keyboard nav should still work on visible notes
+    fireEvent.keyDown(getByTestId('note-a'), { key: 'ArrowDown' })
+    expect(onMoveNote).toHaveBeenCalledWith('a', 59, 0)
+  })
+})
+
+// ─── Wheel / pinch zoom ───────────────────────────────────────────────────────
+
+describe('PianoRoll wheel zoom', () => {
+  it('ctrl+wheel with large negative deltaY (pinch-in) decreases visible octaves', () => {
+    const { getByTestId } = render(<PianoRoll {...BASE} />)
+    const scroll = getByTestId('piano-roll-scroll')
+    // pitchRange [36,60] = 2 octaves default; ctrlKey pinch-in = zoom in = fewer octaves
+    fireEvent.wheel(scroll, { ctrlKey: true, deltaY: -150 })
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('1oct')
+  })
+
+  it('ctrl+wheel with large positive deltaY (pinch-out) increases visible octaves', () => {
+    const { getByRole, getByTestId } = render(<PianoRoll {...BASE} />)
+    // First zoom in so we can zoom back out
+    fireEvent.click(getByRole('button', { name: /zoom in/i }))
+    const scroll = getByTestId('piano-roll-scroll')
+    fireEvent.wheel(scroll, { ctrlKey: true, deltaY: 150 })
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('2oct')
+  })
+
+  it('metaKey+wheel with negative deltaY zooms in', () => {
+    const { getByTestId } = render(<PianoRoll {...BASE} />)
+    const scroll = getByTestId('piano-roll-scroll')
+    fireEvent.wheel(scroll, { metaKey: true, deltaY: -150 })
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('1oct')
+  })
+
+  it('plain wheel without modifier does not change octave count', () => {
+    const { getByTestId } = render(<PianoRoll {...BASE} />)
+    const scroll = getByTestId('piano-roll-scroll')
+    fireEvent.wheel(scroll, { deltaY: 150 })
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('2oct')
+  })
+
+  it('ctrl+wheel below minimum octave count stays at 1', () => {
+    const { getByTestId } = render(<PianoRoll {...BASE} />)
+    const scroll = getByTestId('piano-roll-scroll')
+    fireEvent.wheel(scroll, { ctrlKey: true, deltaY: -150 })
+    fireEvent.wheel(scroll, { ctrlKey: true, deltaY: -150 })  // already at min
+    expect(getByTestId('piano-roll-octave-count').textContent).toBe('1oct')
+  })
+
+  it('onTimeZoom called when ⌘+horizontal scroll', () => {
+    const onTimeZoom = vi.fn()
+    const { getByTestId } = render(<PianoRoll {...BASE} onTimeZoom={onTimeZoom} />)
+    const scroll = getByTestId('piano-roll-scroll')
+    // Large horizontal delta with metaKey → time zoom
+    fireEvent.wheel(scroll, { metaKey: true, deltaX: 150, deltaY: 0 })
+    expect(onTimeZoom).toHaveBeenCalled()
   })
 })
 

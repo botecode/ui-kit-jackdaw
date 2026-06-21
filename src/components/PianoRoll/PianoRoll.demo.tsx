@@ -115,7 +115,7 @@ function StatesDemo() {
         </RollWrap>
       </State>
 
-      <State label="wide pitch range — C2 to C7 (scrollable)">
+      <State label="wide pitch range — C2 to C7 (scrollable, zoom with ⌘+scroll)">
         <RollWrap height={220}>
           <PianoRoll
             notes={MELODY}
@@ -173,12 +173,12 @@ function StatesDemo() {
 // ─── Playground ───────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [notes,        setNotes]        = useState<PianoNote[]>(MELODY)
-  const [pxPerBeat,    setPxPerBeat]    = useState(48)
-  const [division,     setDivision]     = useState(0.25)
-  const [snap,         setSnap]         = useState(false)
+  const [notes,         setNotes]         = useState<PianoNote[]>(MELODY)
+  const [pxPerBeat,     setPxPerBeat]     = useState(48)
+  const [division,      setDivision]      = useState(0.25)
+  const [snap,          setSnap]          = useState(false)
   const [durationBeats, setDurationBeats] = useState(16)
-  const [log,          setLog]          = useState('—')
+  const [log,           setLog]           = useState('—')
 
   const DIVISIONS = [
     { label: '1/4',  value: 1    },
@@ -212,6 +212,11 @@ function PlaygroundDemo() {
     if (ids.length > 0) setLog(`select → [${ids.join(', ')}]`)
   }, [])
 
+  const handleTimeZoom = useCallback((newPxPerBeat: number) => {
+    setPxPerBeat(newPxPerBeat)
+    setLog(`time zoom → ${newPxPerBeat}px/beat`)
+  }, [])
+
   const labelStyle: React.CSSProperties = {
     display:    'flex',
     alignItems: 'center',
@@ -240,6 +245,7 @@ function PlaygroundDemo() {
               onResizeNote={handleResizeNote}
               onDeleteNote={handleDeleteNote}
               onSelectNote={handleSelectNote}
+              onTimeZoom={handleTimeZoom}
             />
           </div>
           {/* Intent log */}
@@ -347,7 +353,7 @@ function PlaygroundDemo() {
             lineHeight: 1.6,
             whiteSpace: 'pre',
           }}>
-            {'click grid → add note\nclick-drag → draw longer\ndrag body → move note\ndrag right edge → resize\nright-click note → delete\n↑/↓ = ±1 semitone\nShift+↑/↓ = ±octave\n←/→ = move by division\nDelete = remove selected'}
+            {'click grid → add note\nclick-drag → draw longer\ndrag body → move note\ndrag right edge → resize\nright-click note → delete\n↑/↓ = ±1 semitone\n⌘↑/↓ = ±1 octave\n←/→ = move by division\nDelete = remove selected\n⌘+scroll = time zoom\npinch / ctrl+scroll = octave zoom'}
           </div>
         </div>
       </div>
