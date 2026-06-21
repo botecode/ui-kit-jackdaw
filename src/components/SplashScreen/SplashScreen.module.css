@@ -1,0 +1,201 @@
+/* src/components/SplashScreen/SplashScreen.module.css */
+
+/* ── Root (full-bleed container) ─────────────────────────────────────────────
+   Fills its parent. The app mounts it full-screen; the shelf demo wraps it
+   in a fixed-size box. Uses --bg (dark in dark themes, cream in light themes)
+   so it matches the instrument surface on first paint.                        */
+
+.root {
+  position:        relative;
+  width:           100%;
+  height:          100%;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  background:      var(--bg);
+  overflow:        hidden;
+}
+
+/* ── Center column ───────────────────────────────────────────────────────────*/
+
+.center {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            var(--space-4);
+}
+
+/* ── Brand + ring wrapper ────────────────────────────────────────────────────
+   200 × 200px relative box. The SVG ring fills it absolutely; the BrandMark
+   is flexed to the center.
+   box-shadow encodes the LED bloom — transitions on --dur-led-* timings.     */
+
+.brandRing {
+  position:        relative;
+  width:           200px;
+  height:          200px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  border-radius:   50%;
+  /* Incandescent off — no glow */
+  box-shadow: none;
+  transition: box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+/* At 100%: warm LED bloom appears with fast attack */
+.root[data-ready] .brandRing {
+  box-shadow:
+    0 0 40px 12px color-mix(in srgb, var(--chroma-orange) 20%, transparent),
+    0 0 80px 24px color-mix(in srgb, var(--chroma-yellow) 10%, transparent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* Indeterminate: slow warm pulse — the instrument is breathing, not stalled  */
+.root[data-indeterminate] .brandRing {
+  animation: splash-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes splash-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px 6px  color-mix(in srgb, var(--chroma-orange) 10%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 44px 14px color-mix(in srgb, var(--chroma-orange) 22%, transparent);
+  }
+}
+
+/* ── Progress ring SVG ───────────────────────────────────────────────────────
+   Absolute, fills the 200×200 wrapper. Rotated -90° so fill starts at 12 o'clock.
+   Hidden in indeterminate mode (ring fills would show empty, which reads as 0%).  */
+
+.ring {
+  position:         absolute;
+  inset:            0;
+  transform:        rotate(-90deg);
+  transform-origin: center;
+}
+
+.root[data-indeterminate] .ring {
+  display: none;
+}
+
+.ringTrack {
+  fill:         none;
+  stroke:       var(--border);
+  stroke-width: 1.5;
+}
+
+.ringFill {
+  fill:              none;
+  stroke:            var(--chroma-orange);
+  stroke-width:      2;
+  stroke-linecap:    round;
+  /* Smooth fill as progress prop updates */
+  transition:        stroke-dashoffset var(--dur-base) linear;
+}
+
+/* At 100%: ring stroke brightens to the LED core tone */
+.root[data-ready] .ringFill {
+  stroke: var(--led-orange-core);
+}
+
+/* ── BrandMark ───────────────────────────────────────────────────────────────
+   Dim on low progress, brightens as --_progress approaches 1.
+   brightness() via calc() on a CSS custom property is valid modern CSS.
+   Default (no --_progress = indeterminate): full brightness to let the glow
+   pulse carry the loading metaphor.                                            */
+
+.brand {
+  flex-shrink: 0;
+  /* determinate: dim → bright as progress rises */
+  filter:     brightness(calc(0.2 + 0.8 * var(--_progress, 1)));
+  transition: filter var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-ready] .brand {
+  filter:     brightness(1);
+  transition: filter var(--dur-led-on) var(--ease-out);
+}
+
+/* Indeterminate: gentle opacity pulse on the mark itself */
+.root[data-indeterminate] .brand {
+  filter:    brightness(0.55);
+  animation: splash-brand-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes splash-brand-pulse {
+  0%, 100% { filter: brightness(0.45); }
+  50%       { filter: brightness(0.7);  }
+}
+
+/* ── Wordmark ─────────────────────────────────────────────────────────────── */
+
+.wordmark {
+  margin:          0;
+  font-family:     var(--font-display);
+  font-size:       var(--text-md);
+  font-weight:     var(--weight-bold);
+  letter-spacing:  0.24em;
+  text-transform:  uppercase;
+  color:           var(--text);
+  /* fades in with progress */
+  opacity:         calc(0.25 + 0.75 * var(--_progress, 1));
+  transition:      opacity var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-indeterminate] .wordmark {
+  opacity:   0.4;
+  animation: splash-wordmark-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes splash-wordmark-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.55; }
+}
+
+/* ── Status wrap + text ──────────────────────────────────────────────────────
+   role="status" / aria-live="polite" — live region announces boot step.
+   Min-height prevents layout jump when status appears/disappears.             */
+
+.statusWrap {
+  min-height: 20px;
+  display:    flex;
+  align-items: center;
+}
+
+.status {
+  margin:      0;
+  font-family: var(--font-ui);
+  font-size:   var(--text-sm);
+  color:       var(--text-muted);
+  letter-spacing: 0.01em;
+  opacity:     calc(0.6 + 0.4 * var(--_progress, 1));
+  transition:  opacity var(--dur-base) var(--ease-out);
+}
+
+/* ── Version tag ─────────────────────────────────────────────────────────────
+   Bottom-right corner, subtle. --font-mono keeps it instrument-readout style. */
+
+.version {
+  position:    absolute;
+  bottom:      var(--space-4);
+  right:       var(--space-4);
+  font-family: var(--font-mono);
+  font-size:   var(--text-xs);
+  color:       var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ── Reduced-motion ──────────────────────────────────────────────────────────
+   --dur-* tokens are already zeroed in global.css → ring fill + LED bloom
+   transitions snap to instant automatically.
+   Explicitly disable the decorative pulse animations here.
+   Per spec: "simplify to a static branded screen + plain progress, no decorative pulse."
+   Indeterminate under reduced-motion: BrandMark at a calm mid-brightness.     */
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-indeterminate] .brandRing  { animation: none; }
+  .root[data-indeterminate] .brand      { animation: none; filter: brightness(0.75); }
+  .root[data-indeterminate] .wordmark   { animation: none; opacity: 0.5; }
+}
