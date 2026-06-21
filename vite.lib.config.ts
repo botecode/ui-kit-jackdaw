@@ -13,7 +13,7 @@ export default defineConfig({
   resolve: {
     // Mirror the gallery aliases so components resolve the bridge contract + tokens.
     alias: {
-      '@bridge': resolve(__dirname, 'types.ts'),
+      '@bridge': resolve(__dirname, '../jackdaw/shared/index.ts'),
       '@tokens': resolve(__dirname, 'src/tokens'),
     },
   },

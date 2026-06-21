@@ -16,7 +16,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@bridge": ["./types.ts"],
+      "@bridge": ["../jackdaw/shared/index.ts"],
       "@tokens/*": ["./src/tokens/*"]
     }
   },
