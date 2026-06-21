@@ -1,0 +1,147 @@
+/* src/components/Tabs/Tabs.module.css */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Tablist wrapper — horizontal scroll, scrollbar hidden ─────────────────── */
+
+.tablistWrapper {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tablistWrapper::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Tablist ────────────────────────────────────────────────────────────────── */
+
+.tablist {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ─── Tab button ─────────────────────────────────────────────────────────────── */
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+/* ─── Sizes ──────────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] .tab {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  height: 36px;
+}
+
+.root[data-size="sm"] .tab {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  height: 28px;
+}
+
+/* ─── Hover ──────────────────────────────────────────────────────────────────── */
+
+.tab:hover:not([data-disabled]):not([data-active]) {
+  color: var(--text);
+}
+
+/* ─── Active (selected) ──────────────────────────────────────────────────────── */
+
+/*
+  Active tab text lifts to full --text contrast; the accent indicator bar carries
+  the color signal. Using accent on text AND indicator simultaneously is too loud.
+  Fast attack (--dur-led-on) on activation; base transition handles decay.
+*/
+
+.tab[data-active] {
+  color: var(--text);
+  transition: color var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Disabled ───────────────────────────────────────────────────────────────── */
+
+.tab[data-disabled] {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────────── */
+
+.tab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+  border-radius: 3px;
+}
+
+/* ─── Icon slot ──────────────────────────────────────────────────────────────── */
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+/* ─── Label ──────────────────────────────────────────────────────────────────── */
+
+.tabLabel {
+  line-height: 1;
+}
+
+/* ─── Sliding ink bar (active indicator) ─────────────────────────────────────── */
+
+/*
+  Sits at the bottom of the tablist (position: absolute, bottom: 0).
+  --_ind-left and --_ind-width are computed in useLayoutEffect and applied as
+  inline CSS vars. Transitions via --dur-base, which global.css zeros under
+  prefers-reduced-motion — so the slide snaps (decorative motion as spec requires).
+*/
+
+.indicator {
+  position: absolute;
+  bottom: 0;
+  left: var(--_ind-left, 0px);
+  width: var(--_ind-width, 0px);
+  height: 2px;
+  background: var(--accent);
+  box-shadow:
+    0 0 6px 2px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 1px 0 var(--accent);
+  border-radius: 1px 1px 0 0;
+  transition:
+    left  var(--dur-base) var(--ease-out),
+    width var(--dur-base) var(--ease-out);
+}
+
+/* ─── Panel ──────────────────────────────────────────────────────────────────── */
+
+.panel {
+  outline: none;
+  flex: 1;
+}
+
+.panel:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+}
