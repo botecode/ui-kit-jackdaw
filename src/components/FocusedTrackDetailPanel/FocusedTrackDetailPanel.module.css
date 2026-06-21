@@ -268,14 +268,306 @@
   scrollbar-color: var(--border) transparent;
 }
 
-/* ─── Advanced placeholder slots ─────────────────────────────────────────── */
+/* ─── Inline FX chain — master LED ──────────────────────────────────────── */
+
+.masterChainLed {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  transition:
+    background  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.masterChainLed[data-state="active"] {
+  background: var(--led-cyan);
+  box-shadow:
+    0 0 0 1px var(--led-cyan),
+    0 0 8px 3px color-mix(in srgb, var(--led-cyan) 40%, transparent);
+  transition:
+    background  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.masterChainLed[data-state="partial"] {
+  background: var(--led-yellow);
+  box-shadow:
+    0 0 0 1px var(--led-yellow),
+    0 0 12px 5px color-mix(in srgb, var(--led-yellow) 55%, transparent);
+  transition:
+    background  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.masterChainLed:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-cyan) 70%, transparent);
+  outline-offset: 3px;
+}
+
+.masterChainLed:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Inline FX chain — plugin list ─────────────────────────────────────── */
+
+.pluginList {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dim the whole list when chain is bypassed */
+.pluginList:not([data-chain-enabled]) {
+  opacity: 0.45;
+}
+
+/* ─── Plugin row ─────────────────────────────────────────────────────────── */
+
+.pluginRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+  min-height: 26px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pluginRow + .pluginRow {
+  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+/* ─── Plugin LED (enable/bypass) ─────────────────────────────────────────── */
+
+.pluginLed {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  transition:
+    background  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.pluginLed[aria-checked="true"] {
+  background: var(--slot-color);
+  box-shadow:
+    0 0 0 1px var(--slot-color),
+    0 0 5px 2px color-mix(in srgb, var(--slot-color) 38%, transparent);
+  transition:
+    background  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.pluginLed:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--slot-color, var(--accent)) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.pluginLed:disabled {
+  pointer-events: none;
+}
+
+/* ─── Plugin name button (click → open editor) ───────────────────────────── */
+
+.pluginName {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--stage-text, var(--text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  transition: color var(--dur-fast, 120ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.pluginName:hover { color: var(--text); }
+
+.pluginName:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.pluginName:disabled {
+  pointer-events: none;
+}
+
+/* Dim bypassed plugin name */
+.pluginRow[data-bypassed] .pluginName {
+  color: color-mix(in srgb, var(--stage-text, var(--text)) 40%, transparent);
+}
+
+/* ─── Move up / down buttons ─────────────────────────────────────────────── */
+
+.pluginMoveBtn {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-dim, var(--text-muted));
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast, 120ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* show on row hover or when any child is focused */
+.pluginRow:hover .pluginMoveBtn,
+.pluginRow:has(:focus-visible) .pluginMoveBtn {
+  opacity: 1;
+}
+
+.pluginMoveBtn:hover { color: var(--text); }
+
+.pluginMoveBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.pluginMoveBtn:disabled {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* ─── Remove button ──────────────────────────────────────────────────────── */
+
+.pluginRemoveBtn {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-dim, var(--text-muted));
+  font-size: var(--text-xs);
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast, 120ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.pluginRow:hover .pluginRemoveBtn,
+.pluginRow:has(:focus-visible) .pluginRemoveBtn {
+  opacity: 1;
+}
+
+.pluginRemoveBtn:hover { color: var(--danger, #e05252); }
+
+.pluginRemoveBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--danger, #e05252) 70%, transparent);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.pluginRemoveBtn:disabled {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* ─── Add plugin button ──────────────────────────────────────────────────── */
+
+.pluginAddBtn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--space-2) 0 0;
+  margin-top: var(--space-1);
+  border: none;
+  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  outline: none;
+  transition: color var(--dur-fast, 120ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.pluginAddBtn:hover { color: var(--text); }
+
+.pluginAddBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.pluginAddBtn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+
+.pluginEmpty {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-dim, var(--text-muted));
+  text-align: center;
+  padding: var(--space-2) 0;
+  margin: 0;
+  line-height: var(--leading-sm, 1.3);
+}
+
+/* ─── SR-only live announce region ──────────────────────────────────────── */
+
+.srAnnounce {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Routing placeholder slots ──────────────────────────────────────────── */
 
 .advancedSlot {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-2);
-  border: 1px dashed var(--border);
+  border: 1px dashed color-mix(in srgb, var(--border) 60%, transparent);
   border-radius: var(--radius, 4px);
   background-color: color-mix(in srgb, var(--stage) 30%, var(--surface));
   margin-bottom: var(--space-1);
@@ -285,11 +577,21 @@
   margin-bottom: 0;
 }
 
-/* Phase row: label left, toggle right — overrides the column layout of .advancedSlot */
+/* Phase row: label+desc left, toggle right */
 .advancedPhaseRow {
   flex-direction: row;
   align-items: center;
+  gap: var(--space-2);
   justify-content: space-between;
+}
+
+/* Text group (label + description) inside the phase row */
+.phaseTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
 }
 
 .slotLabel {

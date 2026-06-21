@@ -98,9 +98,59 @@ describe('FocusedTrackDetailPanel — structure', () => {
     expect(screen.getByText(/no clips/i)).toBeInTheDocument()
   })
 
-  it('renders FxChip for the FX chain section', () => {
+  it('renders inline FX chain with master LED toggle', () => {
     render(<FocusedTrackDetailPanel {...makeProps()} />)
-    expect(screen.getByRole('button', { name: /fx chain/i })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /fx chain/i })).toBeInTheDocument()
+  })
+
+  it('renders plugin names in the inline FX chain list', () => {
+    render(<FocusedTrackDetailPanel {...makeProps()} />)
+    expect(screen.getByRole('button', { name: /open reverb/i })).toBeInTheDocument()
+  })
+
+  it('calls onTogglePlugin when a plugin LED is clicked', () => {
+    const onTogglePlugin = vi.fn()
+    render(<FocusedTrackDetailPanel {...makeProps({ onTogglePlugin })} />)
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Reverb' }))
+    expect(onTogglePlugin).toHaveBeenCalledWith('p1', false)
+  })
+
+  it('calls onRemovePlugin when remove button is clicked', () => {
+    const onRemovePlugin = vi.fn()
+    render(<FocusedTrackDetailPanel {...makeProps({ onRemovePlugin })} />)
+    fireEvent.click(screen.getByRole('button', { name: /remove reverb/i }))
+    expect(onRemovePlugin).toHaveBeenCalledWith('p1')
+  })
+
+  it('calls onAddPlugin when the add button is clicked', () => {
+    const onAddPlugin = vi.fn()
+    render(<FocusedTrackDetailPanel {...makeProps({ onAddPlugin })} />)
+    fireEvent.click(screen.getByRole('button', { name: /add plugin/i }))
+    expect(onAddPlugin).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows empty state when plugins=[]', () => {
+    render(<FocusedTrackDetailPanel {...makeProps({ plugins: [] })} />)
+    expect(screen.getByText(/no effects yet/i)).toBeInTheDocument()
+  })
+
+  it('master chain LED is checked when chainEnabled=true and all plugins enabled', () => {
+    render(<FocusedTrackDetailPanel {...makeProps()} />)
+    const led = screen.getByRole('checkbox', { name: /fx chain/i })
+    expect(led.getAttribute('aria-checked')).toBe('true')
+  })
+
+  it('master chain LED is unchecked when chainEnabled=false', () => {
+    render(<FocusedTrackDetailPanel {...makeProps({ chainEnabled: false })} />)
+    const led = screen.getByRole('checkbox', { name: /fx chain/i })
+    expect(led.getAttribute('aria-checked')).toBe('false')
+  })
+
+  it('calls onToggleChain when master chain LED is clicked', () => {
+    const onToggleChain = vi.fn()
+    render(<FocusedTrackDetailPanel {...makeProps({ onToggleChain })} />)
+    fireEvent.click(screen.getByRole('checkbox', { name: /fx chain/i }))
+    expect(onToggleChain).toHaveBeenCalledWith(false)
   })
 
   it('always renders Meter regardless of arm/selected state', () => {

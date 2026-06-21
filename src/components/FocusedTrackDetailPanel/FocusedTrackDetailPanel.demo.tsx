@@ -125,6 +125,43 @@ function StatesDemo() {
         </PanelFrame>
       </State>
 
+      <State label="FX chain — fully bypassed (chainEnabled=false)">
+        <PanelFrame height={280}>
+          <FocusedTrackDetailPanel
+            {...BASE}
+            track={TRACK_VOCAL}
+            open height={280}
+            chainEnabled={false}
+          />
+        </PanelFrame>
+      </State>
+
+      <State label="FX chain — partial (some plugins bypassed)">
+        <PanelFrame height={280}>
+          <FocusedTrackDetailPanel
+            {...BASE}
+            track={TRACK_VOCAL}
+            open height={280}
+            plugins={[
+              { id: 'p1', name: 'Compressor', enabled: true },
+              { id: 'p2', name: 'EQ',         enabled: false },
+              { id: 'p3', name: 'Reverb',      enabled: false },
+            ]}
+          />
+        </PanelFrame>
+      </State>
+
+      <State label="FX chain — empty (no plugins)">
+        <PanelFrame height={260}>
+          <FocusedTrackDetailPanel
+            {...BASE}
+            track={TRACK_VOCAL}
+            open height={260}
+            plugins={[]}
+          />
+        </PanelFrame>
+      </State>
+
       <State label="closed (open=false)">
         <div style={{ height: 40, position: 'relative', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 'var(--radius, 4px)', background: 'var(--surface)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
@@ -177,8 +214,8 @@ function PlaygroundDemo() {
     <Playground>
       <div style={{ display: 'flex', gap: 'var(--space-6)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
-        {/* Live instance */}
-        <div style={{ width: 680, flexShrink: 0 }}>
+        {/* Live instance — fills available width */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <PanelFrame height={height}>
             <FocusedTrackDetailPanel
               track={track}
