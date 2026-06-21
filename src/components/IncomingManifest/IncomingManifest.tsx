@@ -35,6 +35,11 @@ function formatDuration(seconds: number): string {
 // The receiver's confirm centerpiece: what's coming (track · clips · duration)
 // and where it lands (→ Song). When the target song is missing the "where" row
 // shifts to a calm amber attention state (NOT an error) prompting an import.
+//
+// Why this isn't a webpage: not a notification card with a grey "details" list.
+// It's a recessed stage card — the take name reads in the display face, the meta
+// in mono like a readout, and "missing song" is a single warm amber LED, the same
+// attention language as the rest of the instrument, never a red error banner.
 
 export function IncomingManifest({ manifest, size = 'md' }: IncomingManifestProps) {
   const { trackName, clipCount, durationSeconds, songName, needsImport } = manifest

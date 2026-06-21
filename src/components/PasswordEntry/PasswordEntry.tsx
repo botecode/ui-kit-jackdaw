@@ -37,6 +37,11 @@ const COPY: Record<PasswordEntryMode, { label: string; placeholder: string; subm
 // A masked password field built on the kit TextField (type=password). Used both
 // sender-side (set the optional content password) and receiver-side (enter it),
 // with a wrong-password error state that keeps the field editable for retry.
+//
+// Why this isn't a webpage: it inherits the kit TextField's recessed groove, mono
+// caret and lit focus ring rather than a browser login box. The lock leading glyph
+// and the accent "Unlock" action read as an instrument latch, and a wrong password
+// is a quiet inline correction on the same warm field — not a flashing red form.
 
 export function PasswordEntry({
   value,

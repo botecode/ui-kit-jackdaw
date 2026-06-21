@@ -18,6 +18,11 @@ export interface ImportFirstProps {
 // ── Component ─────────────────────────────────────────────────────────────────
 // A calm, on-brand prompt shown when the target song isn't in the project yet.
 // Not an error — a gentle "import this first" with a clear primary action.
+//
+// Why this isn't a webpage: not a modal error with a red icon and "OK". The badge
+// is a warm amber attention well (recessed, tinted), the copy is plain and human,
+// and the import is a lit accent action — a calm next step on the instrument, not
+// a dialog scolding you for a missing file.
 
 export function ImportFirst({ songName, itemLabel = 'this take', busy, onImport, onCancel }: ImportFirstProps) {
   return (

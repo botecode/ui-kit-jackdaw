@@ -56,6 +56,11 @@ function QrCode({ value, size }: { value: string; size: number }) {
 // A hero readout of the share deep link: large mono in a recessed well that
 // lights with an accent LED bloom when live, an inline copy button, and a QR of
 // the same link. Extends the Share code readout (link + QR, not a bare code).
+//
+// Why this isn't a webpage: a web "copy link" field prints the URL in a bordered
+// input. This is a recessed instrument well — the link sits in the stage groove,
+// the well lights with incandescent timing when the peer is live, and the QR is a
+// tactile paper chip embedded in the dark face, not a flat black-on-white box.
 
 export function ShareLink({ link, active, size = 'md', showQR = true, onCopy }: ShareLinkProps) {
   const [copied, setCopied] = useState(false)
