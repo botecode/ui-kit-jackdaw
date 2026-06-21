@@ -1,0 +1,208 @@
+/* src/components/ExportDialog/ExportDialog.module.css */
+
+/* ── Segmented control ────────────────────────────────────────────────────────
+   Recessed pill container; individual options LED-lit on select.
+   Attack fast (--dur-led-on ~40ms), decay slow (--dur-led-off ~220ms).
+*/
+
+.segControl {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--border);
+}
+
+.segOption {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: 4px var(--space-4);
+  cursor: pointer;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  /* Slow decay off — incandescent cooldown */
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    color       var(--dur-led-off) var(--ease-out),
+    box-shadow  var(--dur-led-off) var(--ease-out);
+}
+
+/* LED-lit selected state — fast attack */
+.segOption[data-selected] {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 10px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    color       var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+}
+
+.segOption:hover:not([data-selected]) {
+  color: var(--text);
+}
+
+.segOption:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 1px;
+}
+
+/* ── Form layout ──────────────────────────────────────────────────────────────*/
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Each label + control pair */
+.fieldRow {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fieldLabel {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+/* Mode hint sits under the mode row, indented to align with the control */
+.modeHint {
+  margin: 0;
+  padding-left: calc(52px + var(--space-3));
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  line-height: var(--leading-sm);
+  margin-top: calc(var(--space-4) * -1);
+}
+
+/* Bit-depth + sample-rate side by side */
+.formatRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ── Rendering progress section ───────────────────────────────────────────────*/
+
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+/* ── Done section ─────────────────────────────────────────────────────────────*/
+
+.doneSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.doneCheck {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-base);
+  line-height: 1;
+  /* Accent-colored LED bloom — done is a positive state */
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 12px 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.doneText {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text);
+  line-height: var(--leading-base);
+}
+
+/* ── Error section ────────────────────────────────────────────────────────────*/
+
+.errorSection {
+  padding: var(--space-2) 0;
+}
+
+.errorText {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--danger);
+  line-height: var(--leading-base);
+}
+
+/* ── Action buttons ───────────────────────────────────────────────────────────
+   Mirrors the kit-standard button recipe from Dialog.demo.tsx so the
+   dialog's footer looks first-party without a shared Button component.
+*/
+
+.btnBase {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: var(--space-2) var(--space-4);
+  line-height: 1;
+  outline: none;
+}
+
+.btnSecondary {
+  composes: btnBase;
+  background: var(--stage);
+  color: var(--stage-text);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+.btnSecondary:hover { filter: brightness(1.1); }
+
+.btnSecondary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.btnPrimary {
+  composes: btnBase;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.btnPrimary:hover { filter: brightness(1.08); }
+
+.btnPrimary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
