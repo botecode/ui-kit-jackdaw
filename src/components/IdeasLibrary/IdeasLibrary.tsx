@@ -182,8 +182,8 @@ function LyricGlyph({ size = 12 }: { size?: number }) {
 // ─── QR Code SVG ─────────────────────────────────────────────────────────────
 
 function QrCodeSvg({ url, size = 120 }: { url: string; size?: number }) {
-  const qr = encode(url)
-  const modules = qr.size
+  const qr = encode(url, { border: 1, ecc: 'M' })
+  const modules  = qr.size
   const cellSize = size / modules
   return (
     <svg
@@ -194,21 +194,20 @@ function QrCodeSvg({ url, size = 120 }: { url: string; size?: number }) {
       aria-label="Scan QR code to get the app"
       role="img"
     >
-      {qr.data.map((on, i) => {
-        if (!on) return null
-        const col = i % modules
-        const row = Math.floor(i / modules)
-        return (
-          <rect
-            key={i}
-            x={col * cellSize}
-            y={row * cellSize}
-            width={cellSize}
-            height={cellSize}
-            fill="currentColor"
-          />
+      {qr.data.flatMap((row, r) =>
+        row.map((dark, c) =>
+          dark ? (
+            <rect
+              key={`${r}-${c}`}
+              x={c * cellSize}
+              y={r * cellSize}
+              width={cellSize}
+              height={cellSize}
+              fill="currentColor"
+            />
+          ) : null
         )
-      })}
+      )}
     </svg>
   )
 }
