@@ -119,6 +119,18 @@
   color: var(--text-dim);
 }
 
+/* ─── Device name (secondary/muted) ────────────────────────────────────────── */
+
+.deviceName {
+  margin-left: 0.35em;
+  color: color-mix(in srgb, var(--stage-text) 45%, transparent);
+}
+
+/* Chip context: muted against the surface-2 background, not stage */
+.chip .deviceName {
+  color: var(--text-dim);
+}
+
 /* ─── Dropdown caret ───────────────────────────────────────────────────────── */
 
 .caret {

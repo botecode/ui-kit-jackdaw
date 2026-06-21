@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { InputSelect } from './InputSelect'
+import type { InputSelectOption } from './InputSelect'
 
 const OPTIONS = [
   { id: 'in-1', label: 'Input 1' },
@@ -156,6 +157,53 @@ describe('InputSelect selection', () => {
     render(<InputSelect value={null} onChange={vi.fn()} options={OPTIONS} defaultOpen />)
     fireEvent.mouseDown(screen.getByRole('option', { name: /Input 1/ }))
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+})
+
+// ─── label + inputName combined rendering ────────────────────────────────────
+
+const OPTIONS_WITH_DEVICE: InputSelectOption[] = [
+  { id: 'in-1', label: 'Vocals', inputName: 'Input 1 – ez1073' },
+  { id: 'in-2', label: 'Input 2' },
+  { id: 'in-3', label: 'Guitar', inputName: 'Input 3' },
+]
+
+describe('InputSelect label + inputName rendering', () => {
+  it('trigger shows label text when inputName is absent', () => {
+    render(<InputSelect value="in-2" onChange={noop} options={OPTIONS_WITH_DEVICE} />)
+    expect(screen.getByText('Input 2')).toBeInTheDocument()
+    expect(screen.queryByText(/\(/)).not.toBeInTheDocument()
+  })
+
+  it('trigger shows label and "(inputName)" as separate spans when both set', () => {
+    render(<InputSelect value="in-1" onChange={noop} options={OPTIONS_WITH_DEVICE} />)
+    expect(screen.getByText('Vocals')).toBeInTheDocument()
+    expect(screen.getByText('(Input 1 – ez1073)')).toBeInTheDocument()
+  })
+
+  it('dropdown option shows "(inputName)" span when inputName is set', () => {
+    render(<InputSelect value={null} onChange={noop} options={OPTIONS_WITH_DEVICE} defaultOpen />)
+    expect(screen.getByText('(Input 1 – ez1073)')).toBeInTheDocument()
+    expect(screen.getByText('(Input 3)')).toBeInTheDocument()
+  })
+
+  it('dropdown option shows no paren text when inputName is absent', () => {
+    render(<InputSelect value={null} onChange={noop} options={OPTIONS_WITH_DEVICE} defaultOpen />)
+    const option = screen.getByRole('option', { name: /Input 2/ })
+    expect(option).not.toHaveTextContent('(')
+  })
+
+  it('aria-selected still works with inputName present', () => {
+    render(<InputSelect value="in-1" onChange={noop} options={OPTIONS_WITH_DEVICE} defaultOpen />)
+    const selected = screen.getByRole('option', { name: /Vocals/ })
+    expect(selected.getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('clicking an option with inputName calls onChange with its id', () => {
+    const onChange = vi.fn()
+    render(<InputSelect value={null} onChange={onChange} options={OPTIONS_WITH_DEVICE} defaultOpen />)
+    fireEvent.mouseDown(screen.getByRole('option', { name: /Vocals/ }))
+    expect(onChange).toHaveBeenCalledWith('in-1')
   })
 })
 

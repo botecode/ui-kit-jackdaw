@@ -39,7 +39,6 @@ export function InputSelect({
   const listboxId = useId()
 
   const selectedOption = options.find(o => o.id === value) ?? null
-  const displayLabel = selectedOption?.label ?? placeholder
 
   function openMenu() {
     if (disabled) return
@@ -104,7 +103,11 @@ export function InputSelect({
         aria-controls={open ? listboxId : undefined}
         aria-activedescendant={open && activeId ? `${listboxId}-${activeId}` : undefined}
         aria-label={ariaLabel}
-        title={selectedOption?.label}
+        title={selectedOption
+          ? selectedOption.inputName
+            ? `${selectedOption.label} (${selectedOption.inputName})`
+            : selectedOption.label
+          : undefined}
         disabled={disabled}
         onClick={open ? closeMenu : openMenu}
         onKeyDown={handleKeyDown}
@@ -113,7 +116,14 @@ export function InputSelect({
           <span className={styles.inTag} aria-hidden="true">IN</span>
         )}
         <span className={styles.displayLabel} data-muted={!selectedOption || undefined}>
-          {displayLabel}
+          {selectedOption ? (
+            <>
+              {selectedOption.label}
+              {selectedOption.inputName && (
+                <span className={styles.deviceName}>({selectedOption.inputName})</span>
+              )}
+            </>
+          ) : placeholder}
         </span>
         <span className={styles.caret} aria-hidden="true">▾</span>
       </button>
