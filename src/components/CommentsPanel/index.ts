@@ -1,4 +1,4 @@
-export { CommentsPanel } from './CommentsPanel'
+export { CommentsPanel, authorAccent } from './CommentsPanel'
 export type {
   CommentAuthor,
   AudioRef,

@@ -1,7 +1,7 @@
 // src/components/CommentsPanel/CommentsPanel.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { CommentsPanel } from './CommentsPanel'
+import { CommentsPanel, authorAccent } from './CommentsPanel'
 import type { Comment, CommentAuthor, CommentsPanelProps } from './CommentsPanel'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -348,5 +348,44 @@ describe('CommentsPanel — play chip', () => {
     expect(chip).toHaveAttribute('data-playing')
     fireEvent.click(chip)
     expect(chip).not.toHaveAttribute('data-playing')
+  })
+})
+
+// ── Author identity ───────────────────────────────────────────────────────────
+
+describe('authorAccent', () => {
+  it('returns author.color when the author has one', () => {
+    expect(authorAccent(ALICE)).toBe('#e8a87c')
+  })
+
+  it('returns a deterministic track-color var for an author without color', () => {
+    const result1 = authorAccent(BOB)
+    const result2 = authorAccent(BOB)
+    expect(result1).toBe(result2)
+    expect(result1).toMatch(/^var\(--track-color-\d\)$/)
+  })
+
+  it('returns different accents for different author ids (statistical sanity)', () => {
+    const a = authorAccent({ id: 'id-aaa', name: 'A', initials: 'A' })
+    const b = authorAccent({ id: 'id-zzz', name: 'B', initials: 'B' })
+    expect(a).toMatch(/^var\(--track-color-\d\)$/)
+    expect(b).toMatch(/^var\(--track-color-\d\)$/)
+  })
+})
+
+describe('CommentsPanel — author identity: data-own', () => {
+  it('sets data-own on the current user\'s comment card', () => {
+    render(<CommentsPanel {...makeProps({ comments: [TEXT_COMMENT], currentUserId: 'a1' })} />)
+    expect(screen.getByTestId('comment-card-c1')).toHaveAttribute('data-own')
+  })
+
+  it('does not set data-own on a collaborator\'s comment card', () => {
+    render(<CommentsPanel {...makeProps({ comments: [TEXT_COMMENT], currentUserId: 'b1' })} />)
+    expect(screen.getByTestId('comment-card-c1')).not.toHaveAttribute('data-own')
+  })
+
+  it('does not set data-own when currentUserId is absent', () => {
+    render(<CommentsPanel {...makeProps({ comments: [TEXT_COMMENT] })} />)
+    expect(screen.getByTestId('comment-card-c1')).not.toHaveAttribute('data-own')
   })
 })

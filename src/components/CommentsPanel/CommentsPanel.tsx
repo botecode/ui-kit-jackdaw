@@ -5,8 +5,11 @@
 // in the shell. No overlay/portal needed.
 //
 // Design decisions recorded here (not relitigated in future):
-// - Avatar: initials circle with optional --_avatar-color ring (track-color
-//   family). Inlined — no separate Avatar component (1 consumer, YAGNI).
+// - Avatar: initials circle with --_avatar-color ring derived from the
+//   same accent as the comment spine — always in sync.
+// - Author accent: derived deterministically from a 6-slot track-color
+//   palette keyed by author.id; respects author.color if already set.
+//   Current user's comments use --accent so "mine" reads at a glance.
 // - Waveform: 12-bar static decorative SVG; real playback is app-level.
 // - Thread depth: 1 level of indented replies (no recursive threading).
 // - Composer: raw <textarea> — TextField is single-line; multi-line is
@@ -28,6 +31,30 @@ import {
   Clock,
 } from '@phosphor-icons/react'
 import styles from './CommentsPanel.module.css'
+
+// ── Author accent palette ─────────────────────────────────────────────────────
+
+// 6-slot palette using track-color tokens — same family as clip/track spines.
+// Ordered to maximise perceptual distance between adjacent indices.
+const AUTHOR_PALETTE = [
+  'var(--track-color-1)', // warm orange
+  'var(--track-color-3)', // sky blue
+  'var(--track-color-4)', // violet
+  'var(--track-color-2)', // sage green
+  'var(--track-color-5)', // amber
+  'var(--track-color-6)', // rose red
+]
+
+function hashAuthorId(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return h
+}
+
+export function authorAccent(author: CommentAuthor): string {
+  if (author.color) return author.color
+  return AUTHOR_PALETTE[hashAuthorId(author.id) % AUTHOR_PALETTE.length]
+}
 
 // ── Types (exported for app contract) ────────────────────────────────────────
 
@@ -65,6 +92,7 @@ export interface Comment {
 
 export interface CommentsPanelProps {
   comments: Comment[]
+  currentUserId?: string
   onPost: (content: string | AudioRef) => void
   onReply: (commentId: string, content: string | AudioRef) => void
   onResolve: (commentId: string, resolved: boolean) => void
@@ -95,11 +123,11 @@ const WAVE_BARS = [4, 8, 12, 10, 14, 9, 6, 11, 13, 7, 5, 10]
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 
-function Avatar({ author }: { author: CommentAuthor }) {
+function Avatar({ author, accent }: { author: CommentAuthor; accent: string }) {
   return (
     <div
       className={styles.avatar}
-      style={author.color ? { '--_avatar-color': author.color } as React.CSSProperties : undefined}
+      style={{ '--_avatar-color': accent } as React.CSSProperties}
       aria-hidden="true"
     >
       {author.avatarUrl ? (
@@ -198,10 +226,15 @@ interface CommentCardProps {
   onResolve: (commentId: string, resolved: boolean) => void
   onJumpTo?: (timelineAt: number) => void
   onRecord?: () => Promise<AudioRef>
+  currentUserId?: string
 }
 
-function CommentCard({ comment, onReply, onResolve, onJumpTo }: CommentCardProps) {
+function CommentCard({ comment, onReply, onResolve, onJumpTo, currentUserId }: CommentCardProps) {
   const [replyOpen, setReplyOpen] = useState(false)
+
+  const isMe = !!currentUserId && comment.author.id === currentUserId
+  // Current user's comments use --accent so "mine" is immediately distinct.
+  const accent = isMe ? 'var(--accent)' : authorAccent(comment.author)
 
   function handleReplySubmit(id: string, content: string | AudioRef) {
     onReply(id, content)
@@ -212,11 +245,13 @@ function CommentCard({ comment, onReply, onResolve, onJumpTo }: CommentCardProps
     <div
       className={styles.commentCard}
       data-resolved={comment.resolved || undefined}
+      data-own={isMe || undefined}
       data-testid={`comment-card-${comment.id}`}
+      style={{ '--_author-accent': accent } as React.CSSProperties}
     >
       {/* Header: avatar + author + time */}
       <div className={styles.commentHeader}>
-        <Avatar author={comment.author} />
+        <Avatar author={comment.author} accent={accent} />
         <div className={styles.authorMeta}>
           <span className={styles.authorName}>{comment.author.name}</span>
           <span className={styles.commentTime}>{formatTime(comment.time)}</span>
@@ -271,26 +306,38 @@ function CommentCard({ comment, onReply, onResolve, onJumpTo }: CommentCardProps
         </button>
       </div>
 
-      {/* Replies */}
+      {/* Replies — thread connector uses parent accent; each reply gets its own spine */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className={styles.replies}>
-          {comment.replies.map(reply => (
-            <div key={reply.id} className={styles.replyCard}>
-              <div className={styles.replyHeader}>
-                <Avatar author={reply.author} />
-                <div className={styles.authorMeta}>
-                  <span className={styles.authorName}>{reply.author.name}</span>
-                  <span className={styles.commentTime}>{formatTime(reply.time)}</span>
+        <div
+          className={styles.replies}
+          style={{ '--_reply-accent': accent } as React.CSSProperties}
+        >
+          {comment.replies.map(reply => {
+            const replyIsMe = !!currentUserId && reply.author.id === currentUserId
+            const replyAccent = replyIsMe ? 'var(--accent)' : authorAccent(reply.author)
+            return (
+              <div
+                key={reply.id}
+                className={styles.replyCard}
+                data-own={replyIsMe || undefined}
+                style={{ '--_author-accent': replyAccent } as React.CSSProperties}
+              >
+                <div className={styles.replyHeader}>
+                  <Avatar author={reply.author} accent={replyAccent} />
+                  <div className={styles.authorMeta}>
+                    <span className={styles.authorName}>{reply.author.name}</span>
+                    <span className={styles.commentTime}>{formatTime(reply.time)}</span>
+                  </div>
                 </div>
+                {reply.text && (
+                  <p className={styles.commentBody}>{reply.text}</p>
+                )}
+                {reply.audio && !reply.text && (
+                  <PlayChip audio={reply.audio} />
+                )}
               </div>
-              {reply.text && (
-                <p className={styles.commentBody}>{reply.text}</p>
-              )}
-              {reply.audio && !reply.text && (
-                <PlayChip audio={reply.audio} />
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -417,6 +464,7 @@ function Composer({ onPost, onRecord }: ComposerProps) {
 
 export function CommentsPanel({
   comments,
+  currentUserId,
   onPost,
   onReply,
   onResolve,
@@ -454,6 +502,7 @@ export function CommentsPanel({
               onResolve={onResolve}
               onJumpTo={onJumpTo}
               onRecord={onRecord}
+              currentUserId={currentUserId}
             />
           ))
         )}
