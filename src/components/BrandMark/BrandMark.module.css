@@ -29,7 +29,7 @@
    Two PNGs: dark-letter (light themes) / white-letter (dark themes).
    Swapped in BrandMark.tsx via useTheme(). Width is auto so the PNG's own
    aspect ratio controls it; height is sized relative to the mark.
-   TODO(brand-assets): replace 1×1 stubs with real exports from design.        */
+   TODO(brand-assets): replace transparent 1×1 stubs with real exports from design. */
 .wordmarkImg {
   display:     block;
   height:      0.28em;
