@@ -373,6 +373,23 @@ describe('authorAccent', () => {
   })
 })
 
+// ── Author accent CSS variable ────────────────────────────────────────────────
+
+describe('CommentsPanel — author accent CSS variable', () => {
+  it('sets --_author-accent to the collaborator author color on the card', () => {
+    render(<CommentsPanel {...makeProps({ comments: [TEXT_COMMENT] })} />)
+    const card = screen.getByTestId('comment-card-c1')
+    // ALICE has color: '#e8a87c' → authorAccent returns it directly
+    expect(card.style.getPropertyValue('--_author-accent')).toBe('#e8a87c')
+  })
+
+  it('sets --_author-accent to var(--accent) for the current user\'s card', () => {
+    render(<CommentsPanel {...makeProps({ comments: [TEXT_COMMENT], currentUserId: 'a1' })} />)
+    const card = screen.getByTestId('comment-card-c1')
+    expect(card.style.getPropertyValue('--_author-accent')).toBe('var(--accent)')
+  })
+})
+
 describe('CommentsPanel — author identity: data-own', () => {
   it('sets data-own on the current user\'s comment card', () => {
     render(<CommentsPanel {...makeProps({ comments: [TEXT_COMMENT], currentUserId: 'a1' })} />)
