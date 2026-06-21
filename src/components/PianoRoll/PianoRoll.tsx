@@ -509,6 +509,7 @@ export function PianoRoll({
                   onContextMenu={disabled ? undefined : ev => handleNoteContextMenu(ev, note)}
                   onKeyDown={disabled ? undefined : ev => handleNoteKeyDown(ev, note)}
                 >
+                  <span className={styles.noteLabel} aria-hidden="true">{midiNoteToName(pitch)}</span>
                   <div className={styles.noteResizeHandle} aria-hidden="true" />
                 </div>
               )

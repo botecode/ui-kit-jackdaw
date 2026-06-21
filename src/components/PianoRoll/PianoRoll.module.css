@@ -220,11 +220,33 @@
   /* Hairline top highlight — the Chroma "lit" surface signature */
   border-top: 1px solid color-mix(in srgb, var(--_note-color) 0%, white 28%);
 
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+
   cursor: grab;
   outline: none;
   transition:
     box-shadow    var(--dur-fast)    var(--ease-out),
     border-color  var(--dur-led-on)  var(--ease-out);
+}
+
+/* ─── Note name label ────────────────────────────────────────────────────────── */
+
+.noteLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  color: color-mix(in srgb, white 90%, transparent);
+  text-shadow: 0 1px 1px color-mix(in srgb, black 28%, transparent);
+  padding-left: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 0.01em;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .note:focus-visible {
@@ -292,8 +314,9 @@
 /* ─── Size variants ─────────────────────────────────────────────────────────── */
 
 /* sm: smaller lanes + key strip (set via --lane-h/--key-w CSS vars on root).
-   Suppress key labels at sm — there isn't room. */
-.root[data-size="sm"] .keyLabel { display: none; }
+   Suppress labels at sm — 8px note height leaves no legible room. */
+.root[data-size="sm"] .keyLabel  { display: none; }
+.root[data-size="sm"] .noteLabel { display: none; }
 
 /* ─── Reduced motion ────────────────────────────────────────────────────────── */
 

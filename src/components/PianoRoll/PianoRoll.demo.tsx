@@ -80,7 +80,7 @@ function StatesDemo() {
         </RollWrap>
       </State>
 
-      <State label="with notes — melody + chord">
+      <State label="with notes — note names inside blocks, clipped on short notes">
         <RollWrap height={220}>
           <PianoRoll
             notes={MELODY}

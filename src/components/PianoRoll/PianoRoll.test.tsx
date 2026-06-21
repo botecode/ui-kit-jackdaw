@@ -543,6 +543,27 @@ describe('PianoRoll drag move', () => {
   })
 })
 
+// ─── Note name labels ────────────────────────────────────────────────────────
+
+describe('PianoRoll note name labels', () => {
+  it('renders the pitch name inside the note element (C4 for pitch 60)', () => {
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[NOTE_A]} />)
+    expect(getByTestId('note-a').textContent).toContain('C4')
+  })
+
+  it('renders pitch name for a black-key note (C#4 for pitch 61)', () => {
+    const note: PianoNote = { id: 'cs', pitch: 61, start: 0, length: 1 }
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[note]} />)
+    expect(getByTestId('note-cs').textContent).toContain('C#4')
+  })
+
+  it('renders pitch name for a lower-octave note (C2 for pitch 36)', () => {
+    const note: PianoNote = { id: 'c2', pitch: 36, start: 0, length: 1 }
+    const { getByTestId } = render(<PianoRoll {...BASE} notes={[note]} />)
+    expect(getByTestId('note-c2').textContent).toContain('C2')
+  })
+})
+
 // ─── Drag resize ──────────────────────────────────────────────────────────────
 
 describe('PianoRoll drag resize', () => {
