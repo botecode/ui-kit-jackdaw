@@ -1,0 +1,472 @@
+/* src/components/Versions/Versions.module.css */
+
+/* ─── Root ──────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--panel-bg);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    var(--shadow-sm);
+  overflow: hidden;
+  font-family: var(--font-ui);
+}
+
+/* ─── Empty state ───────────────────────────────────────────────────────────── */
+
+.emptyState {
+  padding: var(--space-8) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+}
+
+.emptyHint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+}
+
+/* ─── Timeline list ──────────────────────────────────────────────────────────── */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) 0;
+  overflow-y: auto;
+  outline: none;
+}
+
+/* ─── Row ────────────────────────────────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  transition: background-color var(--dur-fast) var(--ease-out);
+  position: relative;
+}
+
+.row:hover {
+  background-color: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.row[data-selected] {
+  background-color: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Focus ring inset so the timeline line stays visible */
+.row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: -2px;
+}
+
+/* ─── Spine (vertical timeline + node) ──────────────────────────────────────── */
+
+.spine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 3px;
+  width: 16px;
+}
+
+/*
+  Node: recessed off (dark well), accent bloom when current, partial glow when
+  compare-selected but not current. compareIndex text sits centered inside.
+*/
+.node {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow  var(--dur-led-off) var(--ease-out);
+}
+
+.row[data-current] .node {
+  background: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 8px 2px color-mix(in srgb, var(--accent) 50%, transparent);
+  transition:
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+}
+
+/* Selected-but-not-current: partial glow only */
+.row[data-selected]:not([data-current]) .node {
+  background: color-mix(in srgb, var(--accent) 55%, var(--stage));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 0 5px 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* Compare index: "1" or "2" rendered inside the node */
+.compareIndex {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-contrast);
+  position: relative;
+  z-index: 1;
+}
+
+/* Connecting line between nodes */
+.spline {
+  flex: 1;
+  width: 1px;
+  background: var(--border);
+  margin: 2px 0;
+  min-height: 8px;
+}
+
+/* ─── Content area ───────────────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-1);
+}
+
+.contentHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Meta row: badge · avatar · date ───────────────────────────────────────── */
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.currentBadge {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  padding: 1px 5px;
+  border-radius: 999px;
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+
+/* Author avatar: initials in a small recessed circle */
+.avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--stage);
+  box-shadow: 0 0 0 1px var(--border);
+  font-family: var(--font-ui);
+  font-size: 7px;
+  font-weight: var(--weight-bold);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.dateMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+/* Space Mono for date — "digital readout" feel, distinct from name/note copy */
+.dateDisplay {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.timeDisplay {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  opacity: 0.65;
+  line-height: 1;
+}
+
+/* ─── Note ───────────────────────────────────────────────────────────────────── */
+
+.note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-base);
+  font-style: italic;
+}
+
+/* ─── Inline rename input ────────────────────────────────────────────────────── */
+
+.renameInput {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  background: var(--stage);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 1px var(--space-1);
+  outline: none;
+  width: 100%;
+  max-width: 220px;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.renameInput:focus-visible {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* ─── Actions bar ────────────────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  background: var(--stage);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px var(--space-2);
+  cursor: pointer;
+  transition:
+    color        var(--dur-fast) var(--ease-out),
+    background   var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.actionBtn:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 12%, var(--stage));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.actionBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+/* ─── Diff / Compare panel ───────────────────────────────────────────────────── */
+
+.diffPanel {
+  border-top: 1px solid var(--border);
+  background-color: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+}
+
+.diffHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.diffTitle {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--stage-text) 55%, transparent);
+  flex-shrink: 0;
+}
+
+.diffVersions {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.diffVersionA,
+.diffVersionB {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--stage-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.diffArrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, var(--stage-text) 45%, transparent);
+  flex-shrink: 0;
+}
+
+.diffList {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.diffRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.diffRowLabel {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: color-mix(in srgb, var(--stage-text) 70%, transparent);
+}
+
+.diffRowChanges {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Diff deltas use semantic LED colors: green=added, red=removed, orange=modified/changed */
+.diffAdded {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--led-green);
+}
+
+.diffRemoved {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--led-red);
+}
+
+.diffModified {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--led-orange);
+}
+
+.diffChanged {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--led-orange);
+}
+
+.diffNoChanges {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: color-mix(in srgb, var(--stage-text) 50%, transparent);
+}
+
+.diffLoading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: color-mix(in srgb, var(--stage-text) 55%, transparent);
+}
+
+.diffLoadingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--stage-text) 40%, transparent);
+  flex-shrink: 0;
+  animation: pulse 1.2s var(--ease-in-out) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1;   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diffLoadingDot { animation: none; opacity: 0.7; }
+}
+
+/* ─── Size variants ──────────────────────────────────────────────────────────── */
+
+.root[data-size="sm"] .row     { padding: var(--space-1) var(--space-2); }
+.root[data-size="sm"] .name    { font-size: var(--text-sm); }
+.root[data-size="sm"] .node    { width: 8px; height: 8px; }
+.root[data-size="sm"] .spine   { width: 12px; }
+.root[data-size="sm"] .compareIndex { font-size: 6px; }
+.root[data-size="sm"] .dateDisplay,
+.root[data-size="sm"] .timeDisplay { font-size: 9px; }
