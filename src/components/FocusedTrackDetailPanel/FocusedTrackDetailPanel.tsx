@@ -5,7 +5,6 @@ import { TrackLane } from '../TrackLane'
 import type { ClipInfo, ClipMoveIntent, ClipTrimIntent } from '../TrackLane'
 import type { Division } from '../TimelineGrid'
 import { Meter } from '../Meter/Meter'
-import { FxChip } from '../FxChip'
 import type { FxPlugin } from '../FxChip'
 import { Panel } from '../Panel'
 import { Fader, dbScale } from '../Fader'
@@ -22,6 +21,17 @@ const HEIGHT_MIN = 120
 
 function storeHeight(h: number) {
   try { localStorage.setItem(HEIGHT_KEY, String(h)) } catch { /* ignore */ }
+}
+
+// ── Slot color cycle (same palette as FxChip) ────────────────────────────────
+
+const CHROMA_CYCLE = [
+  '--chroma-red', '--chroma-orange', '--chroma-yellow', '--chroma-green',
+  '--chroma-teal', '--chroma-blue', '--chroma-purple',
+] as const
+
+function slotColor(index: number): string {
+  return `var(${CHROMA_CYCLE[index % CHROMA_CYCLE.length]})`
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -72,6 +82,114 @@ export interface FocusedTrackDetailPanelProps {
 
 const DB_SCALE = dbScale()
 
+// ── MasterChainLed ────────────────────────────────────────────────────────────
+
+interface MasterChainLedProps {
+  chainEnabled: boolean
+  plugins: FxPlugin[]
+  onToggle: (next: boolean) => void
+  disabled?: boolean
+}
+
+function MasterChainLed({ chainEnabled, plugins, onToggle, disabled }: MasterChainLedProps) {
+  const someBypassed = chainEnabled && plugins.some(p => !p.enabled)
+  const state =
+    plugins.length === 0 ? 'off'
+    : !chainEnabled      ? 'off'
+    : someBypassed       ? 'partial'
+    :                      'active'
+  const ariaChecked: boolean | 'mixed' =
+    plugins.length === 0 ? false
+    : !chainEnabled      ? false
+    : someBypassed       ? 'mixed'
+    :                      true
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={ariaChecked}
+      aria-label="FX chain"
+      data-state={state}
+      className={styles.masterChainLed}
+      onClick={() => onToggle(!chainEnabled)}
+      disabled={disabled}
+    />
+  )
+}
+
+// ── InlinePluginRow ───────────────────────────────────────────────────────────
+
+interface InlinePluginRowProps {
+  plugin: FxPlugin
+  index: number
+  total: number
+  onToggle: (id: string, next: boolean) => void
+  onMove: (from: number, to: number) => void
+  onRemove: (id: string) => void
+  onOpen: (id: string) => void
+  onAnnounce: (msg: string) => void
+  disabled?: boolean
+}
+
+function InlinePluginRow({
+  plugin, index, total, onToggle, onMove, onRemove, onOpen, onAnnounce, disabled,
+}: InlinePluginRowProps) {
+  return (
+    <div
+      className={styles.pluginRow}
+      data-bypassed={!plugin.enabled || undefined}
+      style={{ '--slot-color': slotColor(index) } as CSSProperties}
+    >
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={plugin.enabled}
+        aria-label={plugin.name}
+        className={styles.pluginLed}
+        onClick={() => onToggle(plugin.id, !plugin.enabled)}
+        disabled={disabled}
+      />
+      <button
+        type="button"
+        className={styles.pluginName}
+        aria-label={`Open ${plugin.name}`}
+        onClick={() => onOpen(plugin.id)}
+        disabled={disabled}
+      >
+        {plugin.name}
+      </button>
+      <button
+        type="button"
+        className={styles.pluginMoveBtn}
+        aria-label={`Move ${plugin.name} up`}
+        disabled={disabled || index === 0}
+        onClick={() => {
+          onMove(index, index - 1)
+          onAnnounce(`${plugin.name} moved to position ${index} of ${total}`)
+        }}
+      >↑</button>
+      <button
+        type="button"
+        className={styles.pluginMoveBtn}
+        aria-label={`Move ${plugin.name} down`}
+        disabled={disabled || index === total - 1}
+        onClick={() => {
+          onMove(index, index + 1)
+          onAnnounce(`${plugin.name} moved to position ${index + 2} of ${total}`)
+        }}
+      >↓</button>
+      <button
+        type="button"
+        className={styles.pluginRemoveBtn}
+        aria-label={`Remove ${plugin.name}`}
+        onClick={() => onRemove(plugin.id)}
+        disabled={disabled}
+      >×</button>
+    </div>
+  )
+}
+
 // ── AdvancedSlot ─────────────────────────────────────────────────────────────
 
 interface AdvancedSlotProps { label: string; description: string }
@@ -117,6 +235,7 @@ export function FocusedTrackDetailPanel({
   disabled = false,
   onTogglePhase,
 }: FocusedTrackDetailPanelProps) {
+  const [announcement, setAnnouncement] = useState('')
   const dragRef   = useRef<{ startY: number; startH: number } | null>(null)
   const [resizing, setResizing] = useState(false)
 
@@ -290,30 +409,68 @@ export function FocusedTrackDetailPanel({
             </div>
           </div>
 
-          {/* Right: FX chain + advanced slots */}
+          {/* Right: FX chain (inline) + routing */}
           <div className={styles.rightCol}>
-            <Panel title="FX Chain" tone="stage" padding="sm">
-              <FxChip
-                plugins={plugins}
-                chainEnabled={chainEnabled}
-                onToggleChain={onToggleChain}
-                onTogglePlugin={onTogglePlugin}
-                onReorder={onReorderPlugin}
-                onRemove={onRemovePlugin}
-                onAdd={onAddPlugin}
-                onOpenPlugin={onOpenPlugin}
-                size="md"
-                disabled={disabled}
-              />
+
+            {/* ── FX Chain — inline plugin list ──────────────────────────── */}
+            <Panel
+              title="FX Chain"
+              tone="stage"
+              padding="sm"
+              headerLead={
+                <MasterChainLed
+                  chainEnabled={chainEnabled}
+                  plugins={plugins}
+                  onToggle={onToggleChain}
+                  disabled={disabled}
+                />
+              }
+            >
+              <div
+                className={styles.pluginList}
+                data-chain-enabled={chainEnabled || undefined}
+              >
+                {plugins.length === 0 ? (
+                  <p className={styles.pluginEmpty}>No effects yet — add one.</p>
+                ) : (
+                  plugins.map((p, i) => (
+                    <InlinePluginRow
+                      key={p.id}
+                      plugin={p}
+                      index={i}
+                      total={plugins.length}
+                      onToggle={onTogglePlugin}
+                      onMove={onReorderPlugin}
+                      onRemove={onRemovePlugin}
+                      onOpen={onOpenPlugin}
+                      onAnnounce={setAnnouncement}
+                      disabled={disabled}
+                    />
+                  ))
+                )}
+                <button
+                  type="button"
+                  className={styles.pluginAddBtn}
+                  onClick={onAddPlugin}
+                  disabled={disabled}
+                >+ Add plugin…</button>
+              </div>
+              <div className={styles.srAnnounce} aria-live="polite" aria-atomic="true">
+                {announcement}
+              </div>
             </Panel>
 
-            <Panel title="Advanced" tone="outlined" padding="sm">
+            {/* ── Routing — sidechain · phase · automation ────────────────── */}
+            <Panel title="Routing" tone="outlined" padding="sm">
               <AdvancedSlot
                 label="Sidechain"
                 description="Route a sidechain source to this track's compressors"
               />
               <div className={`${styles.advancedSlot} ${styles.advancedPhaseRow}`}>
-                <span className={styles.slotLabel}>Phase</span>
+                <div className={styles.phaseTextGroup}>
+                  <span className={styles.slotLabel}>Phase</span>
+                  <span className={styles.slotDesc}>Flip polarity on the input signal</span>
+                </div>
                 <PhaseInvert
                   inverted={track.phaseInverted ?? false}
                   onToggle={onTogglePhase ?? (() => {})}
@@ -323,13 +480,10 @@ export function FocusedTrackDetailPanel({
               </div>
               <AdvancedSlot
                 label="Automation"
-                description="Write and read automation lanes for this track"
-              />
-              <AdvancedSlot
-                label="Routing"
-                description="Assign this track to an aux send or effect return"
+                description="Automate this track's fader, pan, and FX sends"
               />
             </Panel>
+
           </div>
         </div>
       </div>
