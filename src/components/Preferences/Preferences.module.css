@@ -24,8 +24,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: 720px;
-  height: 540px;
+  width: 800px;
+  height: 560px;
   max-width: calc(100vw - var(--space-8));
   max-height: calc(100vh - var(--space-8));
 
@@ -106,88 +106,51 @@
   outline-offset: 1px;
 }
 
-/* ─── Body: sidebar + content ───────────────────────────────────────────────── */
+/* ─── Section selector bar ──────────────────────────────────────────────────── */
 
-.body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  min-height: 0;
-}
-
-/* ─── Sidebar / tablist ─────────────────────────────────────────────────────── */
-
-.sidebar {
+.sectionBar {
   flex-shrink: 0;
-  width: 176px;
-  border-right: 1px solid var(--border);
-  background: var(--stage);
-  padding: var(--space-2);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
-.navItem {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: none;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--stage);
+}
+
+.sectionSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 220px;
+  height: 32px;
+  padding: 0 var(--space-8) 0 var(--space-3);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: none;
-  color: var(--stage-text);
+  background-color: var(--surface);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  text-align: left;
   transition:
-    background var(--dur-base) var(--ease-out),
-    color var(--dur-base) var(--ease-out);
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
 }
 
-.navItem:hover {
-  background: rgba(255, 255, 255, 0.06);
+.sectionSelect:hover {
+  border-color: var(--accent);
 }
 
-.navItem:focus-visible {
+.sectionSelect:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+  border-color: var(--accent);
 }
 
-.navItem[data-selected] {
-  background: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.navItem[data-selected]:hover {
-  background: var(--accent);
-}
-
-.navIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  opacity: 0.7;
-}
-
-.navItem[data-selected] .navIcon {
-  opacity: 1;
-}
-
-.navLabel {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ─── Content / tabpanel ────────────────────────────────────────────────────── */
+/* ─── Content / panel ───────────────────────────────────────────────────────── */
 
 .content {
   flex: 1;
@@ -206,7 +169,7 @@
     animation: none;
   }
 
-  .navItem,
+  .sectionSelect,
   .closeBtn {
     transition: none;
   }

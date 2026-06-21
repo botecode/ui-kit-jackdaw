@@ -1,14 +1,13 @@
 // src/components/Preferences/Preferences.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { SlidersHorizontal, PaintBrush, Command } from '@phosphor-icons/react'
 import { Preferences } from './Preferences'
 import type { PreferencesSection } from './Preferences'
 
 const SECTIONS: PreferencesSection[] = [
-  { id: 'input',         label: 'Input',         icon: <SlidersHorizontal size={14} /> },
-  { id: 'look-and-feel', label: 'Look and feel', icon: <PaintBrush size={14} /> },
-  { id: 'shortcuts',     label: 'Shortcuts',      icon: <Command size={14} /> },
+  { id: 'input',         label: 'Input' },
+  { id: 'look-and-feel', label: 'Look and feel' },
+  { id: 'shortcuts',     label: 'Shortcuts' },
 ]
 
 const BASE = {
@@ -52,14 +51,14 @@ describe('Preferences — rendering', () => {
     expect(titleEl?.textContent).toBe('PREFERENCES')
   })
 
-  it('renders all section labels in the sidebar', () => {
+  it('renders all section labels in the section select', () => {
     render(<Preferences {...BASE} />)
     expect(screen.getByText('Input')).toBeInTheDocument()
     expect(screen.getByText('Look and feel')).toBeInTheDocument()
     expect(screen.getByText('Shortcuts')).toBeInTheDocument()
   })
 
-  it('renders the children in the tabpanel', () => {
+  it('renders the children in the content region', () => {
     render(<Preferences {...BASE} />)
     expect(screen.getByTestId('panel-content')).toBeInTheDocument()
   })
@@ -70,59 +69,43 @@ describe('Preferences — rendering', () => {
   })
 })
 
-// ── ARIA / tablist ────────────────────────────────────────────────────────────
+// ── ARIA section select ───────────────────────────────────────────────────────
 
-describe('Preferences — ARIA tablist', () => {
-  it('renders a tablist', () => {
+describe('Preferences — section select', () => {
+  it('renders a combobox for section navigation', () => {
     render(<Preferences {...BASE} />)
-    expect(screen.getByRole('tablist')).toBeInTheDocument()
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
 
-  it('renders a tab for each section', () => {
+  it('renders an option for each section', () => {
     render(<Preferences {...BASE} />)
-    const tabs = screen.getAllByRole('tab')
-    expect(tabs).toHaveLength(SECTIONS.length)
+    const options = screen.getAllByRole('option')
+    expect(options).toHaveLength(SECTIONS.length)
   })
 
-  it('active section tab has aria-selected=true', () => {
-    render(<Preferences {...BASE} />)
-    const inputTab = screen.getByRole('tab', { name: /Input/i })
-    expect(inputTab).toHaveAttribute('aria-selected', 'true')
+  it('active section option is selected in the dropdown', () => {
+    render(<Preferences {...BASE} active="look-and-feel" />)
+    const select = screen.getByRole('combobox') as HTMLSelectElement
+    expect(select.value).toBe('look-and-feel')
   })
 
-  it('inactive section tabs have aria-selected=false', () => {
-    render(<Preferences {...BASE} />)
-    const lafTab = screen.getByRole('tab', { name: /Look and feel/i })
-    const scTab  = screen.getByRole('tab', { name: /Shortcuts/i })
-    expect(lafTab).toHaveAttribute('aria-selected', 'false')
-    expect(scTab).toHaveAttribute('aria-selected', 'false')
+  it('changing the section select calls onSelect with the section id', () => {
+    const onSelect = vi.fn()
+    render(<Preferences {...BASE} onSelect={onSelect} />)
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'shortcuts' } })
+    expect(onSelect).toHaveBeenCalledWith('shortcuts')
   })
 
-  it('active tab has tabIndex=0, others tabIndex=-1 (roving focus)', () => {
-    render(<Preferences {...BASE} />)
-    const tabs = screen.getAllByRole('tab')
-    expect(tabs[0]).toHaveAttribute('tabindex', '0')
-    expect(tabs[1]).toHaveAttribute('tabindex', '-1')
-    expect(tabs[2]).toHaveAttribute('tabindex', '-1')
+  it('changing the section select does NOT call onClose', () => {
+    const onClose = vi.fn()
+    render(<Preferences {...BASE} onClose={onClose} />)
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'look-and-feel' } })
+    expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('renders a tabpanel', () => {
-    render(<Preferences {...BASE} />)
-    expect(screen.getByRole('tabpanel')).toBeInTheDocument()
-  })
-
-  it('tabpanel is labelled by the active tab', () => {
-    render(<Preferences {...BASE} />)
-    const panel = screen.getByRole('tabpanel')
-    const labelledBy = panel.getAttribute('aria-labelledby')
-    expect(labelledBy).toBeTruthy()
-    const labelEl = document.getElementById(labelledBy!)
-    expect(labelEl?.getAttribute('role')).toBe('tab')
-  })
-
-  it('tablist has aria-orientation="vertical"', () => {
-    render(<Preferences {...BASE} />)
-    expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical')
+  it('content region is labelled by the active section name', () => {
+    render(<Preferences {...BASE} active="shortcuts" />)
+    expect(screen.getByRole('region', { name: /shortcuts/i })).toBeInTheDocument()
   })
 })
 
@@ -143,52 +126,12 @@ describe('Preferences — keyboard', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('ArrowDown on first tab moves focus to second tab and calls onSelect', () => {
-    const onSelect = vi.fn()
-    render(<Preferences {...BASE} onSelect={onSelect} />)
-    const tabs = screen.getAllByRole('tab')
-    tabs[0]!.focus()
-    fireEvent.keyDown(tabs[0]!, { key: 'ArrowDown' })
-    expect(document.activeElement).toBe(tabs[1])
-    expect(onSelect).toHaveBeenCalledWith(SECTIONS[1]!.id)
-  })
-
-  it('ArrowUp on first tab wraps to last tab', () => {
-    const onSelect = vi.fn()
-    render(<Preferences {...BASE} onSelect={onSelect} />)
-    const tabs = screen.getAllByRole('tab')
-    tabs[0]!.focus()
-    fireEvent.keyDown(tabs[0]!, { key: 'ArrowUp' })
-    expect(document.activeElement).toBe(tabs[tabs.length - 1])
-    expect(onSelect).toHaveBeenCalledWith(SECTIONS[SECTIONS.length - 1]!.id)
-  })
-
-  it('Home moves to first tab', () => {
-    const onSelect = vi.fn()
-    render(<Preferences {...BASE} active="shortcuts" onSelect={onSelect} />)
-    const tabs = screen.getAllByRole('tab')
-    tabs[2]!.focus()
-    fireEvent.keyDown(tabs[2]!, { key: 'Home' })
-    expect(document.activeElement).toBe(tabs[0])
-    expect(onSelect).toHaveBeenCalledWith(SECTIONS[0]!.id)
-  })
-
-  it('End moves to last tab', () => {
-    const onSelect = vi.fn()
-    render(<Preferences {...BASE} onSelect={onSelect} />)
-    const tabs = screen.getAllByRole('tab')
-    tabs[0]!.focus()
-    fireEvent.keyDown(tabs[0]!, { key: 'End' })
-    expect(document.activeElement).toBe(tabs[tabs.length - 1])
-    expect(onSelect).toHaveBeenCalledWith(SECTIONS[SECTIONS.length - 1]!.id)
-  })
-
   it('Tab wraps from last focusable to first', () => {
     render(<Preferences {...BASE} />)
     const dialog = screen.getByRole('dialog')
     const focusable = Array.from(
       dialog.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
       ),
     )
     focusable[focusable.length - 1]!.focus()
@@ -201,7 +144,7 @@ describe('Preferences — keyboard', () => {
     const dialog = screen.getByRole('dialog')
     const focusable = Array.from(
       dialog.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
       ),
     )
     focusable[0]!.focus()
@@ -234,32 +177,14 @@ describe('Preferences — interaction', () => {
     fireEvent.click(screen.getByRole('dialog'))
     expect(onClose).not.toHaveBeenCalled()
   })
-
-  it('clicking a section tab calls onSelect with its id', () => {
-    const onSelect = vi.fn()
-    render(<Preferences {...BASE} onSelect={onSelect} />)
-    fireEvent.click(screen.getByRole('tab', { name: /Look and feel/i }))
-    expect(onSelect).toHaveBeenCalledWith('look-and-feel')
-  })
-
-  it('clicking a section tab does NOT call onClose', () => {
-    const onClose = vi.fn()
-    render(<Preferences {...BASE} onClose={onClose} />)
-    fireEvent.click(screen.getByRole('tab', { name: /Shortcuts/i }))
-    expect(onClose).not.toHaveBeenCalled()
-  })
 })
 
 // ── Focus management ──────────────────────────────────────────────────────────
 
 describe('Preferences — focus management', () => {
-  it('focuses the first focusable element on open', () => {
+  it('focuses the section select on open', () => {
     render(<Preferences {...BASE} />)
-    const dialog = screen.getByRole('dialog')
-    const firstFocusable = dialog.querySelector<HTMLElement>(
-      'button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    )
-    expect(document.activeElement).toBe(firstFocusable)
+    expect(document.activeElement).toBe(screen.getByRole('combobox'))
   })
 
   it('returns focus to the previously focused element on close', () => {

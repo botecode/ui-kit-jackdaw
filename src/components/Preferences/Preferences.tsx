@@ -1,5 +1,5 @@
 // src/components/Preferences/Preferences.tsx
-import { useEffect, useRef, useId, useCallback } from 'react'
+import { useEffect, useRef, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from '@phosphor-icons/react'
 import { usePortalTarget } from '../../theme/ThemeProvider'
@@ -8,7 +8,6 @@ import styles from './Preferences.module.css'
 export interface PreferencesSection {
   id: string
   label: string
-  icon: React.ReactNode
 }
 
 export interface PreferencesProps {
@@ -42,8 +41,8 @@ export function Preferences({
   children,
 }: PreferencesProps) {
   const titleId = useId()
-  const panelId = useId()
   const modalRef = useRef<HTMLDivElement>(null)
+  const selectRef = useRef<HTMLSelectElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const portalTarget = usePortalTarget()
 
@@ -54,11 +53,10 @@ export function Preferences({
     }
   }, [open])
 
-  // Explicit focus on open (WKWebView: clicking a button does NOT focus it).
+  // Focus the section select on open (WKWebView: clicking a button does NOT focus it).
   useEffect(() => {
     if (!open || !modalRef.current) return
-    const focusable = getFocusable(modalRef.current)
-    const target = focusable[0] ?? modalRef.current
+    const target = selectRef.current ?? getFocusable(modalRef.current)[0] ?? modalRef.current
     target.focus()
   }, [open])
 
@@ -102,12 +100,12 @@ export function Preferences({
       if (e.shiftKey) {
         if (document.activeElement === first) {
           e.preventDefault()
-          last.focus()
+          last!.focus()
         }
       } else {
         if (document.activeElement === last) {
           e.preventDefault()
-          first.focus()
+          first!.focus()
         }
       }
     }
@@ -115,26 +113,9 @@ export function Preferences({
     return () => document.removeEventListener('keydown', handle)
   }, [open])
 
-  // Tablist Arrow Up/Down / Home / End navigation.
-  const handleTabKeyDown = useCallback(
-    (e: React.KeyboardEvent, idx: number) => {
-      const total = sections.length
-      let next = -1
-      if (e.key === 'ArrowDown') next = (idx + 1) % total
-      if (e.key === 'ArrowUp')   next = (idx - 1 + total) % total
-      if (e.key === 'Home')      next = 0
-      if (e.key === 'End')       next = total - 1
-      if (next >= 0) {
-        e.preventDefault()
-        const tabs = modalRef.current?.querySelectorAll<HTMLElement>('[role="tab"]')
-        tabs?.[next]?.focus()
-        onSelect(sections[next]!.id)
-      }
-    },
-    [sections, onSelect],
-  )
-
   if (!open) return null
+
+  const activeLabel = sections.find(s => s.id === active)?.label
 
   return createPortal(
     <div className={styles.scrim} onClick={onClose}>
@@ -159,47 +140,30 @@ export function Preferences({
           </button>
         </div>
 
-        {/* Body: sidebar + content */}
-        <div className={styles.body}>
-          <nav className={styles.sidebar} aria-label="Preferences navigation">
-            <div
-              role="tablist"
-              aria-orientation="vertical"
-              aria-label="Preferences sections"
-            >
-              {sections.map((section, idx) => {
-                const selected = section.id === active
-                return (
-                  <button
-                    key={section.id}
-                    id={`${panelId}-tab-${section.id}`}
-                    role="tab"
-                    aria-selected={selected}
-                    aria-controls={panelId}
-                    tabIndex={selected ? 0 : -1}
-                    className={styles.navItem}
-                    data-selected={selected || undefined}
-                    onClick={() => onSelect(section.id)}
-                    onKeyDown={(e) => handleTabKeyDown(e, idx)}
-                  >
-                    <span className={styles.navIcon} aria-hidden="true">
-                      {section.icon}
-                    </span>
-                    <span className={styles.navLabel}>{section.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </nav>
-
-          <div
-            role="tabpanel"
-            id={panelId}
-            aria-labelledby={`${panelId}-tab-${active}`}
-            className={styles.content}
+        {/* Section selector */}
+        <div className={styles.sectionBar}>
+          <select
+            ref={selectRef}
+            className={styles.sectionSelect}
+            value={active}
+            onChange={(e) => onSelect(e.target.value)}
+            aria-label="Preferences section"
           >
-            {children}
-          </div>
+            {sections.map((section) => (
+              <option key={section.id} value={section.id}>
+                {section.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Panel — full width */}
+        <div
+          role="region"
+          aria-label={activeLabel}
+          className={styles.content}
+        >
+          {children}
         </div>
       </div>
     </div>,

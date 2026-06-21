@@ -1,6 +1,5 @@
 // src/components/Preferences/Preferences.demo.tsx
 import { useState } from 'react'
-import { SlidersHorizontal, PaintBrush, Command } from '@phosphor-icons/react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
@@ -24,9 +23,9 @@ export const meta: DemoMeta = {
 // ── Sections ──────────────────────────────────────────────────────────────────
 
 const SECTIONS: PreferencesSection[] = [
-  { id: 'input',         label: 'Input',         icon: <SlidersHorizontal size={14} /> },
-  { id: 'look-and-feel', label: 'Look and feel', icon: <PaintBrush size={14} /> },
-  { id: 'shortcuts',     label: 'Shortcuts',      icon: <Command size={14} /> },
+  { id: 'input',         label: 'Input' },
+  { id: 'look-and-feel', label: 'Look and feel' },
+  { id: 'shortcuts',     label: 'Shortcuts' },
 ]
 
 // ── Stub data ─────────────────────────────────────────────────────────────────
