@@ -9,7 +9,7 @@ const INPUTS: InputEntry[] = [
   { id: 'in-3', name: 'Input 3' },
 ]
 
-const LABELLED_INPUTS: InputEntry[] = [
+const LABELLED: InputEntry[] = [
   { id: 'in-1', name: 'Input 1', label: 'Guitar - ez1073' },
   { id: 'in-2', name: 'Input 2', label: 'Bass DI' },
 ]
@@ -17,7 +17,7 @@ const LABELLED_INPUTS: InputEntry[] = [
 // ── Rendering ────────────────────────────────────────────────────────────────
 
 describe('InputLabels rendering', () => {
-  it('renders a list container', () => {
+  it('renders a labelled list', () => {
     const { getByRole } = render(
       <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
     )
@@ -31,7 +31,14 @@ describe('InputLabels rendering', () => {
     expect(getAllByRole('listitem')).toHaveLength(3)
   })
 
-  it('renders input names as dim labels', () => {
+  it('renders one textbox per input', () => {
+    const { getAllByRole } = render(
+      <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
+    )
+    expect(getAllByRole('textbox')).toHaveLength(3)
+  })
+
+  it('renders input name as visible label text', () => {
     const { getByText } = render(
       <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
     )
@@ -40,44 +47,51 @@ describe('InputLabels rendering', () => {
     expect(getByText('Input 3')).toBeInTheDocument()
   })
 
-  it('renders a text field for each input', () => {
-    const { getAllByRole } = render(
+  it('label htmlFor associates name with its textbox', () => {
+    const { getByLabelText } = render(
       <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
     )
-    expect(getAllByRole('textbox')).toHaveLength(3)
+    expect(getByLabelText('Input 1')).toBeInTheDocument()
+    expect(getByLabelText('Input 2')).toBeInTheDocument()
   })
 
-  it('fields are aria-labelled with the input name', () => {
-    const { getByRole } = render(
-      <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
+  it('shows existing label value in textbox', () => {
+    const { getByLabelText } = render(
+      <InputLabels inputs={LABELLED} onLabel={vi.fn()} />,
     )
-    expect(getByRole('textbox', { name: 'Label for Input 1' })).toBeInTheDocument()
-    expect(getByRole('textbox', { name: 'Label for Input 2' })).toBeInTheDocument()
+    expect(getByLabelText('Input 1')).toHaveValue('Guitar - ez1073')
+    expect(getByLabelText('Input 2')).toHaveValue('Bass DI')
   })
 
-  it('shows placeholder "add a label…" on empty fields', () => {
+  it('shows placeholder on empty fields', () => {
     const { getAllByPlaceholderText } = render(
       <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
     )
     expect(getAllByPlaceholderText('add a label…')).toHaveLength(3)
   })
 
-  it('shows existing label values', () => {
-    const { getByRole } = render(
-      <InputLabels inputs={LABELLED_INPUTS} onLabel={vi.fn()} />,
+  it('data-size is "md" by default', () => {
+    const { container } = render(
+      <InputLabels inputs={INPUTS} onLabel={vi.fn()} />,
     )
-    expect(getByRole('textbox', { name: 'Label for Input 1' })).toHaveValue('Guitar - ez1073')
-    expect(getByRole('textbox', { name: 'Label for Input 2' })).toHaveValue('Bass DI')
+    expect(container.firstChild).toHaveAttribute('data-size', 'md')
   })
 
-  it('renders empty-state message when inputs is empty', () => {
+  it('data-size is "sm" when size="sm"', () => {
+    const { container } = render(
+      <InputLabels inputs={INPUTS} onLabel={vi.fn()} size="sm" />,
+    )
+    expect(container.firstChild).toHaveAttribute('data-size', 'sm')
+  })
+
+  it('renders empty-state text when inputs is empty', () => {
     const { getByText } = render(
       <InputLabels inputs={[]} onLabel={vi.fn()} />,
     )
-    expect(getByText('No inputs available')).toBeInTheDocument()
+    expect(getByText(/no inputs/i)).toBeInTheDocument()
   })
 
-  it('empty list has no listitems', () => {
+  it('renders no listitems when inputs is empty', () => {
     const { queryAllByRole } = render(
       <InputLabels inputs={[]} onLabel={vi.fn()} />,
     )
@@ -85,57 +99,131 @@ describe('InputLabels rendering', () => {
   })
 })
 
-// ── Interaction ──────────────────────────────────────────────────────────────
+// ── Draft state (local edit buffer) ──────────────────────────────────────────
 
-describe('InputLabels interaction', () => {
-  it('fires onLabel with (id, label) when a field changes', () => {
-    const onLabel = vi.fn()
-    const { getByRole } = render(
-      <InputLabels inputs={INPUTS} onLabel={onLabel} />,
+describe('InputLabels draft state', () => {
+  it('typing updates the field immediately without waiting for onLabel', () => {
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1' }]} onLabel={() => {}} />,
     )
-    const field = getByRole('textbox', { name: 'Label for Input 1' })
+    const field = getByLabelText('Input 1')
     fireEvent.change(field, { target: { value: 'Kick' } })
-    expect(onLabel).toHaveBeenCalledOnce()
-    expect(onLabel).toHaveBeenCalledWith('in-1', 'Kick')
+    expect(field).toHaveValue('Kick')
   })
 
-  it('fires onLabel with the correct id for each field', () => {
+  it('draft changes do not call onLabel until committed', () => {
     const onLabel = vi.fn()
-    const { getByRole } = render(
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1' }]} onLabel={onLabel} />,
+    )
+    fireEvent.change(getByLabelText('Input 1'), { target: { value: 'Kick' } })
+    expect(onLabel).not.toHaveBeenCalled()
+  })
+})
+
+// ── Commit on blur ────────────────────────────────────────────────────────────
+
+describe('InputLabels blur commit', () => {
+  it('blur calls onLabel with the draft value', () => {
+    const onLabel = vi.fn()
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1' }]} onLabel={onLabel} />,
+    )
+    const field = getByLabelText('Input 1')
+    fireEvent.change(field, { target: { value: 'Bass DI' } })
+    fireEvent.blur(field)
+    expect(onLabel).toHaveBeenCalledOnce()
+    expect(onLabel).toHaveBeenCalledWith('1', 'Bass DI')
+  })
+
+  it('blur with correct id for each row', () => {
+    const onLabel = vi.fn()
+    const { getByLabelText } = render(
       <InputLabels inputs={INPUTS} onLabel={onLabel} />,
     )
-    fireEvent.change(
-      getByRole('textbox', { name: 'Label for Input 2' }),
-      { target: { value: 'Snare' } },
-    )
+    const field = getByLabelText('Input 2')
+    fireEvent.change(field, { target: { value: 'Snare' } })
+    fireEvent.blur(field)
     expect(onLabel).toHaveBeenCalledWith('in-2', 'Snare')
   })
 
-  it('fires onLabel with empty string when field is cleared', () => {
+  it('blur does NOT call onLabel when value is unchanged', () => {
     const onLabel = vi.fn()
-    const { getByRole } = render(
-      <InputLabels inputs={LABELLED_INPUTS} onLabel={onLabel} />,
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1', label: 'Guitar' }]} onLabel={onLabel} />,
     )
-    const field = getByRole('textbox', { name: 'Label for Input 1' })
-    fireEvent.change(field, { target: { value: '' } })
-    expect(onLabel).toHaveBeenCalledWith('in-1', '')
+    fireEvent.blur(getByLabelText('Input 1'))
+    expect(onLabel).not.toHaveBeenCalled()
   })
 
-  it('each field change fires independently', () => {
+  it('blur trims leading/trailing whitespace before saving', () => {
     const onLabel = vi.fn()
-    const { getByRole } = render(
-      <InputLabels inputs={INPUTS} onLabel={onLabel} />,
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1' }]} onLabel={onLabel} />,
     )
-    fireEvent.change(
-      getByRole('textbox', { name: 'Label for Input 1' }),
-      { target: { value: 'A' } },
+    const field = getByLabelText('Input 1')
+    fireEvent.change(field, { target: { value: '  Guitar  ' } })
+    fireEvent.blur(field)
+    expect(onLabel).toHaveBeenCalledWith('1', 'Guitar')
+  })
+})
+
+// ── Commit on Enter ───────────────────────────────────────────────────────────
+
+describe('InputLabels Enter commit', () => {
+  it('Enter calls onLabel with the draft value', () => {
+    const onLabel = vi.fn()
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1' }]} onLabel={onLabel} />,
     )
-    fireEvent.change(
-      getByRole('textbox', { name: 'Label for Input 3' }),
-      { target: { value: 'B' } },
+    const field = getByLabelText('Input 1')
+    fireEvent.change(field, { target: { value: 'Synth' } })
+    fireEvent.keyDown(field, { key: 'Enter' })
+    expect(onLabel).toHaveBeenCalledOnce()
+    expect(onLabel).toHaveBeenCalledWith('1', 'Synth')
+  })
+
+  it('Enter after Enter does NOT call onLabel a second time', () => {
+    const onLabel = vi.fn()
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1' }]} onLabel={onLabel} />,
     )
-    expect(onLabel).toHaveBeenCalledTimes(2)
-    expect(onLabel).toHaveBeenNthCalledWith(1, 'in-1', 'A')
-    expect(onLabel).toHaveBeenNthCalledWith(2, 'in-3', 'B')
+    const field = getByLabelText('Input 1')
+    fireEvent.change(field, { target: { value: 'Synth' } })
+    fireEvent.keyDown(field, { key: 'Enter' })
+    fireEvent.keyDown(field, { key: 'Enter' })
+    expect(onLabel).toHaveBeenCalledOnce()
+  })
+})
+
+// ── Revert on Escape ──────────────────────────────────────────────────────────
+
+describe('InputLabels Escape revert', () => {
+  it('Escape reverts draft to the last saved value', () => {
+    const onLabel = vi.fn()
+    const { getByLabelText } = render(
+      <InputLabels
+        inputs={[{ id: '1', name: 'Input 1', label: 'Guitar' }]}
+        onLabel={onLabel}
+      />,
+    )
+    const field = getByLabelText('Input 1')
+    fireEvent.change(field, { target: { value: 'Bass' } })
+    expect(field).toHaveValue('Bass')
+    fireEvent.keyDown(field, { key: 'Escape' })
+    expect(field).toHaveValue('Guitar')
+    expect(onLabel).not.toHaveBeenCalled()
+  })
+
+  it('Escape on a never-edited empty field stays empty', () => {
+    const onLabel = vi.fn()
+    const { getByLabelText } = render(
+      <InputLabels inputs={[{ id: '1', name: 'Input 1' }]} onLabel={onLabel} />,
+    )
+    const field = getByLabelText('Input 1')
+    fireEvent.change(field, { target: { value: 'Drums' } })
+    fireEvent.keyDown(field, { key: 'Escape' })
+    expect(field).toHaveValue('')
+    expect(onLabel).not.toHaveBeenCalled()
   })
 })

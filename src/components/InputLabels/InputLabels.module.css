@@ -1,12 +1,24 @@
 /* src/components/InputLabels/InputLabels.module.css */
 
-/* ── Root: scrollable recessed well ─────────────────────────────────────────── */
+/* ── Root ────────────────────────────────────────────────────────────────────── */
 
 .root {
   display: flex;
   flex-direction: column;
+  width: 100%;
   font-family: var(--font-ui);
+}
+
+/* ── List: scrollable recessed well ──────────────────────────────────────────── */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
+  max-height: 360px;
   background: var(--stage);
   border-radius: var(--radius);
   box-shadow:
@@ -15,66 +27,64 @@
     0 0 0 1px var(--border);
 }
 
-/* ── Row: input-name + field ─────────────────────────────────────────────────── */
+/* ── Row ─────────────────────────────────────────────────────────────────────── */
 
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 72px 1fr;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-1) var(--space-3);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* hairline highlight on first row */
+/* hairline separator between rows */
+.row + .row {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* hairline highlight at the top of the first row */
 .row:first-child {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.row:last-of-type {
-  border-bottom: none;
-}
+/* ── Name label ──────────────────────────────────────────────────────────────── */
 
-/* ── Input name (the dim left column) ───────────────────────────────────────── */
+/*
+  Acts as an HTML <label> (htmlFor wired to the TextField id), so clicking
+  "Input 1" focuses the editable field. cursor:text reinforces this.
+*/
 
-.inputName {
-  flex-shrink: 0;
-  width: 72px;
+.name {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: text;
+  user-select: none;
   line-height: 1;
-  /* vertically align with the field's text */
-  padding-top: 1px;
 }
 
-/* ── Field wrapper: grows to fill the row ───────────────────────────────────── */
+/* ── Size variant: sm squeezes the name col slightly ─────────────────────────── */
 
-.fieldWrap {
-  flex: 1;
-  min-width: 0;
+.root[data-size="sm"] .name {
+  font-size: var(--text-xs);
 }
 
-/* Stretch the TextField root (inline-flex by default) to fill the wrapper */
-.fieldWrap > * {
-  width: 100%;
-}
-
-/* ── Empty state ────────────────────────────────────────────────────────────── */
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
 
 .empty {
+  margin: 0;
   padding: var(--space-4) var(--space-3);
   font-size: var(--text-sm);
   color: var(--text-dim);
   text-align: center;
 }
 
-/* ── Reduced motion ─────────────────────────────────────────────────────────── */
+/* ── Reduced motion ──────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .root {
-    transition: none;
-  }
+  /* no transitions in this component */
 }
