@@ -118,7 +118,7 @@ export function ProjectPicker({
         <div className={styles.actions}>
           <p className={styles.sectionLabel}>Start</p>
 
-          <button className={styles.actionCard} onClick={onNew}>
+          <button className={styles.actionCard} onClick={onNew} aria-label="New">
             <span className={styles.actionIcon}>
               <FilePlus size={18} />
             </span>
