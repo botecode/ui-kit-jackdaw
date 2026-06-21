@@ -1,0 +1,208 @@
+/* src/components/NumberField/NumberField.module.css */
+
+/* ─── Root — the full recessed well ────────────────────────────────────────── */
+
+/*
+  The entire control (steppers + value area) lives inside one recessed well.
+  This reads as a single hardware display rather than three independent pieces.
+  align-items: stretch lets the stepper buttons and dividers fill the full height
+  without needing explicit height on every child.
+*/
+.root {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--stage);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--border);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+/* ─── Focus ring — keyboard-only, propagated from spinbutton to the full well ─ */
+
+/*
+  :has() elevates the focus signal from the inner readout div (which has
+  outline:none) to the outer recessed well — same pattern as TextField's
+  .field:has(:focus-visible). Incandescent attack timing on → slower decay off.
+*/
+.root:has(.readout:focus-visible) {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--accent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* Edit mode: keep the accent ring lit while the user types */
+.root[data-editing] {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--accent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Disabled ───────────────────────────────────────────────────────────────── */
+
+.root[data-disabled] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Sizes — root height drives everything via align-items:stretch ──────────── */
+
+.root[data-size="md"] {
+  height: 32px;
+}
+
+.root[data-size="sm"] {
+  height: 24px;
+}
+
+/* ─── Stepper buttons ────────────────────────────────────────────────────────── */
+
+/*
+  tabIndex=-1 keeps steppers out of the tab order (spinbutton covers keyboard).
+  onPointerDown+preventDefault prevents focus from leaving the spinbutton on click.
+  Immediate-press response on pointerDown (not onClick) feels like a hardware button.
+*/
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.stepper:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.stepper:disabled {
+  color: var(--text-dim);
+  cursor: default;
+  opacity: 0.35;
+}
+
+.root[data-size="md"] .stepper {
+  width: 24px;
+}
+
+.root[data-size="sm"] .stepper {
+  width: 18px;
+}
+
+/* ─── Hairline dividers ───────────────────────────────────────────────────────── */
+
+.divider {
+  width: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  /* Slightly darker than border so the groove reads inside the well */
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* ─── Value area — center flex slot ──────────────────────────────────────────── */
+
+.valueArea {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.root[data-size="md"] .valueArea {
+  padding: 0 var(--space-2);
+  min-width: 52px;
+}
+
+.root[data-size="sm"] .valueArea {
+  padding: 0 var(--space-1);
+  min-width: 36px;
+}
+
+/* ─── Readout — spinbutton target in display mode ────────────────────────────── */
+
+.readout {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 0;
+  cursor: ns-resize;
+  outline: none;  /* ring propagated to root via :has(.readout:focus-visible) */
+  user-select: none;
+}
+
+/* ns-resize cursor on the whole root while actively dragging */
+.root[data-dragging] {
+  cursor: ns-resize;
+}
+
+/* ─── Value text — mono digital readout ──────────────────────────────────────── */
+
+.valueText {
+  font-family: var(--font-mono);
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.root[data-size="md"] .valueText {
+  font-size: var(--text-base);
+}
+
+.root[data-size="sm"] .valueText {
+  font-size: var(--text-sm);
+}
+
+/* ─── Unit suffix ────────────────────────────────────────────────────────────── */
+
+.unit {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.root[data-size="md"] .unit {
+  font-size: var(--text-sm);
+}
+
+.root[data-size="sm"] .unit {
+  font-size: var(--text-xs);
+}
+
+/* ─── Edit input — replaces the spinbutton readout while typing ──────────────── */
+
+.editInput {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  color: var(--text);
+  caret-color: var(--accent);
+  text-align: right;
+  padding: 0;
+}
+
+.root[data-size="md"] .editInput {
+  font-size: var(--text-base);
+}
+
+.root[data-size="sm"] .editInput {
+  font-size: var(--text-sm);
+}
