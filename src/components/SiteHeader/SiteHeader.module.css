@@ -1,0 +1,456 @@
+/* src/components/SiteHeader/SiteHeader.module.css */
+
+/*
+  SiteHeader — sticky marketing nav.
+  Two skins on one element: TOP (transparent, floats over the hero) and SCROLLED
+  (a warm solid surface dropping in with a hairline + top-highlight + soft lift).
+  The transition is the classic crafted-site move; here it's done in Chroma
+  tokens so the storefront feels milled from the same block as the instrument.
+*/
+
+.root {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  /* The surface paints in via background + the keyline pseudo-element below.
+     Incandescent timing — quick to settle, slow to fade — keeps the drop honest. */
+  background: transparent;
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    backdrop-filter  var(--dur-led-off) var(--ease-out);
+}
+
+/* Bottom hairline + top-highlight, painted as a pseudo so it can fade
+   independently of the bar's own background. */
+.root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent),  /* hairline top-highlight */
+    inset 0 -1px 0 var(--border),                                   /* bottom keyline */
+    0 1px 0 color-mix(in srgb, var(--border) 60%, transparent),     /* faint cast under the line */
+    var(--shadow-sm);
+  opacity: 0;
+  transition: opacity var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-scrolled] {
+  background-color: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    backdrop-filter  var(--dur-led-on) var(--ease-out);
+}
+
+.root[data-scrolled]::after {
+  opacity: 1;
+  transition: opacity var(--dur-led-on) var(--ease-out);
+}
+
+/* Contained inner row.
+   container-type makes the bar respond to ITS OWN width, not the viewport — so
+   it collapses to the hamburger wherever it's dropped (narrow column, gallery
+   frame, real page) instead of only at a global breakpoint. Containment lives on
+   .inner, never .root, so the drawer's fixed scrim is not trapped by it. */
+.inner {
+  container-type: inline-size;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  max-width: 1120px;
+  margin: 0 auto;
+  height: 64px;
+  padding: 0 var(--space-6);
+}
+
+.root[data-size='sm'] .inner {
+  height: 52px;
+  padding: 0 var(--space-4);
+  gap: var(--space-4);
+}
+
+/* ── Brand ──────────────────────────────────────────────────────────────────── */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--text);
+  border-radius: var(--radius);
+  outline: none;
+  /* nudge the optical weight of the mark up to the cap line */
+  margin-right: var(--space-2);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.root[data-size='sm'] .wordmark { font-size: var(--text-md); }
+
+.brand:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 3px;
+}
+
+/* ── Desktop nav ────────────────────────────────────────────────────────────── */
+
+.nav {
+  margin-left: auto;   /* push links + CTA to the right, after the brand */
+}
+
+.navList {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+  Recessed-off, lit-on, the kit way: a link sits flush and quiet, then a soft
+  recessed pill wells in under the pointer (tactile press, not a web underline).
+  The current page stays lit — accent ink + a short LED bar beneath it.
+*/
+.navLink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  text-decoration: none;
+  outline: none;
+  transition:
+    color      var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.root[data-size='sm'] .navLink { height: 30px; padding: 0 var(--space-2); }
+
+.navLink:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.navLink:active {
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+
+.navLink:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Current page — lit accent ink + a short LED underline that glows. */
+.navLink[data-current] {
+  color: var(--accent);
+}
+
+.navLink[data-current]::after {
+  content: '';
+  position: absolute;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 6px 0 color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.root[data-size='sm'] .navLink[data-current]::after {
+  left: var(--space-2);
+  right: var(--space-2);
+}
+
+/* ── CTA — the one loud, lit element ────────────────────────────────────────── */
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  outline: none;
+  /* milled cap, not a flat web button: top highlight + grounded shadow */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 28%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, #000 16%, transparent),
+    0 1px 2px color-mix(in srgb, #000 24%, transparent);
+  transition:
+    box-shadow var(--dur-led-on) var(--ease-out),
+    filter     var(--dur-base) var(--ease-out),
+    transform  var(--dur-fast) var(--ease-out);
+}
+
+.root[data-size='sm'] .cta { height: 32px; padding: 0 var(--space-4); }
+
+/* Incandescent bloom on hover — the lamp warms up. */
+.cta:hover {
+  filter: brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 32%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, #000 16%, transparent),
+    0 2px 4px color-mix(in srgb, #000 26%, transparent),
+    0 0 16px 1px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.cta:active {
+  transform: translateY(1px);
+  filter: brightness(0.96);
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, #000 22%, transparent),
+    0 1px 1px color-mix(in srgb, #000 20%, transparent);
+}
+
+.cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 80%, transparent);
+  outline-offset: 3px;
+}
+
+/* ── Hamburger (mobile) ─────────────────────────────────────────────────────── */
+
+.hamburger {
+  display: none;   /* shown at the mobile breakpoint */
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  transition:
+    background   var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.hamburger:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border-color: var(--border-strong);
+}
+
+.hamburger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ── Drawer ─────────────────────────────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, #000 48%, transparent);
+  animation: siteheader-scrim-in var(--dur-base) var(--ease-out) both;
+}
+
+.drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(82vw, 320px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--surface);
+  background-image: var(--texture-paper);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  outline: none;
+  animation: siteheader-drawer-in var(--dur-slow) var(--ease-out) both;
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.drawerBrand {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.drawerClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  transition:
+    color        var(--dur-base) var(--ease-out),
+    background   var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.drawerClose:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border-color: var(--border-strong);
+}
+
+.drawerClose:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.drawerNav { margin: 0; }
+
+.drawerList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.drawerLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  text-decoration: none;
+  outline: none;
+  transition:
+    color      var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out);
+}
+
+.drawerLink:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.drawerLink:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+.drawerLink[data-current] {
+  color: var(--accent);
+}
+
+/* Lit dot marking the current page in the stacked list. */
+.drawerLink[data-current]::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px 0 color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.drawerCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  margin-top: auto;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 28%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, #000 16%, transparent),
+    0 1px 2px color-mix(in srgb, #000 24%, transparent);
+  transition:
+    box-shadow var(--dur-led-on) var(--ease-out),
+    filter     var(--dur-base) var(--ease-out),
+    transform  var(--dur-fast) var(--ease-out);
+}
+
+.drawerCta:hover {
+  filter: brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 32%, transparent),
+    0 0 16px 1px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.drawerCta:active { transform: translateY(1px); filter: brightness(0.96); }
+
+.drawerCta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 80%, transparent);
+  outline-offset: 3px;
+}
+
+/* ── Responsive: collapse to hamburger ──────────────────────────────────────── */
+
+@container (max-width: 720px) {
+  .nav, .cta { display: none; }
+  .hamburger { display: inline-flex; }
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────────── */
+
+@keyframes siteheader-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes siteheader-drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* Decorative motion snaps; the state (open/scrolled) still lands. */
+@media (prefers-reduced-motion: reduce) {
+  .scrim, .drawer { animation: none; }
+}
