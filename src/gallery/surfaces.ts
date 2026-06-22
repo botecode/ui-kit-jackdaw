@@ -46,6 +46,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   PricingPlans: ['web'],
   ProductFrame: ['web'],
   Showcase: ['web'],
+  SiteFooter: ['web'],
   SiteHeader: ['web'],
   SpecStrip: ['web'],
 
@@ -98,13 +99,23 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   ImportFirst: ['app', 'daw'],
   IncomingManifest: ['app', 'daw'],
   LookAndFeelPanel: ['app', 'daw'],
+  LyricCRUD: ['app', 'daw'],
   NavRail: ['app', 'daw'],
+  PairQRCode: ['app', 'daw'], // pairing bridges the phone companion and the desktop DAW
   Preferences: ['app', 'daw'],
   ProjectPicker: ['app', 'daw'],
   Shortcuts: ['app', 'daw'],
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],
   Versions: ['app', 'daw'],
+  VoiceIdeaCRUD: ['app', 'daw'],
+
+  // ── Mobile companion app surfaces (app only) ───────────────────────────────
+  MobileRecordButton: ['app'],
+  MobileSegmented: ['app'],
+  MobileTabBar: ['app'],
+  MobileTopBar: ['app'],
+  RadioPlayer: ['app'],
 
   // ── DAW workspace only ─────────────────────────────────────────────────────
   AnnotationLane: ['daw'],
