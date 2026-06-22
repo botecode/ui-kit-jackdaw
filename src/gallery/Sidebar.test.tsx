@@ -43,6 +43,26 @@ describe('Sidebar surface filter', () => {
     expect(screen.queryByRole('link', { name: 'Fader' })).not.toBeInTheDocument()
   })
 
+  it('does not leak an app-only component (MobileTabBar) into DAW or Web', () => {
+    renderSidebar()
+    fireEvent.click(screen.getByRole('radio', { name: 'App' }))
+    expect(screen.getByRole('link', { name: 'MobileTabBar' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: 'DAW' }))
+    expect(screen.queryByRole('link', { name: 'MobileTabBar' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: 'Web' }))
+    expect(screen.queryByRole('link', { name: 'MobileTabBar' })).not.toBeInTheDocument()
+  })
+
+  it('narrows search results to the active surface', () => {
+    renderSidebar()
+    // "Mobile" matches several app-only cards; under DAW none should remain.
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Mobile' } })
+    fireEvent.click(screen.getByRole('radio', { name: 'App' }))
+    expect(screen.getByRole('link', { name: 'MobileTabBar' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: 'DAW' }))
+    expect(screen.queryByRole('link', { name: 'MobileTabBar' })).not.toBeInTheDocument()
+  })
+
   it('keeps cross-cutting Foundation links visible on every surface', () => {
     renderSidebar()
     fireEvent.click(screen.getByRole('radio', { name: 'Web' }))

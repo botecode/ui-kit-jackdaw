@@ -32,6 +32,8 @@ const ALL: Surface[] = ['web', 'app', 'daw']
 //     timeline, FX/automation/phase) → daw.
 //   • In-product chrome that isn't on the marketing site (shells, settings,
 //     project/idea management, collaboration) → app + daw.
+//   • Mobile companion surfaces (mobile chrome, on-the-go idea capture, the
+//     pocket radio) → app only.
 //   • Auth / onboarding / support, shown on the site and in the app → web + app.
 //   • Marketing/landing building blocks → web.
 // When unsure, prefer the broader tag — the filter is a convenience, not a wall.
@@ -54,6 +56,15 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   PasswordEntry: ['web', 'app'],
   OnboardingStep: ['web', 'app'],
   SupportFlow: ['web', 'app'],
+
+  // ── Mobile companion app only (app) ────────────────────────────────────────
+  LyricCRUD: ['app'],
+  MobileRecordButton: ['app'],
+  MobileSegmented: ['app'],
+  MobileTabBar: ['app'],
+  MobileTopBar: ['app'],
+  RadioPlayer: ['app'],
+  VoiceIdeaCRUD: ['app'],
 
   // ── Generic UI primitives (everywhere) ─────────────────────────────────────
   Avatar: ALL,
