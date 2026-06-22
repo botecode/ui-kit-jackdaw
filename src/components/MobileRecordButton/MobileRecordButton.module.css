@@ -1,0 +1,252 @@
+/* src/components/MobileRecordButton/MobileRecordButton.module.css */
+
+/*
+  The Walkman record key — the centerpiece of the mobile Record tab.
+
+  Chroma split of motion:
+  - The press (translate/scale + well deepening) is DECORATIVE → driven by
+    --dur-fast, so it snaps flat under prefers-reduced-motion.
+  - The red LED bloom is STATE-CARRYING → incandescent timing (fast attack
+    --dur-led-on / slow decay --dur-led-off); it survives reduced-motion as a
+    static lit state (the tokens zero the duration, not the lit value).
+  - The level meter is FUNCTIONAL → a fixed 90ms ease, NOT a --dur token, so it
+    keeps tracking input even under reduced-motion.
+*/
+
+/* ─── Root (vertical stack) ───────────────────────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── The key (the big tactile press target) ──────────────────────────────── */
+
+.key {
+  --_bloom: 0 0 0 transparent;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  /* Warm raised hardware key: surface gradient + hairline top-highlight (inset)
+     + soft outer depth shadow. */
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface-2) 70%, var(--bg)) 0%,
+      var(--surface) 100%);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--stage-text) 14%, transparent),
+    var(--shadow-md),
+    var(--_bloom);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  /* Decorative settle of the key body — snaps under reduced-motion. */
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out),
+    border-color var(--dur-led-off) var(--ease-out);
+}
+
+.key[data-size="md"] { width: 116px; height: 116px; }
+.key[data-size="sm"] { width: 84px;  height: 84px;  }
+
+/* ─── Press feel — punch it in ────────────────────────────────────────────── */
+
+.key:active:not(:disabled) {
+  transform: translateY(2px) scale(0.97);
+  /* Well deepens: outer depth collapses, inner shadow bites. */
+  box-shadow:
+    inset 0 2px 5px 0 rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 0 color-mix(in srgb, var(--stage-text) 10%, transparent),
+    var(--_bloom);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.key:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.key:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-red) 70%, transparent);
+  outline-offset: 3px;
+}
+
+/* ─── Recording — LED lit, key seated in, red bloom ───────────────────────── */
+
+.key[data-state="recording"] {
+  --_bloom:
+    0 0 16px 4px color-mix(in srgb, var(--led-red) 45%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--led-red) 60%, transparent);
+  border-color: color-mix(in srgb, var(--led-red) 55%, var(--border-strong));
+  /* Seated: the recessed well of a held-down hardware key (fast attack). */
+  box-shadow:
+    inset 0 2px 6px 0 rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 color-mix(in srgb, var(--stage-text) 10%, transparent),
+    var(--_bloom);
+  transition: box-shadow var(--dur-led-on) var(--ease-out),
+              border-color var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Disabled — no mic permission ────────────────────────────────────────── */
+
+.key:disabled {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.45;
+  box-shadow:
+    inset 0 1px 3px 0 rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+/* ─── Glyph (bespoke dot ↔ stop-square) ───────────────────────────────────── */
+
+.face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.glyph { display: block; }
+.key[data-size="md"] .glyph { width: 44px; height: 44px; }
+.key[data-size="sm"] .glyph { width: 32px; height: 32px; }
+
+.glyphShape {
+  /* Idle/stopped: matte deep red, fully rounded → the record DOT. The red is
+     the record meaning (KIT-LEAD §6 semantic LED), matte because the key is
+     recessed-off here. */
+  fill: var(--led-red-deep);
+  rx: 6px;
+  ry: 6px;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    fill var(--dur-led-off) var(--ease-out),
+    rx var(--dur-base) var(--ease-out),
+    ry var(--dur-base) var(--ease-out);
+}
+
+/* Recording: bright lit red with bloom, glyph squares off → the STOP affordance. */
+.glyphShape[data-recording] {
+  fill: var(--led-red);
+  rx: 2.5px;
+  ry: 2.5px;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--led-red) 75%, transparent));
+  transition:
+    fill var(--dur-led-on) var(--ease-out),
+    rx var(--dur-base) var(--ease-out),
+    ry var(--dur-base) var(--ease-out);
+}
+
+/* Stopped: take captured — dim the dot a touch so it reads "done, not armed". */
+.key[data-state="stopped"] .glyphShape {
+  fill: color-mix(in srgb, var(--led-red-deep) 80%, var(--stage));
+}
+
+.micGlyph { color: var(--text-dim); }
+
+/* ─── Readout (m:ss timer) ────────────────────────────────────────────────── */
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  min-height: 1em;
+}
+
+.timer {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+  transition: color var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-size="md"] .timer { font-size: var(--text-display); }
+.root[data-size="sm"] .timer { font-size: var(--text-lg); }
+
+/* Live take: the readout lights to the record red while rolling. */
+.root[data-state="recording"] .timer {
+  color: var(--led-red);
+  transition: color var(--dur-led-on) var(--ease-out);
+}
+/* Captured take: legible but quiet. */
+.root[data-state="stopped"] .timer { color: var(--text-muted); }
+
+/* ─── Level meter (simple, native-drawable) ───────────────────────────────── */
+
+/*
+  A single horizontal level bar — a width-driven fill behind a segment mask, so
+  it's trivially native-drawable (a Box with animated width + a striped overlay
+  in Compose) rather than the full segmented Meter. The fill transition is a
+  fixed 90ms (NOT a --dur token) because a meter is functional motion: it must
+  keep tracking input even under prefers-reduced-motion.
+*/
+.meter {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--stage);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.root[data-size="md"] .meter { width: 128px; height: 8px; }
+.root[data-size="sm"] .meter { width: 96px;  height: 6px; }
+
+.meterFill {
+  width: 100%;
+  height: 100%;
+  /* Green safe → amber hot → red clip across the full travel. Token-driven so
+     it reskins per theme. */
+  background: linear-gradient(90deg,
+    var(--led-green) 0%,
+    var(--led-green) 55%,
+    var(--led-yellow) 78%,
+    var(--led-red) 100%);
+  /* Reveal by clipping from the right (--clip = unfilled remainder) rather than
+     animating width — compositor-friendly, no layout thrash, and the gradient
+     stays mapped to the full track so partial levels still read green-first. */
+  clip-path: inset(0 var(--clip, 100%) 0 0);
+  transition: clip-path 90ms linear;
+}
+
+/* Segment gaps — a repeating transparent comb over the fill. */
+.meterMask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(90deg,
+    transparent 0,
+    transparent 7px,
+    var(--stage) 7px,
+    var(--stage) 9px);
+}
+
+/* ─── Status caption ──────────────────────────────────────────────────────── */
+
+.status {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-state="recording"] .status { color: var(--led-red); }
+.root[data-state="disabled"] .status {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
