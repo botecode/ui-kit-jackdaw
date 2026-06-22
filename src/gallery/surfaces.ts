@@ -47,7 +47,15 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   ProductFrame: ['web'],
   Showcase: ['web'],
   SiteHeader: ['web'],
+  SiteFooter: ['web'],
   SpecStrip: ['web'],
+
+  // ── Mobile companion app (phone) ───────────────────────────────────────────
+  MobileTopBar: ['app'],
+  MobileTabBar: ['app'],
+  MobileSegmented: ['app'],
+  MobileRecordButton: ['app'],
+  RadioPlayer: ['app'],
 
   // ── Auth / onboarding / support (site + app) ───────────────────────────────
   PasswordEntry: ['web', 'app'],
@@ -96,7 +104,10 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   ExportDialog: ['app', 'daw'],
   IdeasLibrary: ['app', 'daw'],
   ImportFirst: ['app', 'daw'],
+  LyricCRUD: ['app', 'daw'],
+  VoiceIdeaCRUD: ['app', 'daw'],
   IncomingManifest: ['app', 'daw'],
+  IncomingShare: ['app'],
   LookAndFeelPanel: ['app', 'daw'],
   NavRail: ['app', 'daw'],
   Preferences: ['app', 'daw'],
