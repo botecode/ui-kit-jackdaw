@@ -10,6 +10,9 @@ export interface DemoMeta {
   // The surface(s) a component is used on (web / app / daw). Optional in a
   // demo's own `meta` — the registry fills it from the central tag map
   // (`surfacesFor`) so every entry in DEMOS carries a resolved surface list.
+  // Convention: every new component must be tagged in `SURFACE_TAGS`
+  // (surfaces.ts), or it falls back to all three surfaces and shows under every
+  // tab. `surfaceCoverage.test.ts` enforces this so it can't silently regress.
   surface?: Surface[]
 }
 
