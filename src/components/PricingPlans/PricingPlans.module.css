@@ -1,0 +1,20 @@
+/* src/components/PricingPlans/PricingPlans.module.css */
+
+/* Cards side by side, equal height, stacking to one column when the rack gets
+   narrow. auto-fit + minmax does the responsive collapse with no breakpoints —
+   the track width drives it, so it stacks inside any container, not just at a
+   global viewport size. align-items:stretch + the cards' own height:100% keeps
+   every column the same height so the CTAs share one baseline. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+/* sm packs tighter — smaller cards, smaller gutter. */
+.grid[data-size='sm'] {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-5);
+}

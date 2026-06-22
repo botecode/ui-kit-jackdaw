@@ -1,0 +1,239 @@
+/* src/components/PricingPlans/PlanCard.module.css */
+
+/* ─── Card ──────────────────────────────────────────────────────────────────
+   Warm cream module. Sits quiet by default; the recommended variant lights.
+   Flex column with the feature list flexing so the CTA pins to the bottom edge
+   — that baseline is what keeps a row of cards reading as one rack. */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--space-6);
+  gap: var(--space-5);
+
+  font-family: var(--font-ui);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  /* Soft drop + hairline top-highlight: a crafted, lifted-off-the-paper feel. */
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    border-color var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.card[data-size='sm'] {
+  padding: var(--space-5);
+  gap: var(--space-4);
+}
+
+/* Quiet hover on an unlit card — a small, tactile lift. */
+.card:not([data-recommended]):not([data-disabled]):hover {
+  transform: translateY(-2px);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* ─── Recommended — the lit module ──────────────────────────────────────────
+   Accent keyline + a warm bloom, raised above the recessed siblings. The bloom
+   is built from the accent via color-mix so it reskins through every theme. */
+.card[data-recommended] {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 10px 28px color-mix(in srgb, var(--accent) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.card[data-recommended]:hover {
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 12px 34px color-mix(in srgb, var(--accent) 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Disabled — a plan that isn't available yet ─────────────────────────────*/
+.card[data-disabled] {
+  opacity: 0.55;
+}
+
+/* ─── Recommended badge — straddles the top keyline like a labelled tab ──────*/
+.badgeSlot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────────*/
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.card[data-size='sm'] .name {
+  font-size: var(--text-base);
+}
+
+.price {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.amount,
+.free {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-display);
+  color: var(--text);
+}
+
+.card[data-size='sm'] .amount,
+.card[data-size='sm'] .free {
+  font-size: var(--text-lg);
+}
+
+.unit {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.tagline {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+}
+
+/* ─── Features ───────────────────────────────────────────────────────────────
+   Flexes to fill the card so the CTA pins to the bottom and all cards align. */
+.features {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  color: var(--text);
+}
+
+/* Warm accent check — the brand's signature colour, carrying "included". */
+.check {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+/* ─── CTA ─────────────────────────────────────────────────────────────────────
+   Default: ghost outline button. Recommended: incandescent accent fill. */
+.cta {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3) var(--space-4);
+
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  text-align: center;
+  color: var(--text);
+
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+
+  transition:
+    color var(--dur-led-on) var(--ease-out),
+    background var(--dur-led-on) var(--ease-out),
+    border-color var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.card[data-size='sm'] .cta {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.cta:hover {
+  background: var(--surface-2);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Recommended CTA — lit accent with an incandescent bloom. */
+.cta[data-recommended] {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: transparent;
+  box-shadow:
+    0 0 14px 1px color-mix(in srgb, var(--accent) 38%, transparent),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.cta[data-recommended]:hover {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+  box-shadow:
+    0 0 22px 4px color-mix(in srgb, var(--accent) 48%, transparent),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.cta[data-recommended]:focus-visible {
+  outline: 2px solid var(--accent-contrast);
+  outline-offset: -4px;
+}
+
+/* Disabled CTA — no lift, no glow, not interactive. */
+.cta:disabled {
+  cursor: not-allowed;
+  background: none;
+  color: var(--text-dim);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* Decorative lift snaps under reduced motion; the accent bloom (not state-
+   carrying here) is fine to keep, but transforms read better snapped. */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card[data-recommended],
+  .card:not([data-recommended]):not([data-disabled]):hover {
+    transform: none;
+  }
+}
