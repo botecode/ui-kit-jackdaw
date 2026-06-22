@@ -6,7 +6,16 @@ import { ThemeSwitcher } from './ui/ThemeSwitcher'
 import { useHashRoute } from './useHashRoute'
 import { SidebarSearch } from './SidebarSearch'
 import { filterByName } from './gallerySearch'
+import { SURFACES, SURFACE_LABELS, filterBySurface, type Surface } from './surfaces'
+import { SegmentedControl } from '../components/SegmentedControl'
 import styles from './Sidebar.module.css'
+
+// Primary nav axis: which surface the viewer is browsing. 'all' is the default.
+type SurfaceFilter = Surface | 'all'
+const SURFACE_OPTIONS = [
+  { value: 'all', label: 'All' },
+  ...SURFACES.map(s => ({ value: s, label: SURFACE_LABELS[s] })),
+]
 
 type Group = 'Foundations' | 'Primitives' | 'Composites'
 const GROUPS: Group[] = ['Foundations', 'Primitives', 'Composites']
@@ -19,6 +28,7 @@ const FOUNDATION_LINKS = [
 export function Sidebar() {
   const route = useHashRoute()
   const [query, setQuery] = useState('')
+  const [surface, setSurface] = useState<SurfaceFilter>('all')
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Global keyboard shortcut: / or ⌘F (⌃F) focuses the search input
@@ -67,21 +77,24 @@ export function Sidebar() {
   const filteredLiveByGroup = useMemo<Record<Group, DemoMeta[]>>(() => {
     const map: Record<Group, DemoMeta[]> = { Foundations: [], Primitives: [], Composites: [] }
     for (const g of GROUPS) {
-      map[g] = filterByName(
-        liveByGroup[g].slice().sort((a, b) => a.order - b.order),
-        query,
+      map[g] = filterBySurface(
+        filterByName(
+          liveByGroup[g].slice().sort((a, b) => a.order - b.order),
+          query,
+        ),
+        surface,
       )
     }
     return map
-  }, [liveByGroup, query])
+  }, [liveByGroup, query, surface])
 
   const filteredPlannedByGroup = useMemo<Record<Group, typeof PLANNED>>(() => {
     const map: Record<Group, typeof PLANNED> = { Foundations: [], Primitives: [], Composites: [] }
     for (const g of GROUPS) {
-      map[g] = filterByName(plannedByGroup[g], query)
+      map[g] = filterBySurface(filterByName(plannedByGroup[g], query), surface)
     }
     return map
-  }, [plannedByGroup, query])
+  }, [plannedByGroup, query, surface])
 
   const hasAnyResult =
     filteredFoundationLinks.length > 0 ||
@@ -101,6 +114,15 @@ export function Sidebar() {
           onChange={setQuery}
           onClear={() => setQuery('')}
           inputRef={inputRef}
+        />
+      </div>
+      <div className={styles.surfaceWrap}>
+        <SegmentedControl
+          aria-label="Filter components by surface"
+          size="sm"
+          options={SURFACE_OPTIONS}
+          value={surface}
+          onChange={v => setSurface(v as SurfaceFilter)}
         />
       </div>
       <div className={styles.nav}>

@@ -82,6 +82,11 @@
   border-bottom: 1px solid var(--border);
 }
 
+.surfaceWrap {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
 .emptyState {
   padding: var(--space-3) var(--space-4);
   font-family: var(--font-ui);
