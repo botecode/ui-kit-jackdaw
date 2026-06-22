@@ -1,0 +1,117 @@
+/* src/components/MobileTopBar/MobileTopBar.module.css */
+
+/*
+  MobileTopBar — the app's milled top chrome.
+  A thin, calm warm surface closed by ONE hairline bottom keyline plus a 1px
+  top-highlight, so it reads as a panel edge catching light rather than a Material
+  elevation shadow. Three grid tracks (1fr · auto · 1fr) keep the centered wordmark
+  optically true regardless of the optional left slot. Tokens only — reskins through
+  every theme, verified on cream + dark.
+*/
+
+.root {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  background-image: var(--texture-paper);
+  /* The whole hardware feel lives in this one line: a hairline bottom keyline,
+     a faint cast beneath it, and a 1px top-highlight catching light. No float. */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent),
+    inset 0 -1px 0 var(--border),
+    0 1px 0 color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.root[data-size='sm'] {
+  height: 44px;
+  padding: 0 var(--space-2);
+}
+
+/* ── Left / right tracks ────────────────────────────────────────────────────── */
+
+.left {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-1);
+  min-height: 1px;        /* hold the track even when empty */
+}
+
+.right {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+}
+
+/* ── Centered wordmark ──────────────────────────────────────────────────────── */
+
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  justify-self: center;
+  gap: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.root[data-size='sm'] .brand { font-size: var(--text-base); }
+
+.brandHead { color: var(--text); }
+
+/* The ".nest" tail engraved a step quieter, like a domain TLD. */
+.brandTail { color: var(--text-dim); }
+
+/* ── QR / sync action — recessed well, presses like a physical key ──────────── */
+
+.sync {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* Recessed-off: sits slightly sunken in the bar, quiet ink. */
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--text) 7%, transparent);
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  transition:
+    color        var(--dur-base) var(--ease-out),
+    background   var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow   var(--dur-fast) var(--ease-out),
+    transform    var(--dur-fast) var(--ease-out);
+}
+
+.root[data-size='sm'] .sync { width: 32px; height: 32px; }
+
+.sync:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-color: var(--border-strong);
+}
+
+/* Action pressed — the key sinks 1px and the well deepens. */
+.sync:active {
+  transform: translateY(1px);
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: inset 0 2px 3px color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+.sync:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
