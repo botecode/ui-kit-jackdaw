@@ -1,0 +1,114 @@
+/* src/components/SpecStrip/SpecStrip.module.css */
+
+/*
+  SpecStrip — a recessed spec plate.
+
+  Layout: .root is the sunken stage well (recess shadow + hairline keyline + a
+  faint top highlight). .grid is a true CSS grid whose own background is the
+  divider colour; the cells sit on the stage and the 1px grid gaps reveal etched
+  hairlines. Because the columns are a real grid, the hairlines stay aligned when
+  the band wraps to two rows — a clean spec sheet, never a stray pipe at a row
+  edge. Responsiveness = dropping columns (auto-fit), so it reflows without
+  clipping and without a scrollbar.
+*/
+
+.root {
+  /* tunables — overridden per size */
+  --_col: 150px;
+  --_pad-y: var(--space-4);
+  --_pad-x: var(--space-4);
+  --_value-size: var(--text-lg);
+  --_divider: color-mix(in srgb, var(--stage-text) 14%, transparent);
+
+  position: relative;
+  display: block;
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--stage-text) 7%, transparent),
+    inset 0 2px 7px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--border);
+}
+
+.root[data-size='sm'] {
+  --_col: 116px;
+  --_pad-y: var(--space-3);
+  --_pad-x: var(--space-3);
+  --_value-size: var(--text-md);
+}
+
+/* ── The etched readout grid ──────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--_col), 1fr));
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--_divider);
+  border-radius: calc(var(--radius) - 2px);
+  overflow: hidden; /* clip cell corners to the grid radius */
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 64px;
+  padding: var(--_pad-y) var(--_pad-x);
+  text-align: center;
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+}
+
+.root[data-size='sm'] .item { min-height: 52px; }
+
+/* ── Readout type ─────────────────────────────────────────────────────────── */
+
+.value {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--_value-size);
+  line-height: var(--leading-lg);
+  letter-spacing: 0.01em;
+  color: var(--stage-text);
+  /* faint phosphor lift so the readout glows against the dark plate */
+  text-shadow: 0 0 1px color-mix(in srgb, var(--stage-text) 22%, transparent);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-normal);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--stage-text) 52%, transparent);
+}
+
+/* Terse phrases read a touch quieter than hard stats — they're prose, not data. */
+.item[data-phrase] .value {
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+}
+
+/* ── Empty groove ─────────────────────────────────────────────────────────── */
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  font-family: var(--font-mono);
+  font-size: var(--_value-size);
+  color: color-mix(in srgb, var(--stage-text) 30%, transparent);
+}
+
+.root[data-size='sm'] .placeholder { min-height: 52px; }
