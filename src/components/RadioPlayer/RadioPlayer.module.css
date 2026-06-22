@@ -1,0 +1,243 @@
+/* src/components/RadioPlayer/RadioPlayer.module.css */
+
+/* ─── Root — a warm raised handset on the page ───────────────────────────────── */
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: calc(var(--radius) + 5px);
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),   /* hairline top-highlight */
+    0 0 0 1px var(--border),
+    var(--shadow-md);
+  font-family: var(--font-ui);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-size="sm"] {
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.root[data-disabled] {
+  opacity: 0.6;
+}
+
+/* ─── Readout panel — recessed black LED well ────────────────────────────────── */
+
+.panel {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 200px;
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--stage);
+  background-image: var(--texture-stage, none);
+  background-blend-mode: multiply;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+  transition: box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-size="sm"] .panel {
+  min-width: 168px;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* Rolling — the panel picks up a faint green keyline + bloom (fast attack). */
+.root[data-playing] .panel {
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.55),
+    inset 0 0 18px color-mix(in srgb, var(--led-green) 14%, transparent),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px color-mix(in srgb, var(--led-green) 45%, var(--border));
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.root[data-empty] .panel,
+.root[data-disabled] .panel {
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+/* CRT scanline veil — decorative; snaps off under reduced motion (static). */
+.scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.22) 3px
+  );
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+}
+
+/* Transition wipe — a quick brightening sweep when the idea changes. */
+.root[data-transition] .panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    color-mix(in srgb, var(--led-green) 22%, transparent) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: rp-wipe 0.36s var(--ease-out) 1;
+}
+
+@keyframes rp-wipe {
+  from { background-position: 130% 0; }
+  to   { background-position: -30% 0; }
+}
+
+/* ─── Rows ───────────────────────────────────────────────────────────────────── */
+
+.statusRow {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.titleRow {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.status { flex: 0 1 auto; min-width: 0; }
+.time   { flex: none; }
+.title  { display: block; }
+
+/* ─── Matrix lines (SVG) ─────────────────────────────────────────────────────── */
+
+.line {
+  display: block;
+}
+
+/* Fluid line (the title) fills the row and clips its scrolling content. */
+.lineFluid {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Off dots — dim green tint so the panel reads "powered" even when dark. */
+.dotOff {
+  fill: color-mix(in srgb, var(--led-green) 16%, transparent);
+}
+
+/* Lit dots — bright LED green with a soft incandescent core. */
+.dotOn {
+  fill: var(--led-green);
+}
+
+/* Group-level bloom — one filter for the whole message (cheap, crisp dots). */
+.lit,
+.litScroll {
+  filter: drop-shadow(0 0 1.4px color-mix(in srgb, var(--led-green-core, var(--led-green)) 80%, transparent));
+}
+
+/* Constant-velocity LED ticker — enters from the right, exits left, repeats. */
+.litScroll {
+  animation: rp-ticker var(--rp-dur, 6s) linear infinite;
+  will-change: transform;
+}
+
+@keyframes rp-ticker {
+  from { transform: translateX(var(--rp-from, 0)); }
+  to   { transform: translateX(var(--rp-to, 0)); }
+}
+
+/* ─── Transport ──────────────────────────────────────────────────────────────── */
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+/* Next — a recessed momentary button, sibling to the kit TransportButton. */
+.next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+
+  background-color: var(--stage);
+  color: var(--text-dim);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  transition:
+    color var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out),
+    filter var(--dur-base) var(--ease-out);
+}
+
+.next[data-size="md"] { width: 36px; height: 36px; }
+.next[data-size="sm"] { width: 28px; height: 28px; }
+
+.next:hover:not(:disabled) {
+  filter: brightness(1.08);
+  color: color-mix(in srgb, var(--led-green) 60%, var(--text-dim));
+}
+
+.next:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+.next:focus-visible {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 2px color-mix(in srgb, var(--led-green) 70%, transparent);
+  color: color-mix(in srgb, var(--led-green) 60%, var(--text-dim));
+}
+
+.next:disabled {
+  cursor: default;
+}
+
+/* ─── Reduced motion — decorative motion snaps; the green bloom + tick stay ───── */
+
+@media (prefers-reduced-motion: reduce) {
+  .litScroll {
+    animation: none;
+    transform: none;
+  }
+  .root[data-transition] .panel::after {
+    animation: none;
+    display: none;
+  }
+}
