@@ -1,0 +1,129 @@
+/* Marquee — infinite horizontal ticker.
+   Warm cream surface, mono keyword type, a recessed→accent LED dot punctuating
+   each item. The page's idle heartbeat: quiet, continuous, hardware — not a
+   web banner. Motion is CSS-only (keyframes); JS only feeds the duration. */
+
+.root {
+  --_marquee-fade: var(--space-12);
+  --_marquee-gap: var(--space-8);
+  --_marquee-dot: 5px;
+
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  /* Edge fade-out at both ends — alpha mask, so it works in every theme with
+     no color token. Content dissolves into the surface rather than hard-cutting. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--_marquee-fade),
+    #000 calc(100% - var(--_marquee-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--_marquee-fade),
+    #000 calc(100% - var(--_marquee-fade)),
+    transparent 100%
+  );
+}
+
+.root[data-size='sm'] {
+  --_marquee-fade: var(--space-8);
+  --_marquee-gap: var(--space-6);
+  --_marquee-dot: 4px;
+}
+
+.viewport {
+  display: flex;
+  width: 100%;
+}
+
+/* The single animated element. Holds both content copies (so it is twice the
+   visible content width); translating it by -50% advances exactly one copy. */
+.lane {
+  display: flex;
+  flex-shrink: 0;
+  min-width: 100%;
+  width: max-content;
+  animation: marquee-scroll var(--_marquee-duration, 0s) linear infinite;
+}
+
+.root[data-direction='right'] .lane {
+  animation-direction: reverse;
+}
+
+/* Pause on hover — pure CSS, no JS. */
+.root[data-pause-on-hover]:hover .lane {
+  animation-play-state: paused;
+}
+
+/* Before the width is measured (duration 0) keep the lane still. */
+.root[data-paused] .lane {
+  animation-play-state: paused;
+}
+
+.track {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--_marquee-gap);
+  padding-right: var(--_marquee-gap);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--_marquee-gap);
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.root[data-size='sm'] .item {
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+}
+
+/* Recessed LED dot trailing each item — the ticker's punctuation. Sits in a
+   shallow well (inset shadow) and reads as a dim warm accent: hardware idling. */
+.dot {
+  flex-shrink: 0;
+  width: var(--_marquee-dot);
+  height: var(--_marquee-dot);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent),
+    inset 0 1px 1px color-mix(in srgb, #000 25%, transparent),
+    0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced motion: the scroll is decorative, so it stops. The component already
+   renders a single static track (no clone); belt-and-suspenders the animation
+   off here too in case the JS branch is bypassed. */
+@media (prefers-reduced-motion: reduce) {
+  .lane {
+    animation: none;
+  }
+}
+
+.root[data-reduced] .lane {
+  animation: none;
+}
