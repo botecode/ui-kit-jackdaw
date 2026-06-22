@@ -1,0 +1,370 @@
+/* src/components/Hero/Hero.module.css */
+
+/*
+  Hero — the landing centerpiece.
+  Warm paper surface + grain, fluid display headline, engraved-mono eyebrow with
+  an LED dot, tactile CTAs, and a product visual sunk into a recessed stage well.
+  Tokens only — reskins through every theme.
+*/
+
+.root {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--bg);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  color: var(--text);
+  /* Generous, fluid whitespace — hardware breathing room, not a tight web band. */
+  padding: clamp(var(--space-12), 8vw, 96px) clamp(var(--space-6), 6vw, 80px);
+  overflow: hidden;
+}
+
+/* Hairline top-highlight — the crafted edge that catches light. */
+.root::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--text) 8%, transparent) 20%,
+    color-mix(in srgb, var(--text) 8%, transparent) 80%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────────── */
+
+.root[data-layout='centered'] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: clamp(var(--space-8), 5vw, var(--space-12));
+}
+
+.root[data-layout='centered'] .copy {
+  align-items: center;
+  text-align: center;
+  max-width: 56rem;
+}
+
+.root[data-layout='centered'] .subhead {
+  margin-inline: auto;
+}
+
+.root[data-layout='centered'] .visual {
+  width: 100%;
+  max-width: 64rem;
+}
+
+.root[data-layout='split'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(var(--space-8), 6vw, 80px);
+}
+
+/* Stack the split layout on narrow viewports. */
+@media (max-width: 720px) {
+  .root[data-layout='split'] {
+    grid-template-columns: minmax(0, 1fr);
+    text-align: center;
+  }
+  .root[data-layout='split'] .copy {
+    align-items: center;
+    text-align: center;
+  }
+  .root[data-layout='split'] .ctaRow {
+    justify-content: center;
+  }
+}
+
+/* ── Copy column ────────────────────────────────────────────────────────────── */
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+/* ── Eyebrow — engraved-mono label with an incandescent LED dot ─────────────── */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.eyebrowDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  /* LED bloom — core → body, with a soft accent glow. */
+  background: radial-gradient(
+    circle at 40% 35%,
+    color-mix(in srgb, var(--accent) 60%, white) 0%,
+    var(--accent) 60%,
+    color-mix(in srgb, var(--accent) 70%, black) 100%
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 0 8px 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* ── Headline — oversized fluid display type ────────────────────────────────── */
+/*
+  No type token reaches hero scale (the scale tops at 24px for dense UI), so the
+  headline is fluid via clamp(). This is size, not colour — colour stays tokened.
+*/
+.headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: var(--leading-display);
+  letter-spacing: -0.02em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.root[data-size='sm'] .headline {
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+}
+
+/* ── Subhead ────────────────────────────────────────────────────────────────── */
+
+.subhead {
+  margin: 0;
+  max-width: 38rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.root[data-size='sm'] .subhead {
+  font-size: var(--text-md);
+}
+
+/* ── CTA row ────────────────────────────────────────────────────────────────── */
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 var(--space-6);
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.root[data-size='sm'] .cta {
+  min-height: 38px;
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+}
+
+/* Primary — the lit control: accent fill with an LED bloom. */
+.cta[data-variant='primary'] {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 6px 18px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.cta[data-variant='primary']:hover {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 32%, transparent),
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 10px 26px -6px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* Secondary — recessed/ghost: hairline-bordered, fills warm on hover. */
+.cta[data-variant='secondary'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
+    0 0 0 1px var(--border-strong);
+}
+
+.cta[data-variant='secondary']:hover {
+  background: var(--surface-2);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
+    0 0 0 1px var(--text-muted);
+}
+
+/* Press — both variants settle into the surface (no bounce). */
+.cta:active {
+  transform: translateY(1px);
+}
+
+.cta:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--accent);
+}
+
+/* Disabled / busy — inert, recedes. */
+.cta:disabled,
+.cta[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 20%, transparent),
+    0 0 0 1px var(--border);
+}
+
+.cta[data-variant='primary']:disabled,
+.cta[data-variant='primary'][aria-disabled='true'] {
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+
+.ctaLabel {
+  display: inline-block;
+}
+
+/* Busy spinner — functional motion, kept under reduced-motion. */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  animation: hero-spin 0.7s linear infinite;
+}
+
+@keyframes hero-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Visual slot — recessed stage well ──────────────────────────────────────── */
+
+.visual {
+  min-width: 0;
+}
+
+.visualWell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(var(--radius) * 2);
+  padding: clamp(var(--space-4), 3vw, var(--space-8));
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  color: var(--stage-text);
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border),
+    0 18px 40px -20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+/* Hairline top-highlight on the well lip. */
+.visualWell::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--stage-text) 18%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.visualWell > * {
+  position: relative;
+  max-width: 100%;
+}
+
+.visualWell img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+
+/* ── Entrance — firm staggered settle (decorative; snaps under reduced-motion) ─ */
+
+.root[data-animate] .eyebrow { animation: hero-rise 480ms var(--ease-out) both; }
+.root[data-animate] .headline { animation: hero-rise 560ms var(--ease-out) 60ms both; }
+.root[data-animate] .subhead { animation: hero-rise 560ms var(--ease-out) 120ms both; }
+.root[data-animate] .ctaRow { animation: hero-rise 560ms var(--ease-out) 180ms both; }
+.root[data-animate] .visual { animation: hero-rise 640ms var(--ease-out) 160ms both; }
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+  Reduced-motion: decorative entrance snaps (parts are visible by default, so
+  killing the animation simply shows them). The busy spinner is functional and
+  is intentionally left running.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .root[data-animate] .eyebrow,
+  .root[data-animate] .headline,
+  .root[data-animate] .subhead,
+  .root[data-animate] .ctaRow,
+  .root[data-animate] .visual {
+    animation: none;
+  }
+}
