@@ -1,0 +1,175 @@
+/* src/components/MobileSegmented/MobileSegmented.module.css */
+
+/* ─── Track (the recessed pill well) ────────────────────────────────────────── */
+/* App-surface control: full-width by nature. Equal segments via flex:1 let the
+   single slider land exactly on each detent (width = inner / N). */
+
+.track {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  border-radius: 999px;
+  padding: var(--_pad);
+  background: var(--stage);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--border);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+/* ─── Track sizes ────────────────────────────────────────────────────────────── */
+/* Chunky on the phone: md clears the 40px tap target. */
+
+.track[data-size="md"] {
+  --_pad:  4px;
+  --_h:    40px;
+  --_px:   16px;
+  --_font: var(--text-md);
+  --_gap:  var(--space-2);
+}
+
+.track[data-size="sm"] {
+  --_pad:  3px;
+  --_h:    32px;
+  --_px:   12px;
+  --_font: var(--text-base);
+  --_gap:  var(--space-1);
+}
+
+/* ─── Disabled track ──────────────────────────────────────────────────────────── */
+
+.track[data-disabled] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ─── The sliding lit box (orange LED) ──────────────────────────────────────── */
+/* One physical illuminated element that travels between detents. Width = one
+   segment; translateX by whole multiples of its own width = one segment per step.
+   Firm, critically-damped settle (--ease-out) on the incandescent off-decay
+   timing so the glide reads tactile, never springy. Under reduced-motion the
+   duration tokens zero out globally → the box snaps (state stays legible because
+   position carries it). */
+
+.slider {
+  position: absolute;
+  top: var(--_pad);
+  bottom: var(--_pad);
+  left: var(--_pad);
+  width: calc((100% - 2 * var(--_pad)) / var(--_n));
+  border-radius: 999px;
+  background: var(--led-orange);
+  transform: translateX(calc(var(--_active) * 100%)) scale(var(--_slider-scale, 1));
+  box-shadow:
+    /* incandescent top filament highlight */
+    inset 0 1px 0 color-mix(in srgb, var(--led-orange-core) 85%, transparent),
+    /* warm depth at the base */
+    inset 0 -2px 4px color-mix(in srgb, var(--led-orange-deep) 55%, transparent),
+    /* crisp edge */
+    0 0 0 1px color-mix(in srgb, var(--led-orange-deep) 60%, transparent),
+    /* the bloom */
+    0 0 14px 1px color-mix(in srgb, var(--led-orange) 45%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.35);
+  transition:
+    transform var(--dur-led-off) var(--ease-out);
+  will-change: transform;
+}
+
+/* The active segment's press dips the lit box — a small, satisfying give. */
+.track[data-pressing="active"] {
+  --_slider-scale: 0.955;
+}
+
+.track[data-pressing="active"] .slider {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* ─── Segment (the radio button) ────────────────────────────────────────────── */
+
+.segment {
+  position: relative; /* lift labels above the slider */
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--_gap);
+  height: var(--_h);
+  padding: 0 var(--_px);
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  /* recessed-off: dim text sunk into the dark well */
+  color: var(--stage-text);
+  opacity: 0.5;
+  font-family: var(--font-ui);
+  font-size: var(--_font);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color   var(--dur-led-off) var(--ease-out),
+    opacity var(--dur-led-off) var(--ease-out),
+    transform var(--dur-fast)  var(--ease-out);
+}
+
+/* ─── Hover (unselected only) ─────────────────────────────────────────────────── */
+
+.segment:hover:not([data-selected]):not(:disabled) {
+  opacity: 0.78;
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────────── */
+
+.segment:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-orange) 75%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Selected (sitting on the lit box) ──────────────────────────────────────── */
+/* Dark ink reads cleanly on the bright orange. Fast attack as the box arrives. */
+
+.segment[data-selected] {
+  color: var(--stage);
+  opacity: 1;
+  font-weight: var(--weight-bold);
+  transition:
+    color   var(--dur-led-on) var(--ease-out),
+    opacity var(--dur-led-on) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+/* ─── Pressed (satisfying give on any segment) ──────────────────────────────── */
+
+.segment[data-pressed] {
+  transform: scale(0.955);
+}
+
+.segment[data-pressed]:not([data-selected]) {
+  opacity: 0.85;
+}
+
+/* ─── Icon wrapper ───────────────────────────────────────────────────────────── */
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+/* ─── Label text ─────────────────────────────────────────────────────────────── */
+
+.label {
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
