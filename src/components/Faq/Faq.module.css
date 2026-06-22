@@ -1,0 +1,231 @@
+/* src/components/Faq/Faq.module.css */
+
+/*
+  ─── Why this isn't a webpage ──────────────────────────────────────────────────
+  A generic accordion just toggles a panel. This one is built like a strip of
+  recessed instrument labels: the whole list sits in an inset well (hairline
+  border + soft inner shadow), items are split by true hairline dividers, and
+  each row carries a left-edge LED groove that is recessed-dark when closed and
+  BLOOMS to accent when its answer opens — on incandescent timing (fast attack
+  --dur-led-on / slow decay --dur-led-off). The answer reveals via an animated
+  grid track (0fr → 1fr), not a max-height guess, so nothing jumps. Everything
+  is tokens, so it reskins warm-cream or dark by swapping variables.
+*/
+
+/* ─── Root — the recessed well ─────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  /* Inset well + a hairline top-highlight — the recessed Chroma surface. */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, #000 4%, transparent);
+  overflow: hidden;
+}
+
+/* ─── Item ─────────────────────────────────────────────────────────────────── */
+
+.item {
+  position: relative;
+}
+
+/* Hairline divider between items (not above the first). */
+.item + .item {
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Heading wrapper (h2/h3/h4) — strip native margins ────────────────────── */
+
+.heading {
+  margin: 0;
+  font: inherit;
+}
+
+/* ─── Trigger (the question header button) ─────────────────────────────────── */
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+  text-align: left;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-medium);
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.root[data-size="md"] .trigger {
+  padding: var(--space-4) var(--space-4);
+  font-size: var(--text-base);
+}
+
+.root[data-size="sm"] .trigger {
+  padding: var(--space-3) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.trigger:hover:not(:disabled) {
+  color: var(--text);
+}
+
+/* Open header lifts to full contrast — the row is "lit". */
+.trigger[data-open] {
+  color: var(--text);
+}
+
+.trigger:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+  border-radius: 3px;
+}
+
+/* ─── Left-edge LED groove — recessed off, blooms on open ──────────────────── */
+
+/*
+  Sits flush against the left inset wall. Closed: a dark recessed sliver.
+  Open: lights to accent with a soft bloom. Fast attack on open, slow decay on
+  close — the kit's incandescent signature. Color/box-shadow are state-carrying,
+  so they remain meaningful even when decorative durations are zeroed.
+*/
+.groove {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  border-radius: 0 2px 2px 0;
+  background: color-mix(in srgb, var(--text-dim) 45%, transparent);
+  box-shadow: none;
+  transition:
+    height var(--dur-base) var(--ease-out),
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+.trigger[data-open] .groove {
+  height: calc(100% - var(--space-4));
+  background: var(--accent);
+  box-shadow:
+    0 0 6px 1px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 2px 0 var(--accent);
+  transition:
+    height var(--dur-base) var(--ease-out),
+    background var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.root[data-size="sm"] .trigger[data-open] .groove {
+  height: calc(100% - var(--space-3));
+}
+
+/* ─── Question label ───────────────────────────────────────────────────────── */
+
+.question {
+  flex: 1;
+  min-width: 0;
+  line-height: var(--leading-md);
+}
+
+/* ─── Chevron — rotates down→up on open, tints accent ──────────────────────── */
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    color var(--dur-led-off) var(--ease-out);
+}
+
+.trigger:hover:not(:disabled) .chevron {
+  color: var(--text-muted);
+}
+
+.trigger[data-open] .chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    color var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Panel — animated grid track (0fr → 1fr), no layout guess ─────────────── */
+
+.panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-slow) var(--ease-out);
+}
+
+.panel[data-open] {
+  grid-template-rows: 1fr;
+}
+
+/* min-height:0 lets the grid track actually collapse to 0fr. */
+.panelInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ─── Answer body — sits in a faintly recessed shelf ───────────────────────── */
+
+.answer {
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-base);
+  /* A whisper of inset + a hairline top rule, so the answer reads as a shelf
+     tucked under the question rather than a flat web paragraph. */
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: color-mix(in srgb, var(--stage) 5%, transparent);
+}
+
+.root[data-size="md"] .answer {
+  padding: var(--space-3) var(--space-4) var(--space-4) var(--space-4);
+  font-size: var(--text-base);
+}
+
+.root[data-size="sm"] .answer {
+  padding: var(--space-2) var(--space-3) var(--space-3) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.answer :where(p) {
+  margin: 0;
+}
+
+.answer :where(p) + :where(p) {
+  margin-top: var(--space-2);
+}
+
+.answer :where(a) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ─── Empty state ──────────────────────────────────────────────────────────── */
+
+.empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
