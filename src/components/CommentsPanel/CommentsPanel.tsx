@@ -4,6 +4,18 @@
 // AnnotationEditor — this is the persistent project thread panel mounted
 // in the shell. No overlay/portal needed.
 //
+// Why this isn't a webpage:
+// A chat app stacks identical grey bubbles and makes you read the gutter to
+// tell who's speaking. This is a studio talkback list. Authorship is carried
+// the way a mixer carries track identity — by COLOR: each collaborator owns a
+// track-color accent (the same palette as clips/tracks) that lights their
+// avatar ring, their name, a 2px card spine, and a low-alpha tint on the card
+// surface, so you scan the thread by *who*, not by reading. Cards are warm
+// recessed pockets on cream with a hairline top-highlight — seated objects,
+// not flat divs — and a voice note is an LED-lit play chip, not a media
+// element. "Mine" pulls toward the app --accent so my own voice reads at a
+// glance. It should feel like the console's scribble strip, not a feed.
+//
 // Design decisions recorded here (not relitigated in future):
 // - Avatar: initials circle with --_avatar-color ring derived from the
 //   same accent as the comment spine — always in sync.
@@ -14,7 +26,9 @@
 // - Thread depth: 1 level of indented replies (no recursive threading).
 // - Composer: raw <textarea> — TextField is single-line; multi-line is
 //   the correct affordance here.
-// - Badge: inline unresolved-count chip (Badge not yet built in kit).
+// - Badge: deliberately an inline unresolved-count chip, not the kit Badge
+//   component — the header owns its own warm count token, and a single call
+//   site doesn't justify coupling this composite to Badge's API.
 // - Play chip: accent bloom on data-playing; accent color (not green LED)
 //   because this is playback not transport-arm state.
 
