@@ -48,31 +48,14 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   PricingPlans: ['web'],
   ProductFrame: ['web'],
   Showcase: ['web'],
-  SiteFooter: ['web'],
   SiteHeader: ['web'],
   SiteFooter: ['web'],
   SpecStrip: ['web'],
-
-  // ── Mobile companion app (phone) ───────────────────────────────────────────
-  MobileTopBar: ['app'],
-  MobileTabBar: ['app'],
-  MobileSegmented: ['app'],
-  MobileRecordButton: ['app'],
-  RadioPlayer: ['app'],
 
   // ── Auth / onboarding / support (site + app) ───────────────────────────────
   PasswordEntry: ['web', 'app'],
   OnboardingStep: ['web', 'app'],
   SupportFlow: ['web', 'app'],
-
-  // ── Mobile companion app only (app) ────────────────────────────────────────
-  LyricCRUD: ['app'],
-  MobileRecordButton: ['app'],
-  MobileSegmented: ['app'],
-  MobileTabBar: ['app'],
-  MobileTopBar: ['app'],
-  RadioPlayer: ['app'],
-  VoiceIdeaCRUD: ['app'],
 
   // ── Generic UI primitives (everywhere) ─────────────────────────────────────
   Avatar: ALL,
@@ -121,7 +104,6 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   IncomingManifest: ['app', 'daw'],
   IncomingShare: ['app'],
   LookAndFeelPanel: ['app', 'daw'],
-  LyricCRUD: ['app', 'daw'],
   NavRail: ['app', 'daw'],
   PairQRCode: ['app', 'daw'], // pairing bridges the phone companion and the desktop DAW
   Preferences: ['app', 'daw'],
@@ -130,7 +112,6 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],
   Versions: ['app', 'daw'],
-  VoiceIdeaCRUD: ['app', 'daw'],
 
   // ── Mobile companion app surfaces (app only) ───────────────────────────────
   MobileRecordButton: ['app'],
@@ -138,6 +119,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   MobileTabBar: ['app'],
   MobileTopBar: ['app'],
   RadioPlayer: ['app'],
+  SyncHub: ['app'], // the phone companion's sync home, opened by the topbar QR icon
 
   // ── DAW workspace only ─────────────────────────────────────────────────────
   AnnotationLane: ['daw'],
