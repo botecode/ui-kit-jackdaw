@@ -22,6 +22,14 @@
 // - Author accent: derived deterministically from a 6-slot track-color
 //   palette keyed by author.id; respects author.color if already set.
 //   Current user's comments use --accent so "mine" reads at a glance.
+// - Color, legibly: full-saturation accent lives on the spine, avatar ring,
+//   and surface tint (no text → no contrast cost). The author NAME is the
+//   accent blended 50/50 toward --text, so it stays readable on a light-theme
+//   card (a raw pale track-color drops to ~1.3:1 there) while still reading as
+//   the author's hue.
+// - Card surface: a warm surface (--surface/--bg), not a well — --stage is
+//   pure black in every theme, so mixing it into a card muddied light themes
+//   to grey. Cards seat on --surface→--bg; --stage stays for true wells.
 // - Waveform: 12-bar static decorative SVG; real playback is app-level.
 // - Thread depth: 1 level of indented replies (no recursive threading).
 // - Composer: raw <textarea> — TextField is single-line; multi-line is
