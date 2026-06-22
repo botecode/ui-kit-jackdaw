@@ -1,0 +1,234 @@
+/* src/components/Showcase/Showcase.module.css */
+
+/* ─── Root (the scroll story — generous vertical rhythm) ───────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6);
+  box-sizing: border-box;
+}
+
+.root[data-size="sm"] {
+  gap: var(--space-10);
+  max-width: 840px;
+  padding: var(--space-8) var(--space-5);
+}
+
+/* ─── Row (one feature section — media + copy, alternating sides) ──────────── */
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-12);
+  align-items: center;
+
+  /* Reveal-on-scroll: decorative. Settled state is the default; the hidden state
+     is opt-in via data-revealed="false" (only set when JS + IO + motion allow). */
+  transition:
+    opacity   var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+
+.root[data-size="sm"] .row {
+  gap: var(--space-8);
+}
+
+.row[data-revealed="false"] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+/* Media side. DOM order is media-first → copy; grid placement flips the visual
+   side while reading order stays logical. */
+.row[data-side="left"]  .mediaWell { grid-column: 1; }
+.row[data-side="left"]  .copy      { grid-column: 2; }
+.row[data-side="right"] .mediaWell { grid-column: 2; }
+.row[data-side="right"] .copy      { grid-column: 1; }
+
+/* ─── Media well (recessed stage — the kit's signature, not a flat card) ───── */
+
+.mediaWell {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: var(--stage);
+  background-image: var(--texture-stage);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--border);
+  line-height: 0;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Consumer media fills the well. */
+.mediaWell > * {
+  width: 100%;
+  height: 100%;
+}
+
+.mediaWell img,
+.mediaWell svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ─── Copy column ─────────────────────────────────────────────────────────── */
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.root[data-size="sm"] .copy {
+  gap: var(--space-3);
+}
+
+/* ─── Eyebrow (the mono digital readout — section index voice) ─────────────── */
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  line-height: 1;
+}
+
+/* ─── Title (display face — big and characterful) ─────────────────────────── */
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-display), 4vw, 40px);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-display);
+  letter-spacing: -0.02em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.root[data-size="sm"] .title {
+  font-size: clamp(var(--text-lg), 3vw, 28px);
+}
+
+/* ─── Body (General Sans — calm, readable) ────────────────────────────────── */
+
+.body {
+  margin: 0;
+  max-width: 46ch;
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+}
+
+.root[data-size="sm"] .body {
+  font-size: var(--text-base);
+}
+
+/* ─── CTA (accent pill — tactile: hover bloom, press inset) ────────────────── */
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  outline: none;
+  transition:
+    filter     var(--dur-fast) var(--ease-out),
+    transform  var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.cta:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.cta:hover .ctaArrow {
+  transform: translateX(2px);
+}
+
+.cta:active {
+  filter: brightness(0.95);
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 3px;
+}
+
+.ctaLabel {
+  line-height: 1;
+}
+
+.ctaArrow {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* ─── Responsive — stack media above copy on narrow viewports ──────────────── */
+
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+  /* Regardless of side, media (DOM-first) stacks above copy. */
+  .row[data-side="left"]  .mediaWell,
+  .row[data-side="right"] .mediaWell,
+  .row[data-side="left"]  .copy,
+  .row[data-side="right"] .copy {
+    grid-column: 1;
+  }
+  .mediaWell {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* Functional/decorative split: reveal is decorative — snap it off. */
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+  .row[data-revealed="false"] {
+    opacity: 1;
+    transform: none;
+  }
+}
