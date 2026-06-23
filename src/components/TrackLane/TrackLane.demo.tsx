@@ -248,6 +248,24 @@ function StatesDemo() {
         </LaneWrap>
       </State>
 
+      {/* Fades — triangular taper + corner handles. Drag a top corner inward to set
+          fade-in/out (the gesture lives here; the Clip paints the overlay). */}
+      <State label="clip fades (in / out → triangular taper + handles)">
+        <LaneWrap>
+          <TrackLane
+            trackId="fades"
+            clips={[
+              { clipId: 'fi', start: BAR(1), length: BAR(2) - BAR(1), peaks: PEAKS_GUITAR, color: 'var(--chroma-blue)',  label: 'fade in',  fadeIn: 0.5 },
+              { clipId: 'fo', start: BAR(3), length: BAR(2) - BAR(1), peaks: PEAKS_KEYS,   color: 'var(--chroma-purple)', label: 'fade out', fadeOut: 0.5 },
+              { clipId: 'fb', start: BAR(5), length: BAR(2) - BAR(1), peaks: PEAKS_BASS,   color: 'var(--chroma-green)',  label: 'both',     fadeIn: 0.4, fadeOut: 0.6 },
+            ]}
+            bpm={BPM} numerator={4} denominator={4}
+            pxPerBeat={PX_PER_BEAT} division="1/4"
+            height={56}
+          />
+        </LaneWrap>
+      </State>
+
       {/* Drop-target verdict — the Arrangement resolves which lane sits under a
           cross-track drag and pushes the verdict down as `dropTarget`. */}
       <State label="drop target — valid (accent landing)">
@@ -324,9 +342,9 @@ function PlaygroundDemo() {
   // Controlled clips for interactive drag demo. Each carries sourceDuration/offset
   // so Alt + dragging an edge time-stretches (rate) instead of trimming.
   const [clips, setClips] = useState<ClipInfo[]>([
-    { clipId: 'p1', start: BAR(1), length: BAR(2) - BAR(1), peaks: PEAKS_GUITAR, color: 'var(--chroma-blue)',   label: 'Guitar', sourceDuration: BAR(2) - BAR(1), offset: 0 },
-    { clipId: 'p2', start: BAR(4), length: BAR(2) - BAR(1), peaks: PEAKS_BASS,   color: 'var(--chroma-green)',  label: 'Bass',   sourceDuration: BAR(2) - BAR(1), offset: 0 },
-    { clipId: 'p3', start: BAR(7), length: BAR(2) - BAR(1), peaks: PEAKS_DRUMS,  color: 'var(--chroma-orange)',                  sourceDuration: BAR(2) - BAR(1), offset: 0 },
+    { clipId: 'p1', start: BAR(1), length: BAR(2) - BAR(1), peaks: PEAKS_GUITAR, color: 'var(--chroma-blue)',   label: 'Guitar', sourceDuration: BAR(2) - BAR(1), offset: 0, fadeIn: 0.4 },
+    { clipId: 'p2', start: BAR(4), length: BAR(2) - BAR(1), peaks: PEAKS_BASS,   color: 'var(--chroma-green)',  label: 'Bass',   sourceDuration: BAR(2) - BAR(1), offset: 0, fadeIn: 0.5, fadeOut: 0.5 },
+    { clipId: 'p3', start: BAR(7), length: BAR(2) - BAR(1), peaks: PEAKS_DRUMS,  color: 'var(--chroma-orange)',                  sourceDuration: BAR(2) - BAR(1), offset: 0, fadeOut: 0.4 },
   ])
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -406,6 +424,15 @@ function PlaygroundDemo() {
       const newLength = content / rate
       return { ...c, start: newStart ?? c.start, length: newLength }
     }))
+  }, [])
+
+  // Drag-to-set fades. The lane emits the full fade state (both sides, seconds); write
+  // it straight to the clip.
+  const handleSetFades = useCallback((clipId: string, fadeIn?: number, fadeOut?: number) => {
+    setLog(`clip.set-fades → ${clipId} · in ${(fadeIn ?? 0).toFixed(2)}s · out ${(fadeOut ?? 0).toFixed(2)}s`)
+    setClips(prev => prev.map(c =>
+      c.clipId === clipId ? { ...c, fadeIn, fadeOut } : c
+    ))
   }, [])
 
   const handleCursor = useCallback((seconds: number) => {
@@ -490,6 +517,7 @@ function PlaygroundDemo() {
                 disabled={disabled}
                 onClipMove={handleMove}
                 onClipSetRate={handleSetRate}
+                onClipSetFades={handleSetFades}
                 onClipDelete={handleDelete}
                 onClipSelect={handleSelect}
                 onClipShiftSelect={handleShiftSelect}
@@ -607,7 +635,7 @@ function PlaygroundDemo() {
             color:      'var(--text-dim)',
             marginTop:  'var(--space-2)',
           }}>
-            click selects · Shift+click multi-selects · drag clips · drag an edge trims · Alt+drag an edge time-stretches (left edge is end-anchored) · Delete removes · click lane sets cursor · right-click a clip or empty lane for the menu · toggle “recording” to watch the live capture region grow from the punch-in point
+            click selects · Shift+click multi-selects · drag clips · drag an edge trims · Alt+drag an edge time-stretches (left edge is end-anchored) · drag a top corner sets a fade (in / out) · Delete removes · click lane sets cursor · right-click a clip or empty lane for the menu · toggle “recording” to watch the live capture region grow from the punch-in point
           </div>
         </div>
       </div>

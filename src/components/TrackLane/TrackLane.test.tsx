@@ -508,6 +508,125 @@ describe('TrackLane clip time-stretch', () => {
   })
 })
 
+// ─── Clip fades (drag-to-set) ───────────────────────────────────────────────────
+// Each clip carries top-corner fade handles. Dragging the top-left handle right sets
+// fade-in; the top-right handle left sets fade-out. Pure-resize gesture (no selection
+// change). Fired once on release with the FULL fade state (both values, un-dragged one
+// unchanged) in SECONDS, freeform (no grid snap). Geometry: pxPerBeat=48, bpm=120 →
+// 96 px/s; CLIP_A spans 0–4s → 0–384px wide.
+
+describe('TrackLane clip fades', () => {
+  function fadeHandle(container: HTMLElement, clipId: string, side: 'in' | 'out'): HTMLElement {
+    return container.querySelector(`[data-clip-id="${clipId}"] [data-fade="${side}"]`) as HTMLElement
+  }
+
+  it('each clip slot has an in and an out fade handle', () => {
+    const { container } = lane({ clips: [CLIP_A] })
+    expect(fadeHandle(container, 'a', 'in')).toBeInTheDocument()
+    expect(fadeHandle(container, 'a', 'out')).toBeInTheDocument()
+  })
+
+  it('no fade handles when the lane is disabled', () => {
+    const { container } = lane({ clips: [CLIP_A], disabled: true })
+    expect(container.querySelector('[data-clip-id="a"] [data-fade]')).not.toBeInTheDocument()
+  })
+
+  it('dragging the fade-in handle right sets fade-in (seconds), fade-out unchanged', () => {
+    const onClipSetFades = vi.fn()
+    const { getByTestId, container } = lane({ clips: [CLIP_A], onClipSetFades, pxPerBeat: 48, bpm: 120 })
+    const root = getByTestId('track-lane')
+    fireEvent.pointerDown(fadeHandle(container, 'a', 'in'), { clientX: 0 })
+    fireEvent.pointerMove(root, { clientX: 96 })   // dx = 96px = 1s
+    fireEvent.pointerUp(root,   { clientX: 96 })
+    expect(onClipSetFades).toHaveBeenCalledTimes(1)
+    const [clipId, fadeIn, fadeOut] = onClipSetFades.mock.calls[0]
+    expect(clipId).toBe('a')
+    expect(fadeIn).toBeCloseTo(1, 2)
+    expect(fadeOut).toBeCloseTo(0, 2)
+  })
+
+  it('dragging the fade-out handle left sets fade-out (seconds)', () => {
+    const onClipSetFades = vi.fn()
+    const { getByTestId, container } = lane({ clips: [CLIP_A], onClipSetFades, pxPerBeat: 48, bpm: 120 })
+    const root = getByTestId('track-lane')
+    fireEvent.pointerDown(fadeHandle(container, 'a', 'out'), { clientX: 384 })
+    fireEvent.pointerMove(root, { clientX: 288 })  // dx = -96px → fade-out grows 1s
+    fireEvent.pointerUp(root,   { clientX: 288 })
+    const [clipId, fadeIn, fadeOut] = onClipSetFades.mock.calls[0]
+    expect(clipId).toBe('a')
+    expect(fadeIn).toBeCloseTo(0, 2)
+    expect(fadeOut).toBeCloseTo(1, 2)
+  })
+
+  it('preserves the un-dragged fade side', () => {
+    const onClipSetFades = vi.fn()
+    // Existing fade-out 0.5s; drag the fade-in — fade-out must come back unchanged.
+    const clip: ClipInfo = { ...CLIP_A, fadeOut: 0.5 }
+    const { getByTestId, container } = lane({ clips: [clip], onClipSetFades, pxPerBeat: 48, bpm: 120 })
+    const root = getByTestId('track-lane')
+    fireEvent.pointerDown(fadeHandle(container, 'a', 'in'), { clientX: 0 })
+    fireEvent.pointerMove(root, { clientX: 96 })
+    fireEvent.pointerUp(root,   { clientX: 96 })
+    const [, fadeIn, fadeOut] = onClipSetFades.mock.calls[0]
+    expect(fadeIn).toBeCloseTo(1, 2)
+    expect(fadeOut).toBeCloseTo(0.5, 2)
+  })
+
+  it('clamps fade-in so it cannot exceed the clip (minus the fade-out)', () => {
+    const onClipSetFades = vi.fn()
+    const { getByTestId, container } = lane({ clips: [CLIP_A], onClipSetFades, pxPerBeat: 48, bpm: 120 })
+    const root = getByTestId('track-lane')
+    fireEvent.pointerDown(fadeHandle(container, 'a', 'in'), { clientX: 0 })
+    fireEvent.pointerMove(root, { clientX: 9999 })  // way past the clip end
+    fireEvent.pointerUp(root,   { clientX: 9999 })
+    const [, fadeIn] = onClipSetFades.mock.calls[0]
+    expect(fadeIn).toBeCloseTo(4, 2)   // full clip length, not more
+  })
+
+  it('a fade drag does not move, trim, or re-select the clip', () => {
+    const onClipMove    = vi.fn()
+    const onClipTrimEnd = vi.fn()
+    const onClipSelect  = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [CLIP_A], onClipMove, onClipTrimEnd, onClipSelect, pxPerBeat: 48, bpm: 120,
+    })
+    const root = getByTestId('track-lane')
+    fireEvent.pointerDown(fadeHandle(container, 'a', 'in'), { clientX: 0 })
+    fireEvent.pointerMove(root, { clientX: 96 })
+    fireEvent.pointerUp(root,   { clientX: 96 })
+    expect(onClipMove).not.toHaveBeenCalled()
+    expect(onClipTrimEnd).not.toHaveBeenCalled()
+    expect(onClipSelect).not.toHaveBeenCalled()
+  })
+
+  it('marks the slot + lane data-fading while a fade drag is active', () => {
+    const { getByTestId, container } = lane({ clips: [CLIP_A], pxPerBeat: 48, bpm: 120 })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(fadeHandle(container, 'a', 'in'), { clientX: 0 })
+    expect(slot).toHaveAttribute('data-fading')
+    expect(getByTestId('track-lane')).toHaveAttribute('data-fading')
+  })
+
+  it('does not fade when the lane is disabled', () => {
+    const onClipSetFades = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [CLIP_A], onClipSetFades, disabled: true, pxPerBeat: 48, bpm: 120,
+    })
+    // Handles aren't rendered when disabled; even firing on the slot must not fade.
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 0 })
+    fireEvent.pointerMove(getByTestId('track-lane'), { clientX: 96 })
+    fireEvent.pointerUp(getByTestId('track-lane'),   { clientX: 96 })
+    expect(onClipSetFades).not.toHaveBeenCalled()
+  })
+
+  it('renders the Clip fade overlay for a clip that already carries a fade', () => {
+    const clip: ClipInfo = { ...CLIP_A, fadeIn: 1 }
+    const { container } = lane({ clips: [clip], pxPerBeat: 48, bpm: 120 })
+    expect(container.querySelector('[data-clip-id="a"] [data-testid="clip-fade"]')).toBeInTheDocument()
+  })
+})
+
 // ─── Keyboard delete ──────────────────────────────────────────────────────────
 
 describe('TrackLane keyboard delete', () => {

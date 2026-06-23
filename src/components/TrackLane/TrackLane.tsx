@@ -1,6 +1,7 @@
 // src/components/TrackLane/TrackLane.tsx
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Clip } from '../Clip'
+import { fadeFractions } from '../Clip/Clip'
 import { TimelineGrid, type Division } from '../TimelineGrid'
 import { divisionToPx, snapXToDivision } from '../TimelineGrid'
 import { secondsToX, xToSeconds } from '../TimelineRuler'
@@ -54,6 +55,10 @@ export interface ClipInfo {
   sourceDuration?: number
   /** Seconds into the source where this clip's content begins (the in-point). Default 0. */
   offset?: number
+  /** Fade-in duration in seconds, measured from the clip's start. 0/undefined = none. */
+  fadeIn?: number
+  /** Fade-out duration in seconds, ending at the clip's end. 0/undefined = none. */
+  fadeOut?: number
 }
 
 /**
@@ -132,6 +137,15 @@ export interface TrackLaneProps {
    * Positional signature mirrors the DAW's `useClipStretch` / ClipStretchLayer.
    */
   onClipSetRate?: (clipId: string, rate: number, newStart?: number) => void
+  /**
+   * Drag-to-set clip fades. Dragging a clip's top-left/right fade handle inward sets the
+   * fade-in / fade-out length. Fired once on release with the clip's FULL fade state (both
+   * values, the un-dragged one unchanged) in seconds — so the consumer can write straight
+   * to the clip without tracking which handle moved. Fades are freeform (NOT grid-snapped),
+   * matching how real DAWs treat fades as fine, off-grid adjustments. Mirrors the DAW's
+   * useClipFadeDrag / ClipFadeOverlay contract.
+   */
+  onClipSetFades?: (clipId: string, fadeIn?: number, fadeOut?: number) => void
   onClipDelete?: (clipId: string) => void
   /** Plain click (or Enter) on a clip — replaces the selection with this clip. */
   onClipSelect?: (clipId: string) => void
@@ -164,9 +178,13 @@ export interface TrackLaneProps {
 
 // ─── Internal types ────────────────────────────────────────────────────────────
 
-type DragMode = 'move' | 'trim-start' | 'trim-end' | 'stretch-start' | 'stretch-end'
+type DragMode =
+  | 'move' | 'trim-start' | 'trim-end'
+  | 'stretch-start' | 'stretch-end'
+  | 'fade-in' | 'fade-out'
 
 const isStretchMode = (m: DragMode) => m === 'stretch-start' || m === 'stretch-end'
+const isFadeMode    = (m: DragMode) => m === 'fade-in' || m === 'fade-out'
 
 interface ActiveDrag {
   clipId: string
@@ -184,6 +202,12 @@ interface ActiveDrag {
   contentSec?: number
   minLenPx?: number
   maxLenPx?: number
+  /** Fade only: immutable fade lengths (px) at grab. */
+  fadeIn0Px?: number
+  fadeOut0Px?: number
+  /** Fade only: live fade lengths (px) — the dragged side updates, the other stays at its grab value. */
+  fadeInPx?: number
+  fadeOutPx?: number
 }
 
 interface ReleaseInfo {
@@ -203,10 +227,15 @@ interface ClipSlotProps {
   isDragging: boolean
   /** True while THIS clip is being time-stretched (vs moved/trimmed). */
   stretching: boolean
+  /** True while THIS clip's fade is being dragged. */
+  fading: boolean
   dragLeft?: number
   dragRight?: number
   /** Vertical lift (px) while THIS clip is being moved across lanes. */
   dragOffsetY?: number
+  /** Fade only: live fade-in/out lengths (px) during a fade drag — override the clip's own. */
+  dragFadeInPx?: number
+  dragFadeOutPx?: number
   release?: ReleaseInfo
   disabled: boolean
   onKeyDelete: (clipId: string) => void
@@ -219,9 +248,12 @@ function ClipSlot({
   bpm,
   isDragging,
   stretching,
+  fading,
   dragLeft,
   dragRight,
   dragOffsetY,
+  dragFadeInPx,
+  dragFadeOutPx,
   release,
   disabled,
   onKeyDelete,
@@ -253,6 +285,13 @@ function ClipSlot({
     ? clamp(content / Math.max(MIN_LEN_SEC, renderLenSec), RATE_MIN, RATE_MAX)
     : 1
 
+  // Fades. While THIS clip's fade is being dragged, the live px override wins; otherwise
+  // the clip's own fade. Seconds feed the Clip overlay; fractions place the hit-zones so
+  // they sit exactly under the rendered knobs (same fadeFractions math, incl. overlap cap).
+  const fadeInSec  = dragFadeInPx  != null ? xToSeconds(dragFadeInPx,  pxPerBeat, bpm) : (clip.fadeIn  ?? 0)
+  const fadeOutSec = dragFadeOutPx != null ? xToSeconds(dragFadeOutPx, pxPerBeat, bpm) : (clip.fadeOut ?? 0)
+  const { fIn: fInFrac, fOut: fOutFrac } = fadeFractions(fadeInSec, fadeOutSec, renderLenSec)
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault()
@@ -270,6 +309,7 @@ function ClipSlot({
       data-clip-id={clip.clipId}
       data-dragging={isDragging || undefined}
       data-stretching={stretching || undefined}
+      data-fading={fading || undefined}
       data-stretchable={isStretchable(clip) || undefined}
       style={{
         position:  'absolute',
@@ -287,6 +327,24 @@ function ClipSlot({
       <div className={styles.trimHandle} data-trim="start" />
       <div className={styles.trimHandle} data-trim="end"   />
 
+      {/* Fade handles — small hit-zones at the top corners, sitting under the Clip's fade
+          knobs and offset inward by the current fade. They sit ABOVE the trim handles (top
+          corner only), so dragging the corner sets a fade while the rest of the edge trims. */}
+      {!disabled && (
+        <>
+          <div
+            className={styles.fadeHandle}
+            data-fade="in"
+            style={{ left: `${fInFrac * 100}%` }}
+          />
+          <div
+            className={styles.fadeHandle}
+            data-fade="out"
+            style={{ left: `${(1 - fOutFrac) * 100}%` }}
+          />
+        </>
+      )}
+
       <Clip
         peaks={clip.peaks}
         color={clip.color}
@@ -299,6 +357,10 @@ function ClipSlot({
         splitLeft={clip.splitLeft}
         splitRight={clip.splitRight}
         rate={rate}
+        fadeIn={fadeInSec}
+        fadeOut={fadeOutSec}
+        lengthSec={renderLenSec}
+        fadeHandles={!disabled}
         aria-label={clip.label ? `Clip: ${clip.label}` : 'Clip'}
       />
     </div>
@@ -376,6 +438,7 @@ export function TrackLane({
   onClipTrimStart,
   onClipTrimEnd,
   onClipSetRate,
+  onClipSetFades,
   onClipDelete,
   onClipSelect,
   onClipShiftSelect,
@@ -458,6 +521,22 @@ export function TrackLane({
       const updated = { ...drag, currentRight: clamp(drag.clip0Right + dx, min, max) }
       activeDragRef.current = updated
       setActiveDrag(updated)
+    } else if (drag.mode === 'fade-in') {
+      // Top-left handle: drag right grows the fade-in. Bounded by 0 and the start of the
+      // (fixed) fade-out, so the two never cross.
+      const width = drag.clip0Right - drag.clip0Left
+      const fadeInPx = clamp((drag.fadeIn0Px ?? 0) + dx, 0, width - (drag.fadeOut0Px ?? 0))
+      const updated = { ...drag, fadeInPx }
+      activeDragRef.current = updated
+      setActiveDrag(updated)
+    } else if (drag.mode === 'fade-out') {
+      // Top-right handle: drag left grows the fade-out. Bounded by 0 and the end of the
+      // (fixed) fade-in.
+      const width = drag.clip0Right - drag.clip0Left
+      const fadeOutPx = clamp((drag.fadeOut0Px ?? 0) - dx, 0, width - (drag.fadeIn0Px ?? 0))
+      const updated = { ...drag, fadeOutPx }
+      activeDragRef.current = updated
+      setActiveDrag(updated)
     } else {
       // stretch-start — end-anchored: right edge fixed, left edge moves the start.
       const min = drag.clip0Right - (drag.maxLenPx ?? drag.clip0Right)
@@ -513,6 +592,12 @@ export function TrackLane({
         const rate         = clamp(contentSeconds(clip) / lengthSec, RATE_MIN, RATE_MAX)
         onClipSetRate?.(clipId, rate)
       }
+    } else if (mode === 'fade-in' || mode === 'fade-out') {
+      // Emit the clip's FULL fade state in seconds (both sides, the un-dragged one
+      // unchanged). Freeform — fades are NOT snapped to the grid.
+      const fadeIn  = xToSeconds(drag.fadeInPx  ?? 0, pxPerBeat, bpm)
+      const fadeOut = xToSeconds(drag.fadeOutPx ?? 0, pxPerBeat, bpm)
+      onClipSetFades?.(clipId, fadeIn, fadeOut)
     } else {
       // stretch-start — end-anchored: end fixed, start moves; emit rate + new start.
       const clip = clips.find(c => c.clipId === clipId)
@@ -528,7 +613,7 @@ export function TrackLane({
 
     activeDragRef.current = null
     setActiveDrag(null)
-  }, [bpm, clips, divisionPx, onClipMove, onClipDragEnd, onClipSetRate, onClipTrimEnd, onClipTrimStart, pxPerBeat])
+  }, [bpm, clips, divisionPx, onClipMove, onClipDragEnd, onClipSetRate, onClipSetFades, onClipTrimEnd, onClipTrimStart, pxPerBeat])
 
   // ── Start drag (called from lane pointer-down after target detection) ───────
 
@@ -548,6 +633,16 @@ export function TrackLane({
         })()
       : {}
 
+    // Fade modes seed the current fade lengths (px) as both the immutable grab baseline
+    // and the live value; only the dragged side moves from here.
+    const fade = isFadeMode(mode)
+      ? (() => {
+          const inPx  = secondsToX(clip.fadeIn  ?? 0, pxPerBeat, bpm)
+          const outPx = secondsToX(clip.fadeOut ?? 0, pxPerBeat, bpm)
+          return { fadeIn0Px: inPx, fadeOut0Px: outPx, fadeInPx: inPx, fadeOutPx: outPx }
+        })()
+      : {}
+
     const drag: ActiveDrag = {
       clipId, mode, clip0Left, clip0Right,
       pointerX0:    e.clientX,
@@ -556,6 +651,7 @@ export function TrackLane({
       currentRight: clip0Right,
       offsetY:      0,
       ...stretch,
+      ...fade,
     }
     activeDragRef.current = drag
     setActiveDrag(drag)
@@ -568,12 +664,20 @@ export function TrackLane({
   function handleLanePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (disabled) return
 
-    // Detect whether the pointer hit a clip (or its trim handle).
+    // Detect whether the pointer hit a clip (or its fade / trim handle).
     const clipEl = (e.target as HTMLElement).closest('[data-clip-id]') as HTMLElement | null
+    const fadeEl = (e.target as HTMLElement).closest('[data-fade]')    as HTMLElement | null
     const trimEl = (e.target as HTMLElement).closest('[data-trim]')    as HTMLElement | null
 
     if (clipEl) {
       const clipId = clipEl.dataset.clipId!
+
+      // Top-corner fade handle wins over the trim edge (it overlays the corner). A fade
+      // is a pure-resize gesture: no selection change.
+      if (fadeEl) {
+        startDrag(e, clipId, fadeEl.dataset.fade === 'in' ? 'fade-in' : 'fade-out')
+        return
+      }
 
       // Edge handles. Alt + a stretchable clip → time-stretch (rate); otherwise the
       // same handle trims. Both are pure-resize gestures: no selection change.
@@ -646,6 +750,7 @@ export function TrackLane({
       data-drop-target={dropTarget ?? undefined}
       data-stretch-armed={(altArmed && !activeDrag) || undefined}
       data-stretching={(activeDrag && isStretchMode(activeDrag.mode)) || undefined}
+      data-fading={(activeDrag && isFadeMode(activeDrag.mode)) || undefined}
       data-recording={recordingRegion ? '' : undefined}
       style={{ height }}
       onPointerDown={handleLanePointerDown}
@@ -688,9 +793,12 @@ export function TrackLane({
             bpm={bpm}
             isDragging={isDragging}
             stretching={isDragging && isStretchMode(activeDrag!.mode)}
+            fading={isDragging && isFadeMode(activeDrag!.mode)}
             dragLeft={isDragging  ? activeDrag!.currentLeft  : undefined}
             dragRight={isDragging ? activeDrag!.currentRight : undefined}
             dragOffsetY={isDragging && activeDrag!.mode === 'move' ? activeDrag!.offsetY : undefined}
+            dragFadeInPx={isDragging && isFadeMode(activeDrag!.mode) ? activeDrag!.fadeInPx : undefined}
+            dragFadeOutPx={isDragging && isFadeMode(activeDrag!.mode) ? activeDrag!.fadeOutPx : undefined}
             release={releaseMap[clip.clipId]}
             disabled={disabled}
             onKeyDelete={clipId => onClipDelete?.(clipId)}

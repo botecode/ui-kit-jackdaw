@@ -159,7 +159,7 @@ const FADE_EPSILON = 0.0005
  * if together they'd exceed the clip, both scale down proportionally so they just meet.
  * Returns zeros when the length is unknown (can't place a fraction).
  */
-function fadeFractions(
+export function fadeFractions(
   fadeIn: number,
   fadeOut: number,
   lengthSec: number | undefined,

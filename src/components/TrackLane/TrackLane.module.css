@@ -229,6 +229,33 @@
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 32%, transparent));
 }
 
+/* ─── Fade handles ────────────────────────────────────────────────────────────
+   Small hit-zones at the top corners, sitting under the Clip's fade knobs and offset
+   inward by the current fade. They overlay the very top of the trim edge so a corner
+   drag sets a fade while the rest of the edge trims; higher z than the trim handle so
+   the corner resolves to a fade. Invisible — the Clip paints the knob affordance.   */
+
+.fadeHandle {
+  position: absolute;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  transform: translateX(-50%);
+  cursor: ew-resize;
+  z-index: 5;
+  touch-action: none;
+}
+
+/* While a fade is being dragged, lock the resize cursor + lift the clip so the live
+   fade overlay reads as the active edit (mirrors the stretch affordance). */
+
+.root[data-fading] { cursor: ew-resize; }
+
+.clipSlot[data-fading] {
+  z-index: 10;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 28%, transparent));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .trimHandle::after { transition: none; }
   .dropHighlight     { transition: none; }
