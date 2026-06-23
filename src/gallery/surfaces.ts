@@ -133,6 +133,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   FocusedTrackDetailPanel: ['daw'],
   FolderTrackHeader: ['daw'],
   FxChip: ['daw'],
+  FxPicker: ['daw'],
   InputLabels: ['daw'],
   Mixer: ['daw'],
   PhaseInvert: ['daw'],
