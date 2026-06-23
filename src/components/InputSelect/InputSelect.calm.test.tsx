@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { InputSelectCalm } from './InputSelect.calm'
+import paper from '../../theme/paperOverlay.module.css'
 
 const OPTIONS = [
   { id: 'in-1', label: 'Input 1' },
@@ -22,6 +23,13 @@ describe('InputSelectCalm', () => {
     expect(screen.getByRole('listbox')).toBeInTheDocument()
     fireEvent.mouseDown(screen.getByRole('option', { name: /Input 1/ }))
     expect(onChange).toHaveBeenCalledWith('in-1')
+  })
+
+  it('renders the listbox on a light paper surface', () => {
+    render(<InputSelectCalm value={null} onChange={() => {}} options={OPTIONS} defaultOpen />)
+    const listbox = screen.getByRole('listbox')
+    // The listbox is wrapped in the paper-overlay remap (light --stage tokens).
+    expect(listbox.closest(`.${paper.paper}`)).not.toBeNull()
   })
 
   it('does not open when disabled', () => {

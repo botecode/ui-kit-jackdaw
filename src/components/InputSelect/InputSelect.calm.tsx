@@ -6,6 +6,7 @@ import { useId, useRef, useState } from 'react'
 import { ListboxPopover } from './ListboxPopover'
 import type { InputSelectProps } from './InputSelect'
 import { Popover } from '../Popover'
+import paper from '../../theme/paperOverlay.module.css'
 import styles from './InputSelect.calm.module.css'
 
 export function InputSelectCalm({
@@ -115,13 +116,15 @@ export function InputSelectCalm({
           anchorRef={triggerRef as React.RefObject<HTMLElement>}
           onClose={closeMenu}
         >
-          <ListboxPopover
-            id={listboxId}
-            options={options}
-            selectedId={value}
-            activeId={activeId}
-            onSelect={handleSelect}
-          />
+          <div className={paper.paper}>
+            <ListboxPopover
+              id={listboxId}
+              options={options}
+              selectedId={value}
+              activeId={activeId}
+              onSelect={handleSelect}
+            />
+          </div>
         </Popover>
       )}
     </div>

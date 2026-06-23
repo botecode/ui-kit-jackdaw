@@ -26,6 +26,11 @@ import type { PanKnobProps } from '../components/PanKnob/PanKnob'
 import type { InputSelectProps } from '../components/InputSelect/InputSelect'
 import type { FxChipProps } from '../components/FxChip/FxChip'
 import type { TrackHeaderProps } from '../components/TrackHeader/TrackHeader'
+import type { TransportButtonProps } from '../components/TransportButton/TransportButton'
+import type { RepeatToggleProps } from '../components/RepeatToggle/RepeatToggle'
+import type { RecordModeProps } from '../components/RecordMode/RecordMode'
+import type { ClockProps } from '../components/Clock/Clock'
+import type { TransportBarProps } from '../components/TransportBar/TransportBar'
 
 /**
  * The set of DAW components a theme is allowed to override, keyed by the public
@@ -41,6 +46,11 @@ export interface ThemeComponentOverrides {
   InputSelect?:    ComponentType<InputSelectProps>
   FxChip?:         ComponentType<FxChipProps>
   TrackHeader?:    ComponentType<TrackHeaderProps>
+  TransportButton?: ComponentType<TransportButtonProps>
+  RepeatToggle?:   ComponentType<RepeatToggleProps>
+  RecordMode?:     ComponentType<RecordModeProps>
+  Clock?:          ComponentType<ClockProps>
+  TransportBar?:   ComponentType<TransportBarProps>
 }
 
 /** Active theme's component overrides. Empty = every control uses its base. */

@@ -5,8 +5,11 @@ import { THEME_COMPONENTS } from './themeRegistry'
 import { ThemeProvider } from './ThemeProvider'
 import { TrackHeader } from '../components/TrackHeader'
 import type { TrackHeaderProps, Track } from '../components/TrackHeader'
+import { TransportBar } from '../components/TransportBar'
+import type { TransportBarProps } from '../components/TransportBar'
 import { ArmButtonCalm } from '../components/ArmButton/ArmButton.calm'
 import { TrackHeaderCalm } from '../components/TrackHeader/TrackHeader.calm'
+import { TransportBarCalm } from '../components/TransportBar/TransportBar.calm'
 
 // ── useThemeComponent (the resolver hook) ─────────────────────────────────────
 
@@ -40,6 +43,10 @@ describe('THEME_COMPONENTS registry', () => {
   it('registers the Calm trackhead + primitives as aware-theme overrides', () => {
     expect(THEME_COMPONENTS.calm?.TrackHeader).toBe(TrackHeaderCalm)
     expect(THEME_COMPONENTS.calm?.ArmButton).toBe(ArmButtonCalm)
+  })
+
+  it('registers the Calm transport bar', () => {
+    expect(THEME_COMPONENTS.calm?.TransportBar).toBe(TransportBarCalm)
   })
 
   it('leaves colour-only themes (chroma) without component overrides', () => {
@@ -117,5 +124,40 @@ describe('aware themes — TrackHeader swap', () => {
       </ThemeProvider>,
     )
     expect(queryByLabelText('Pan')).toBeInTheDocument()
+  })
+})
+
+// ── Integration: ThemeProvider swaps the TransportBar per theme ───────────────
+
+function transportProps(): TransportBarProps {
+  return {
+    playing: false, recording: false, seconds: 0,
+    bpm: 120, numerator: 4, denominator: 4,
+    loopEnabled: false, recordState: 'idle', recordMode: 'normal',
+    selectionStart: 0, selectionEnd: 0, gridDivision: '1/16', rate: 1,
+    onPlay: noop, onStop: noop, onGoToStart: noop, onGoToEnd: noop,
+    onToggleRecord: noop, onSelectRecordMode: noop, onToggleLoop: noop,
+    onSetTempo: noop, onSetTimeSignature: noop,
+  }
+}
+
+describe('aware themes — TransportBar swap', () => {
+  it('base shows the dense SEL/GRID/RATE readouts under chroma', () => {
+    const { getByText } = render(
+      <ThemeProvider theme="chroma">
+        <TransportBar {...transportProps()} />
+      </ThemeProvider>,
+    )
+    expect(getByText('SEL')).toBeInTheDocument()
+  })
+
+  it('Calm drops the dense secondary readouts (distraction-free)', () => {
+    const { queryByText, getByRole } = render(
+      <ThemeProvider theme="calm">
+        <TransportBar {...transportProps()} />
+      </ThemeProvider>,
+    )
+    expect(getByRole('toolbar', { name: 'Transport' })).toBeInTheDocument()
+    expect(queryByText('SEL')).not.toBeInTheDocument()
   })
 })

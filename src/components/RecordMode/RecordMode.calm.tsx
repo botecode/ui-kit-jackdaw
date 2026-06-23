@@ -1,31 +1,21 @@
-// src/components/RecordMode/RecordMode.tsx
+// src/components/RecordMode/RecordMode.calm.tsx
+// Calm-theme variant: a soft record control. Armed/recording read as a muted
+// terracotta fill with a slow breath (no LED glow). The mode menu uses the
+// ContextMenu's light "paper" surface so the drawer matches the calm theme.
 import { useRef, useState } from 'react'
 import { Record, ArrowsClockwise, CaretDown } from '@phosphor-icons/react'
-import styles from './RecordMode.module.css'
 import { ContextMenu } from '../ContextMenu'
 import type { MenuEntry } from '../ContextMenu'
-import { useThemeComponent } from '../../theme/themeComponents'
-
-export type RecordModeState = 'idle' | 'armed' | 'recording'
-export type RecordModeValue = 'normal' | 'loop-punch'
-
-export interface RecordModeProps {
-  state:           RecordModeState
-  mode:            RecordModeValue
-  onToggleRecord:  (e: React.MouseEvent<HTMLButtonElement>) => void
-  onSelectMode:    (mode: RecordModeValue) => void
-  size?:           'sm' | 'md'
-  disabled?:       boolean
-  'aria-label'?:   string
-}
+import type { RecordModeProps } from './RecordMode'
+import styles from './RecordMode.calm.module.css'
 
 const ICON_SIZE:  Record<'sm' | 'md', number> = { sm: 16, md: 20 }
 const CARET_SIZE: Record<'sm' | 'md', number> = { sm: 10, md: 12 }
 const BADGE_SIZE: Record<'sm' | 'md', number> = { sm: 6,  md: 8  }
 
 function resolveLabel(
-  state:    RecordModeState,
-  mode:     RecordModeValue,
+  state:    RecordModeProps['state'],
+  mode:     RecordModeProps['mode'],
   override: string | undefined,
 ): string {
   if (override) return override
@@ -34,19 +24,19 @@ function resolveLabel(
   return base + suffix
 }
 
-function RecordModeBase({
+export function RecordModeCalm({
   state,
   mode,
   onToggleRecord,
   onSelectMode,
-  size     = 'md',
+  size = 'md',
   disabled,
   'aria-label': ariaLabel,
 }: RecordModeProps) {
-  const caretRef       = useRef<HTMLButtonElement>(null)
-  const closeTimeRef   = useRef(0)
-  const [menuOpen, setMenuOpen]   = useState(false)
-  const [menuPos,  setMenuPos]    = useState({ x: 0, y: 0 })
+  const caretRef     = useRef<HTMLButtonElement>(null)
+  const closeTimeRef = useRef(0)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos,  setMenuPos]  = useState({ x: 0, y: 0 })
 
   const label     = resolveLabel(state, mode, ariaLabel)
   const iconSize  = ICON_SIZE[size]
@@ -54,13 +44,10 @@ function RecordModeBase({
   const badgeSize = BADGE_SIZE[size]
 
   function openMenu() {
-    // Guard: if the Popover's outside-click mousedown fired on the caret just
-    // before this click event, closeMenu() set closeTimeRef — skip the reopen.
-    // 300 ms is well beyond the mousedown→click window (<100 ms).
     if (Date.now() - closeTimeRef.current < 300) return
     const el = caretRef.current
     if (!el) return
-    el.focus() // WebKit: mouse click doesn't focus <button>
+    el.focus()
     const rect = el.getBoundingClientRect()
     setMenuPos({ x: rect.left, y: rect.bottom + 2 })
     setMenuOpen(true)
@@ -72,20 +59,8 @@ function RecordModeBase({
   }
 
   const menuItems: MenuEntry[] = [
-    {
-      id:       'normal',
-      label:    'Normal',
-      role:     'menuitemradio',
-      checked:  mode === 'normal',
-      onSelect: () => onSelectMode('normal'),
-    },
-    {
-      id:       'loop-punch',
-      label:    'Loop / punch',
-      role:     'menuitemradio',
-      checked:  mode === 'loop-punch',
-      onSelect: () => onSelectMode('loop-punch'),
-    },
+    { id: 'normal',     label: 'Normal',       role: 'menuitemradio', checked: mode === 'normal',     onSelect: () => onSelectMode('normal') },
+    { id: 'loop-punch', label: 'Loop / punch', role: 'menuitemradio', checked: mode === 'loop-punch', onSelect: () => onSelectMode('loop-punch') },
   ]
 
   return (
@@ -100,7 +75,7 @@ function RecordModeBase({
         disabled={disabled}
         onClick={onToggleRecord}
       >
-        <Record aria-hidden size={iconSize} />
+        <Record aria-hidden size={iconSize} weight={state === 'idle' ? 'regular' : 'fill'} />
         {mode === 'loop-punch' && (
           <span className={styles.badge} data-testid="record-loop-badge" aria-hidden>
             <ArrowsClockwise size={badgeSize} />
@@ -126,16 +101,11 @@ function RecordModeBase({
           open
           x={menuPos.x}
           y={menuPos.y}
+          surface="paper"
           onClose={closeMenu}
           aria-label="Record mode"
         />
       )}
     </div>
   )
-}
-
-// Theme-aware resolver: the active theme's variant, or the base.
-export function RecordMode(props: RecordModeProps) {
-  const Impl = useThemeComponent('RecordMode', RecordModeBase)
-  return <Impl {...props} />
 }

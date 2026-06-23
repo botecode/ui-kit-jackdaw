@@ -1,17 +1,9 @@
-// src/components/TransportButton/TransportButton.tsx
+// src/components/TransportButton/TransportButton.calm.tsx
+// Calm-theme variant: a soft rounded button, no recessed well, no LED bloom.
+// Playing reads as a gentle accent-green fill rather than a glowing transport.
 import { Play, Pause, Stop } from '@phosphor-icons/react'
-import { useThemeComponent } from '../../theme/themeComponents'
-import styles from './TransportButton.module.css'
-
-export interface TransportButtonProps {
-  variant: 'play' | 'stop' | 'pause'
-  /** Controls icon swap and green LED bloom. Only meaningful for variant="play". */
-  playing?: boolean
-  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
-  size?: 'sm' | 'md'
-  disabled?: boolean
-  'aria-label'?: string
-}
+import type { TransportButtonProps } from './TransportButton'
+import styles from './TransportButton.calm.module.css'
 
 const ICON_SIZE: Record<'sm' | 'md', number> = { sm: 16, md: 20 }
 
@@ -28,7 +20,7 @@ function resolveIcon(variant: TransportButtonProps['variant'], playing: boolean)
   return Pause
 }
 
-function TransportButtonBase({
+export function TransportButtonCalm({
   variant,
   playing = false,
   onClick,
@@ -52,13 +44,7 @@ function TransportButtonBase({
       disabled={disabled}
       onClick={onClick}
     >
-      <Icon aria-hidden size={ICON_SIZE[size]} />
+      <Icon aria-hidden size={ICON_SIZE[size]} weight={isPlaying ? 'fill' : 'regular'} />
     </button>
   )
-}
-
-// Theme-aware resolver: the active theme's variant, or the base.
-export function TransportButton(props: TransportButtonProps) {
-  const Impl = useThemeComponent('TransportButton', TransportButtonBase)
-  return <Impl {...props} />
 }

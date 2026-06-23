@@ -1,21 +1,20 @@
-// src/components/Clock/Clock.tsx
-import { useThemeComponent } from '../../theme/themeComponents'
-import styles from './Clock.module.css'
+// src/components/Clock/Clock.calm.tsx
+// Calm-theme variant: a soft paper readout instead of a dark display well. Mono
+// digits in ink; state shown by a quiet coloured label (sage = playing,
+// terracotta = recording).
+import type { ClockProps } from './Clock'
+import styles from './Clock.calm.module.css'
 
-// 96 ticks per beat — matches the spec example "19.3.11" (2-digit tick display, max 95)
 const TICKS_PER_BEAT = 96
 
-type ClockState = 'stopped' | 'playing' | 'recording'
-
-const STATE_LABELS: Record<ClockState, string> = {
-  stopped: '[Stopped]',
-  playing: 'Playing',
+const STATE_LABELS = {
+  stopped:   '[Stopped]',
+  playing:   'Playing',
   recording: 'Recording',
-}
+} as const
 
 const BARS_FALLBACK: Record<1 | 2 | 3, string> = { 1: '-', 2: '-.-', 3: '-.-.--' }
 
-/** seconds → bars string, precision controls how many units: 1=bar, 2=bar.beat, 3=bar.beat.tick */
 function toBarsBeats(seconds: number, bpm: number, numerator: number, precision: 1 | 2 | 3): string {
   if (bpm <= 0 || numerator <= 0) return BARS_FALLBACK[precision]
   const beats = Math.max(0, seconds) * (bpm / 60)
@@ -27,7 +26,6 @@ function toBarsBeats(seconds: number, bpm: number, numerator: number, precision:
   return `${bar}.${beat}.${String(tick).padStart(2, '0')}`
 }
 
-/** seconds → time string, precision controls units: 1=m, 2=m:ss, 3=m:ss.mmm */
 function toMinSec(seconds: number, precision: 1 | 2 | 3): string {
   const s = Math.max(0, seconds)
   const m = Math.floor(s / 60)
@@ -38,34 +36,7 @@ function toMinSec(seconds: number, precision: 1 | 2 | 3): string {
   return `${m}:${String(sec).padStart(2, '0')}.${String(ms).padStart(3, '0')}`
 }
 
-export interface ClockProps {
-  /** Current position in seconds. Caller drives at ~30 Hz when playing. */
-  seconds: number
-  /** Tempo in BPM (quarter-note reference). */
-  bpm: number
-  /** Time signature numerator — beats per bar. */
-  numerator: number
-  /**
-   * Time signature denominator — held for contract completeness.
-   * Bar/beat display uses only numerator; denominator would be needed for
-   * compound-meter correction (deferred to the real app).
-   */
-  denominator: number
-  /** Transport state. */
-  state: ClockState
-  /** Display mode. Default 'bars'. */
-  mode?: 'bars' | 'time'
-  onModeChange?: (mode: 'bars' | 'time') => void
-  /**
-   * How many time units to show. Default 3 (all).
-   * bars mode: 1=bar, 2=bar.beat, 3=bar.beat.tick
-   * time mode: 1=m, 2=m:ss, 3=m:ss.mmm
-   */
-  precision?: 1 | 2 | 3
-  size?: 'sm' | 'md'
-}
-
-function ClockBase({
+export function ClockCalm({
   seconds,
   bpm,
   numerator,
@@ -82,10 +53,6 @@ function ClockBase({
 
   const nextMode: 'bars' | 'time' = mode === 'bars' ? 'time' : 'bars'
 
-  function handleClick() {
-    onModeChange?.(nextMode)
-  }
-
   return (
     <button
       type="button"
@@ -95,7 +62,7 @@ function ClockBase({
       data-mode={mode}
       data-precision={precision}
       aria-label={`Position display, ${mode} mode. Switch to ${nextMode} mode`}
-      onClick={handleClick}
+      onClick={() => onModeChange?.(nextMode)}
     >
       <div className={styles.statusRow} aria-hidden="true">
         <span className={styles.stateLabel}>{STATE_LABELS[state]}</span>
@@ -106,10 +73,4 @@ function ClockBase({
       </div>
     </button>
   )
-}
-
-// Theme-aware resolver: the active theme's variant, or the base.
-export function Clock(props: ClockProps) {
-  const Impl = useThemeComponent('Clock', ClockBase)
-  return <Impl {...props} />
 }

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { FxChipCalm } from './FxChip.calm'
 import type { FxPlugin } from './FxChip'
+import paper from '../../theme/paperOverlay.module.css'
 
 const PLUGINS: FxPlugin[] = [
   { id: 'p1', name: 'Reverb', enabled: true },
@@ -44,5 +45,11 @@ describe('FxChipCalm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'FX chain' }))
     expect(screen.getByRole('dialog', { name: 'FX chain' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open Reverb' })).toBeInTheDocument()
+  })
+
+  it('opens the chain panel on a light paper surface', () => {
+    render(<FxChipCalm plugins={PLUGINS} chainEnabled {...handlers} />)
+    fireEvent.click(screen.getByRole('button', { name: 'FX chain' }))
+    expect(screen.getByRole('dialog', { name: 'FX chain' }).closest(`.${paper.paper}`)).not.toBeNull()
   })
 })

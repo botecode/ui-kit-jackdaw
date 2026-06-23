@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChainEditor } from './FxChip'
 import type { FxChipProps } from './FxChip'
 import { Popover } from '../Popover'
+import paper from '../../theme/paperOverlay.module.css'
 import styles from './FxChip.calm.module.css'
 
 export function FxChipCalm({
@@ -80,17 +81,19 @@ export function FxChipCalm({
           anchorRef={triggerRef as React.RefObject<HTMLElement>}
           onClose={closeMenu}
         >
-          <ChainEditor
-            plugins={plugins}
-            chainEnabled={chainEnabled}
-            onToggleChain={onToggleChain}
-            onTogglePlugin={onTogglePlugin}
-            onReorder={onReorder}
-            onRemove={onRemove}
-            onAdd={onAdd}
-            onOpenPlugin={onOpenPlugin}
-            masterLedRef={masterLedRef}
-          />
+          <div className={paper.paper}>
+            <ChainEditor
+              plugins={plugins}
+              chainEnabled={chainEnabled}
+              onToggleChain={onToggleChain}
+              onTogglePlugin={onTogglePlugin}
+              onReorder={onReorder}
+              onRemove={onRemove}
+              onAdd={onAdd}
+              onOpenPlugin={onOpenPlugin}
+              masterLedRef={masterLedRef}
+            />
+          </div>
         </Popover>
       )}
     </div>
