@@ -56,6 +56,28 @@ export interface ClipInfo {
   offset?: number
 }
 
+/**
+ * Live recording overlay descriptor. While a track is armed + rolling, the consumer
+ * passes the punch-in point plus an imperative read of the transport position; the
+ * lane paints a growing translucent capture region from `startSec` to the live
+ * playhead. This is deliberately NOT a `ClipInfo` in `clips` — it has no peaks, id,
+ * selection, or drag/trim semantics; it's transport-driven UI state, not edited data.
+ */
+export interface RecordingRegion {
+  /** Project seconds where recording punched in — the region's fixed left edge. */
+  startSec: number
+  /**
+   * Imperative read of the live transport position in project seconds — the SAME
+   * authoritative source the Playhead reads via `getPlayheadSeconds`. Called once per
+   * animation frame to grow the region's right edge to the playhead. Imperative (a
+   * getter, not a plain number) so a recording lane repaints via its own rAF instead
+   * of forcing a 60 fps React re-render of the whole arrangement — mirrors Playhead's
+   * `seconds` / `getSeconds` split. Memoize it (useCallback) to avoid restarting the
+   * rAF loop on every parent render.
+   */
+  getNowSec: () => number
+}
+
 export interface ClipMoveIntent {
   clipId: string
   /** Snapped start position in seconds. */
@@ -130,6 +152,14 @@ export interface TrackLaneProps {
   onLaneContextMenu?: (event: React.MouseEvent<HTMLDivElement>, trackId: string) => void
   /** Called when the user clicks empty lane space; seconds are snapped to division. */
   onSetCursor?: (seconds: number) => void
+  /**
+   * Live recording overlay. While this track is armed + rolling, pass the punch-in
+   * point + an imperative read of the transport position and the lane paints a growing
+   * translucent red capture region from `startSec` to the live playhead (driven by the
+   * lane's own rAF, so it costs no React re-renders). Unset = not recording. This is a
+   * transient transport-driven region, NOT a clip in `clips`.
+   */
+  recordingRegion?: RecordingRegion | null
 }
 
 // ─── Internal types ────────────────────────────────────────────────────────────
@@ -275,6 +305,57 @@ function ClipSlot({
   )
 }
 
+// ─── RecordingOverlay ───────────────────────────────────────────────────────────
+// The live capture region. Left edge is fixed at the punch-in point; the right edge
+// tracks the transport position imperatively via rAF, so the region grows smoothly
+// while recording without re-rendering the lane each frame (same no-churn contract as
+// Playhead). The width is also seeded synchronously from getNowSec() at render so the
+// first paint is correct (no flash) and the snapshot stays right even if rAF never
+// advances — e.g. a paused frame. Growth is functional, state-carrying motion (what's
+// being captured, tied to transport), so it KEEPS tracking under prefers-reduced-motion,
+// exactly like the playhead and meters — no decorative animation to disable.
+
+interface RecordingOverlayProps {
+  region: RecordingRegion
+  pxPerBeat: number
+  bpm: number
+}
+
+function RecordingOverlay({ region, pxPerBeat, bpm }: RecordingOverlayProps) {
+  const elRef = useRef<HTMLDivElement>(null)
+
+  // Keep the live getter current without restarting the rAF loop on every render.
+  const getNowRef = useRef(region.getNowSec)
+  useEffect(() => { getNowRef.current = region.getNowSec })
+
+  const left = secondsToX(region.startSec, pxPerBeat, bpm)
+  // Synchronous seed: correct first paint + a sane snapshot if rAF never fires.
+  const width0 = Math.max(0, secondsToX(region.getNowSec(), pxPerBeat, bpm) - left)
+
+  useEffect(() => {
+    const el = elRef.current
+    if (!el) return
+    let raf = 0
+    const paint = () => {
+      const right = secondsToX(getNowRef.current(), pxPerBeat, bpm)
+      el.style.width = `${Math.max(0, right - left)}px`
+      raf = requestAnimationFrame(paint)
+    }
+    raf = requestAnimationFrame(paint)
+    return () => cancelAnimationFrame(raf)
+  }, [left, pxPerBeat, bpm])
+
+  return (
+    <div
+      ref={elRef}
+      className={styles.recordingRegion}
+      data-testid="recording-region"
+      aria-hidden="true"
+      style={{ left, width: width0 }}
+    />
+  )
+}
+
 // ─── TrackLane ────────────────────────────────────────────────────────────────
 
 export function TrackLane({
@@ -301,6 +382,7 @@ export function TrackLane({
   onClipContextMenu,
   onLaneContextMenu,
   onSetCursor,
+  recordingRegion,
 }: TrackLaneProps) {
   const laneRef      = useRef<HTMLDivElement>(null)
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null)
@@ -564,6 +646,7 @@ export function TrackLane({
       data-drop-target={dropTarget ?? undefined}
       data-stretch-armed={(altArmed && !activeDrag) || undefined}
       data-stretching={(activeDrag && isStretchMode(activeDrag.mode)) || undefined}
+      data-recording={recordingRegion ? '' : undefined}
       style={{ height }}
       onPointerDown={handleLanePointerDown}
       onPointerMove={handlePointerMove}
@@ -587,6 +670,13 @@ export function TrackLane({
           denominator={denominator}
         />
       </div>
+
+      {/* Live capture region — a growing translucent red band from the punch-in point
+          to the live playhead while this track is armed + rolling. Transport-driven UI
+          state (its own rAF), not a clip; sits above the grid, below clip bodies. */}
+      {recordingRegion && (
+        <RecordingOverlay region={recordingRegion} pxPerBeat={pxPerBeat} bpm={bpm} />
+      )}
 
       {clips.map(clip => {
         const isDragging = activeDrag?.clipId === clip.clipId

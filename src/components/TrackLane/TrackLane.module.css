@@ -91,6 +91,31 @@
   opacity: 0.42;
 }
 
+/* ─── Recording region ────────────────────────────────────────────────────────
+   The live capture overlay, painted while the track is armed + rolling. A translucent
+   RED band (the record semantic — KIT-LEAD: red = arm/record — so it reads coherently
+   with the red recording Playhead that sweeps its leading edge) grows from the punch-in
+   point to the live transport position. The brighter right edge IS the capture head,
+   landing exactly where the red playhead draws over it. Sits above the grid (z 0) and
+   below clip bodies (z 2) so any committed clip paints over it.
+
+   No CSS transition: width is driven imperatively by rAF (functional, state-carrying
+   motion that keeps tracking under prefers-reduced-motion, like the playhead + meters),
+   so there's nothing decorative to disable. Token-only — reskins through every theme. */
+
+.recordingRegion {
+  position: absolute;
+  top:    4px;
+  bottom: 4px;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--led-red) 16%, transparent);
+  box-shadow:
+    inset -1.5px 0 0 var(--led-red-core),
+    inset 0 0 0 1px color-mix(in srgb, var(--led-red) 40%, transparent);
+}
+
 /* ─── Grid layer ──────────────────────────────────────────────────────────────
    Fills the entire lane behind clips. TimelineGrid renders --arrange-bg,
    --texture-paper, and the beat/bar gradient lines as one background stack.

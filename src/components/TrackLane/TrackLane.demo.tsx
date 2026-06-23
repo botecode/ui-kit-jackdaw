@@ -1,5 +1,5 @@
 // src/components/TrackLane/TrackLane.demo.tsx
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
@@ -275,6 +275,38 @@ function StatesDemo() {
           />
         </LaneWrap>
       </State>
+
+      {/* Live capture region — punched in at bar 2, snapshot grown to bar 4. In the
+          app `getNowSec` reads the live transport (same source as the Playhead); a
+          constant getter here freezes the snapshot for the states grid. The live,
+          growing version lives in the playground below. */}
+      <State label="recording — live capture region (snapshot)">
+        <LaneWrap>
+          <TrackLane
+            trackId="recording"
+            clips={[]}
+            bpm={BPM} numerator={4} denominator={4}
+            pxPerBeat={PX_PER_BEAT} division="1/4"
+            height={56}
+            recordingRegion={{ startSec: BAR(2), getNowSec: () => BAR(4) }}
+          />
+        </LaneWrap>
+      </State>
+
+      {/* Recording over an existing clip — the red capture band reads against a
+          committed clip body (punch-recording onto a take that already exists). */}
+      <State label="recording — over an existing clip">
+        <LaneWrap>
+          <TrackLane
+            trackId="recording-over"
+            clips={GUITAR_CLIPS}
+            bpm={BPM} numerator={4} denominator={4}
+            pxPerBeat={PX_PER_BEAT} division="1/4"
+            height={56}
+            recordingRegion={{ startSec: BAR(3), getNowSec: () => BAR(5) }}
+          />
+        </LaneWrap>
+      </State>
     </StatesGrid>
   )
 }
@@ -298,6 +330,31 @@ function PlaygroundDemo() {
   ])
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // ── Live recording overlay ───────────────────────────────────────────────────
+  // Stand in for the transport: while `recording`, a rAF clock advances nowRef from a
+  // fixed punch-in point; the stable getNowSec reads it, so the lane's OWN rAF grows
+  // the capture region — no per-frame React re-render here (mirrors how the app feeds
+  // the Playhead). Capped at the lane duration so it parks at the edge.
+  const REC_START = BAR(3)
+  const REC_END   = 16
+  const [recording, setRecording] = useState(false)
+  const nowRef = useRef(REC_START)
+  const getNowSec = useCallback(() => nowRef.current, [])
+
+  useEffect(() => {
+    if (!recording) return
+    nowRef.current = REC_START
+    let raf = 0
+    let last = performance.now()
+    const tick = (t: number) => {
+      nowRef.current = Math.min(REC_END, nowRef.current + (t - last) / 1000)
+      last = t
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [recording, REC_START])
 
   // Consumer-owned context menu — the kit only surfaces the gesture (event + ids);
   // here the demo plays the consumer, opening the shared ContextMenu in point mode
@@ -439,6 +496,7 @@ function PlaygroundDemo() {
                 onClipContextMenu={handleClipContextMenu}
                 onLaneContextMenu={handleLaneContextMenu}
                 onSetCursor={handleCursor}
+                recordingRegion={recording ? { startSec: REC_START, getNowSec } : null}
               />
             </div>
           </div>
@@ -536,13 +594,20 @@ function PlaygroundDemo() {
             size="sm"
           />
 
+          <Toggle
+            checked={recording}
+            onChange={setRecording}
+            label="recording (live capture)"
+            size="sm"
+          />
+
           <div style={{
             fontFamily: 'var(--font-mono)',
             fontSize:   'var(--text-xs)',
             color:      'var(--text-dim)',
             marginTop:  'var(--space-2)',
           }}>
-            click selects · Shift+click multi-selects · drag clips · drag an edge trims · Alt+drag an edge time-stretches (left edge is end-anchored) · Delete removes · click lane sets cursor · right-click a clip or empty lane for the menu
+            click selects · Shift+click multi-selects · drag clips · drag an edge trims · Alt+drag an edge time-stretches (left edge is end-anchored) · Delete removes · click lane sets cursor · right-click a clip or empty lane for the menu · toggle “recording” to watch the live capture region grow from the punch-in point
           </div>
         </div>
       </div>

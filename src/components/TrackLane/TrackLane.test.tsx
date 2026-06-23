@@ -735,6 +735,76 @@ describe('TrackLane multiple clips', () => {
   })
 })
 
+// ─── Live recording overlay ─────────────────────────────────────────────────────
+// While a track is armed + rolling, the consumer paints a growing translucent
+// capture region from the punch-in point (startSec) to the live transport position
+// (getNowSec, the same authoritative read the Playhead uses). This is NOT a clip in
+// `clips`: it carries no peaks/id/selection, is never draggable, and is transport-
+// driven UI state. Geometry: pxPerBeat=48, bpm=120 → 96 px/s.
+
+describe('TrackLane recording overlay', () => {
+  it('renders no recording region when the prop is absent', () => {
+    const { container } = lane({ clips: [CLIP_A] })
+    expect(container.querySelector('[data-testid="recording-region"]')).not.toBeInTheDocument()
+  })
+
+  it('renders the recording region when recordingRegion is provided', () => {
+    const { container } = lane({ recordingRegion: { startSec: 0, getNowSec: () => 1 } })
+    expect(container.querySelector('[data-testid="recording-region"]')).toBeInTheDocument()
+  })
+
+  it('marks the lane data-recording while a region is present', () => {
+    const { getByTestId } = lane({ recordingRegion: { startSec: 0, getNowSec: () => 1 } })
+    expect(getByTestId('track-lane')).toHaveAttribute('data-recording')
+  })
+
+  it('no data-recording when the prop is absent', () => {
+    const { getByTestId } = lane()
+    expect(getByTestId('track-lane')).not.toHaveAttribute('data-recording')
+  })
+
+  it('positions the region left at secondsToX(startSec)', () => {
+    // startSec=1 → 1s × 2 beats/s × 48px/beat = 96px
+    const { container } = lane({ recordingRegion: { startSec: 1, getNowSec: () => 1 } })
+    const region = container.querySelector('[data-testid="recording-region"]') as HTMLElement
+    expect(parseFloat(region.style.left)).toBeCloseTo(96)
+  })
+
+  it('initial width = secondsToX(nowSec) - secondsToX(startSec)', () => {
+    // startSec=1 (96px), nowSec=3 (288px) → width 192px
+    const { container } = lane({ recordingRegion: { startSec: 1, getNowSec: () => 3 } })
+    const region = container.querySelector('[data-testid="recording-region"]') as HTMLElement
+    expect(parseFloat(region.style.width)).toBeCloseTo(192)
+  })
+
+  it('floors width at 0 when nowSec is before startSec (degenerate punch)', () => {
+    const { container } = lane({ recordingRegion: { startSec: 4, getNowSec: () => 2 } })
+    const region = container.querySelector('[data-testid="recording-region"]') as HTMLElement
+    expect(parseFloat(region.style.width)).toBeCloseTo(0)
+  })
+
+  it('re-reads getNowSec on re-render so the snapshot tracks the transport', () => {
+    const { container, rerender } = lane({ recordingRegion: { startSec: 0, getNowSec: () => 1 } })
+    let region = container.querySelector('[data-testid="recording-region"]') as HTMLElement
+    expect(parseFloat(region.style.width)).toBeCloseTo(96)   // 1s → 96px
+    rerender(<TrackLane {...BASE} recordingRegion={{ startSec: 0, getNowSec: () => 2 }} />)
+    region = container.querySelector('[data-testid="recording-region"]') as HTMLElement
+    expect(parseFloat(region.style.width)).toBeCloseTo(192)  // grown to 2s → 192px
+  })
+
+  it('the region is decorative-aria (aria-hidden) — it is not an interactive clip', () => {
+    const { container } = lane({ recordingRegion: { startSec: 0, getNowSec: () => 1 } })
+    const region = container.querySelector('[data-testid="recording-region"]') as HTMLElement
+    expect(region).toHaveAttribute('aria-hidden', 'true')
+    expect(region).not.toHaveAttribute('data-clip-id')
+  })
+
+  it('still renders while the lane is disabled (state display, not interaction)', () => {
+    const { container } = lane({ disabled: true, recordingRegion: { startSec: 0, getNowSec: () => 1 } })
+    expect(container.querySelector('[data-testid="recording-region"]')).toBeInTheDocument()
+  })
+})
+
 // ─── Pointer cancel ───────────────────────────────────────────────────────────
 
 describe('TrackLane pointer cancel', () => {
