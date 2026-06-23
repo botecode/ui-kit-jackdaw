@@ -231,27 +231,33 @@ export function TrackHeaderCalm(props: TrackHeaderProps) {
               aria-label={isFolder ? 'Group volume' : 'Volume'}
             />
 
-            {/* Pan arrives only when the track is selected (progressive disclosure). */}
-            {track.selected && (
-              <PanKnobCalm
-                pan={track.pan}
-                onChange={onPan}
-                color={track.color}
-                size="sm"
-                disabled={disabled}
-              />
-            )}
+            {/* Reserved slots — pan/meter fade IN here without reflowing the row,
+                so selecting/arming never changes the trackhead's size. */}
+            <div className={styles.panSlot}>
+              {/* Pan arrives only when the track is selected (progressive disclosure). */}
+              {track.selected && (
+                <PanKnobCalm
+                  pan={track.pan}
+                  onChange={onPan}
+                  color={track.color}
+                  size="sm"
+                  disabled={disabled}
+                />
+              )}
+            </div>
 
-            {showMeter && (
-              <MeterCalm
-                value={meterLevel}
-                valueL={meterLevelL}
-                valueR={meterLevelR}
-                orientation="vertical"
-                size="sm"
-                aria-label="Level"
-              />
-            )}
+            <div className={styles.meterSlot}>
+              {showMeter && (
+                <MeterCalm
+                  value={meterLevel}
+                  valueL={meterLevelL}
+                  valueR={meterLevelR}
+                  orientation="horizontal"
+                  size="sm"
+                  aria-label="Level"
+                />
+              )}
+            </div>
           </div>
         </>
       )}

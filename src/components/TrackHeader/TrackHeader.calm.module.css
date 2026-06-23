@@ -2,6 +2,7 @@
 /* Calm trackhead: a soft paper card, the name as a serif hero, air around it. */
 
 .root {
+  container-type: inline-size;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -12,6 +13,8 @@
   border-radius: var(--radius);
   color: var(--text);
   cursor: pointer;
+  overflow: hidden;
+  box-sizing: border-box;
   transition:
     background var(--dur-slow) var(--ease-out),
     border-color var(--dur-slow) var(--ease-out);
@@ -118,11 +121,16 @@
   outline-offset: 2px;
 }
 
-/* ── Controls row ── */
+/* ── Controls row ──
+   Every item is a FIXED size and the row keeps a constant min-height, so
+   selecting/arming a track fades pan/meter into reserved slots without ever
+   resizing or reflowing the trackhead (matches the base channel's predictability). */
 .controls {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  min-height: 30px;
+  flex-wrap: nowrap;
 }
 
 .cluster {
@@ -132,7 +140,30 @@
   flex: none;
 }
 
-.controls :global([role="slider"]) { flex: 1; }
+/* Reserved slots keep their width whether or not their control is shown. */
+.panSlot {
+  flex: none;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meterSlot {
+  flex: none;
+  width: 80px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Narrow widths: degrade by WIDTH (never by state) so it stays predictable.
+   The meter is ears-first, so it's the first to go; then the input chip. ── */
+@container (max-width: 320px) {
+  .meterSlot { display: none; }
+}
+@container (max-width: 240px) {
+  .cornerChips > :first-child { display: none; }
+}
 
 /* ── Collapsed (minimized) row ── */
 .collapsedRow {
