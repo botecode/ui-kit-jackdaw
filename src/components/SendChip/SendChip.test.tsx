@@ -20,6 +20,12 @@ const TWO_SENDS: SendEntry[] = [
   { returnId: 'r2', returnName: 'Parallel Comp', level: 0.5,  tap: 'pre',  pan: -0.4 },
 ]
 
+const THREE_SENDS: SendEntry[] = [
+  { returnId: 'r1', returnName: 'Reverb',        level: 0.75, tap: 'post', pan: 0    },
+  { returnId: 'r2', returnName: 'Parallel Comp', level: 0.5,  tap: 'pre',  pan: -0.4 },
+  { returnId: 'r3', returnName: 'Room',          level: 0.4,  tap: 'post', pan: 0    },
+]
+
 const DEFAULT_PROPS = {
   sends:          [],
   returns:        RETURNS,
@@ -442,5 +448,186 @@ describe('SendChip + Send picker', () => {
     fireEvent.mouseDown(screen.getByRole('button', { name: /add send/i }))
     fireEvent.click(screen.getByRole('button', { name: /add send/i }))
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+})
+
+// ── Reorder: keyboard (Alt+Arrow) ───────────────────────────────────────────────
+
+describe('SendChip keyboard reorder', () => {
+  it('Alt+ArrowRight on first chip calls onReorderSend(id, index+1)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Send to Reverb/i }), { key: 'ArrowRight', altKey: true })
+    expect(onReorderSend).toHaveBeenCalledWith('r1', 1)
+  })
+
+  it('Alt+ArrowLeft on last chip calls onReorderSend(id, index-1)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Parallel Comp/i }), { key: 'ArrowLeft', altKey: true })
+    expect(onReorderSend).toHaveBeenCalledWith('r2', 0)
+  })
+
+  it('Alt+ArrowLeft at the first slot does nothing (clamped at boundary)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Send to Reverb/i }), { key: 'ArrowLeft', altKey: true })
+    expect(onReorderSend).not.toHaveBeenCalled()
+  })
+
+  it('Alt+ArrowRight at the last slot does nothing (clamped at boundary)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Parallel Comp/i }), { key: 'ArrowRight', altKey: true })
+    expect(onReorderSend).not.toHaveBeenCalled()
+  })
+
+  it('Arrow without Alt does not reorder (plain arrows are free for other use)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Send to Reverb/i }), { key: 'ArrowRight' })
+    expect(onReorderSend).not.toHaveBeenCalled()
+  })
+
+  it('announces the move via an aria-live status region', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={THREE_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Send to Reverb/i }), { key: 'ArrowRight', altKey: true })
+    expect(screen.getByRole('status')).toHaveTextContent('Reverb moved to position 2 of 3')
+  })
+
+  it('no reorder when onReorderSend is not provided (affordance inert)', () => {
+    // Should not throw and should leave the popover-open behavior intact.
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Send to Reverb/i }), { key: 'ArrowRight', altKey: true })
+    // No status announcement, nothing crashed.
+    expect(screen.getByRole('status')).toHaveTextContent('')
+  })
+
+  it('single chip exposes no reorder (Alt+Arrow is a no-op)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} onReorderSend={onReorderSend} />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Send to Reverb/i }), { key: 'ArrowRight', altKey: true })
+    expect(onReorderSend).not.toHaveBeenCalled()
+  })
+
+  it('disabled disables reorder (Alt+Arrow is a no-op)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} disabled />)
+    fireEvent.keyDown(screen.getByRole('button', { name: /Send to Reverb/i }), { key: 'ArrowRight', altKey: true })
+    expect(onReorderSend).not.toHaveBeenCalled()
+  })
+})
+
+// ── Reorder: popover Move left / right ──────────────────────────────────────────
+
+describe('SendChip popover move buttons', () => {
+  it('popover shows Move left / Move right when reorder is enabled', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    expect(screen.getByRole('button', { name: /move left/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /move right/i })).toBeInTheDocument()
+  })
+
+  it('no Move buttons without onReorderSend', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    expect(screen.queryByRole('button', { name: /move left/i })).not.toBeInTheDocument()
+  })
+
+  it('no Move buttons for a single send', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={ONE_SEND} onReorderSend={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    expect(screen.queryByRole('button', { name: /move left/i })).not.toBeInTheDocument()
+  })
+
+  it('Move left is disabled for the first chip', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    expect(screen.getByRole('button', { name: /move left/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /move right/i })).not.toBeDisabled()
+  })
+
+  it('Move right is disabled for the last chip', () => {
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Parallel Comp/i }))
+    expect(screen.getByRole('button', { name: /move right/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /move left/i })).not.toBeDisabled()
+  })
+
+  it('clicking Move right calls onReorderSend(id, index+1)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={THREE_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.click(screen.getByRole('button', { name: /Send to Reverb/i }))
+    fireEvent.click(screen.getByRole('button', { name: /move right/i }))
+    expect(onReorderSend).toHaveBeenCalledWith('r1', 1)
+  })
+
+  it('clicking Move left on the middle chip calls onReorderSend(id, index-1)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={THREE_SENDS} onReorderSend={onReorderSend} />)
+    fireEvent.click(screen.getByRole('button', { name: /Parallel Comp/i }))
+    fireEvent.click(screen.getByRole('button', { name: /move left/i }))
+    expect(onReorderSend).toHaveBeenCalledWith('r2', 0)
+  })
+})
+
+// ── Reorder: pointer drag (real DnD can't run in jsdom — geometry stubbed) ──────
+
+describe('SendChip drag reorder', () => {
+  beforeEach(() => { HTMLElement.prototype.setPointerCapture = vi.fn() })
+
+  // Lay the two chips out left→right by stubbing their measured rects.
+  function stubChipRects() {
+    const roots = Array.from(document.querySelectorAll('[data-send-id]')) as HTMLElement[]
+    roots[0].getBoundingClientRect = () => ({ left: 0,   width: 100, right: 100, top: 0, bottom: 24, height: 24, x: 0,   y: 0, toJSON: () => {} }) as DOMRect
+    roots[1].getBoundingClientRect = () => ({ left: 110, width: 100, right: 210, top: 0, bottom: 24, height: 24, x: 110, y: 0, toJSON: () => {} }) as DOMRect
+  }
+
+  it('dragging the first chip past the second reorders it to the end', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    stubChipRects()
+    const chip = screen.getByRole('button', { name: /Send to Reverb/i })
+    fireEvent.pointerDown(chip, { clientX: 50, clientY: 10, pointerId: 1, button: 0 })
+    fireEvent.pointerMove(chip, { clientX: 200, clientY: 10, pointerId: 1 }) // past r2's midpoint (160)
+    fireEvent.pointerUp(chip,   { clientX: 200, clientY: 10, pointerId: 1 })
+    expect(onReorderSend).toHaveBeenCalledWith('r1', 1)
+  })
+
+  it('a press below the drag threshold stays a click (opens popover, no reorder)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    stubChipRects()
+    const chip = screen.getByRole('button', { name: /Send to Reverb/i })
+    fireEvent.pointerDown(chip, { clientX: 50, clientY: 10, pointerId: 1, button: 0 })
+    fireEvent.pointerMove(chip, { clientX: 52, clientY: 11, pointerId: 1 }) // < 4px → not a drag
+    fireEvent.pointerUp(chip,   { clientX: 52, clientY: 11, pointerId: 1 })
+    fireEvent.click(chip)
+    expect(onReorderSend).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: /Send to Reverb/i })).toBeInTheDocument()
+  })
+
+  it('dropping back onto the original slot does not fire a reorder', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    stubChipRects()
+    const chip = screen.getByRole('button', { name: /Send to Reverb/i })
+    fireEvent.pointerDown(chip, { clientX: 50, clientY: 10, pointerId: 1, button: 0 })
+    fireEvent.pointerMove(chip, { clientX: 40, clientY: 10, pointerId: 1 }) // moved but still slot 0
+    fireEvent.pointerUp(chip,   { clientX: 40, clientY: 10, pointerId: 1 })
+    expect(onReorderSend).not.toHaveBeenCalled()
+  })
+
+  it('a completed drag suppresses the trailing click (no popover)', () => {
+    const onReorderSend = vi.fn()
+    render(<SendChip {...DEFAULT_PROPS} sends={TWO_SENDS} onReorderSend={onReorderSend} />)
+    stubChipRects()
+    const chip = screen.getByRole('button', { name: /Send to Reverb/i })
+    fireEvent.pointerDown(chip, { clientX: 50, clientY: 10, pointerId: 1, button: 0 })
+    fireEvent.pointerMove(chip, { clientX: 200, clientY: 10, pointerId: 1 })
+    fireEvent.pointerUp(chip,   { clientX: 200, clientY: 10, pointerId: 1 })
+    fireEvent.click(chip)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

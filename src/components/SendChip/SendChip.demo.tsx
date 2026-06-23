@@ -35,6 +35,22 @@ const MULTI_SENDS: SendEntry[] = [
   { returnId: 'pcomp',  returnName: 'Parallel Comp', level: 0.5,  tap: 'pre',  pan: -0.4, color: '#c4a0e4' },
 ]
 
+const THREE_SENDS: SendEntry[] = [
+  { returnId: 'reverb', returnName: 'Reverb',        level: 0.75, tap: 'post', pan: 0,    color: '#7ec8a4' },
+  { returnId: 'pcomp',  returnName: 'Parallel Comp', level: 0.5,  tap: 'pre',  pan: -0.4, color: '#c4a0e4' },
+  { returnId: 'room',   returnName: 'Room',          level: 0.4,  tap: 'post', pan: 0.2,  color: '#e4c47e' },
+]
+
+// Move a send to a new slot — the engine intent behind drag / Alt+Arrow / Move buttons.
+function reorder(sends: SendEntry[], returnId: string, toIndex: number): SendEntry[] {
+  const from = sends.findIndex(s => s.returnId === returnId)
+  if (from < 0 || toIndex === from) return sends
+  const next = sends.slice()
+  const [moved] = next.splice(from, 1)
+  next.splice(toIndex, 0, moved)
+  return next
+}
+
 const AUTOMATED_SEND: SendEntry[] = [
   { returnId: 'reverb', returnName: 'Reverb', level: 0.6, tap: 'post', pan: 0.3, color: '#7ec8a4', automated: true },
 ]
@@ -114,6 +130,29 @@ function OpenPickerDemo() {
         setSends(ps => ps.map(s => s.returnId === id ? { ...s, pan } : s))
       }
       onRemoveSend={id => setSends(ps => ps.filter(s => s.returnId !== id))}
+    />
+  )
+}
+
+// Reorderable row — drag a chip, Alt/Option + ←/→, or the popover's Move left/right.
+function ReorderDemo() {
+  const [sends, setSends] = useState<SendEntry[]>(THREE_SENDS)
+  return (
+    <SendChip
+      sends={sends}
+      returns={RETURNS}
+      onAddSend={noop}
+      onSetSendLevel={(id, level) =>
+        setSends(ps => ps.map(s => s.returnId === id ? { ...s, level } : s))
+      }
+      onSetSendTap={(id, tap) =>
+        setSends(ps => ps.map(s => s.returnId === id ? { ...s, tap } : s))
+      }
+      onSetSendPan={(id, pan) =>
+        setSends(ps => ps.map(s => s.returnId === id ? { ...s, pan } : s))
+      }
+      onRemoveSend={id => setSends(ps => ps.filter(s => s.returnId !== id))}
+      onReorderSend={(id, toIndex) => setSends(ps => reorder(ps, id, toIndex))}
     />
   )
 }
@@ -209,6 +248,29 @@ function StatesDemo() {
         </SendStrip>
       </State>
 
+      <State label="reorderable — drag, Alt/Option + ←/→, or popover Move">
+        <div style={{ paddingBottom: 220 }}>
+          <SendStrip>
+            <ReorderDemo />
+          </SendStrip>
+        </div>
+      </State>
+
+      <State label="single send — no reorder affordance">
+        <SendStrip>
+          <SendChip
+            sends={ONE_SEND}
+            returns={RETURNS}
+            onAddSend={noop}
+            onSetSendLevel={noop}
+            onSetSendTap={noop}
+            onSetSendPan={noop}
+            onRemoveSend={noop}
+            onReorderSend={noop}
+          />
+        </SendStrip>
+      </State>
+
       {/* Open states need extra height so portaled panels don't clip the grid */}
       <State label="popover open (click a chip to open)">
         <div style={{ paddingBottom: 200 }}>
@@ -259,6 +321,10 @@ function PlaygroundDemo() {
     setSends(ps => ps.filter(s => s.returnId !== returnId))
   }
 
+  function handleReorderSend(returnId: string, toIndex: number) {
+    setSends(ps => reorder(ps, returnId, toIndex))
+  }
+
   return (
     <Playground>
       <div style={{
@@ -277,6 +343,7 @@ function PlaygroundDemo() {
               onSetSendTap={handleSetTap}
               onSetSendPan={handleSetPan}
               onRemoveSend={handleRemoveSend}
+              onReorderSend={handleReorderSend}
               size={size}
               disabled={disabled}
             />

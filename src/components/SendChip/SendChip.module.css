@@ -56,6 +56,42 @@
   outline-offset: 2px;
 }
 
+/* Reorderable chips advertise the grab affordance (press-and-drag to reorder) */
+.chip[data-reorderable] {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* Lifted while dragging — Chroma elevation + the send's own LED bloom */
+.chipRoot[data-dragging] {
+  z-index: 2;
+}
+
+.chipRoot[data-dragging] .chip {
+  cursor: grabbing;
+  transform: translateY(-1px) scale(1.04);
+  border-color: var(--send-color, var(--accent));
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.28),
+    0 0 0 1px var(--send-color, var(--accent)),
+    0 0 10px 3px color-mix(in srgb, var(--send-color, var(--accent)) 32%, transparent);
+  transition:
+    transform   var(--dur-led-on) var(--ease-out),
+    border-color var(--dur-led-on) var(--ease-out),
+    box-shadow  var(--dur-led-on) var(--ease-out);
+}
+
+/* Drop indicator — a thin lit bar in the dragged send's color, sits between chips */
+.dropIndicator {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 2px;
+  min-height: 18px;
+  border-radius: 999px;
+  background: var(--send-color, var(--accent));
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--send-color, var(--accent)) 55%, transparent);
+}
+
 /* Popover-open state: use the send's own color for the border bloom */
 .chipRoot[data-open] .chip {
   border-color: var(--send-color, var(--accent));
@@ -257,6 +293,67 @@
 .tapBtn:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--led-yellow) 70%, transparent);
   outline-offset: 2px;
+}
+
+/* ─── Move left / right (popover reorder, keyboard-equivalent of drag) ───────── */
+
+.moveGroup {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.moveBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  background: var(--stage-2, #161613);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius, 4px);
+  color: var(--stage-text);
+  opacity: 0.6;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    opacity      var(--dur-fast) var(--ease-out);
+}
+
+.moveBtn:hover:not(:disabled) {
+  opacity: 1;
+  border-color: var(--send-color, var(--accent));
+}
+
+.moveBtn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.moveBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--send-color, var(--accent)) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Screen-reader-only live region (announces reorder moves) ───────────────── */
+
+.srLive {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Decorative drag lift snaps under reduced motion; the bloom (state) stays */
+@media (prefers-reduced-motion: reduce) {
+  .chipRoot[data-dragging] .chip { transform: none; transition: none; }
 }
 
 /* ─── Remove button ──────────────────────────────────────────────────────────── */
