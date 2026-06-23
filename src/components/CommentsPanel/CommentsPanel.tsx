@@ -319,6 +319,7 @@ function CommentCard({
         {comment.replies && comment.replies.length > 0 && (
           <div
             className={styles.replies}
+            data-testid={`replies-${comment.id}`}
             style={{ '--_reply-accent': accent } as React.CSSProperties}
           >
             {comment.replies.map(reply => {
@@ -328,6 +329,7 @@ function CommentCard({
                 <div
                   key={reply.id}
                   className={styles.replyCard}
+                  data-testid={`reply-card-${reply.id}`}
                   data-own={replyIsMe || undefined}
                   style={{ '--_author-accent': replyAccent } as React.CSSProperties}
                 >
