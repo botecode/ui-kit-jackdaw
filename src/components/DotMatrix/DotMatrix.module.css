@@ -91,3 +91,24 @@
       0 0 3px 1px color-mix(in srgb, var(--dot-color, var(--accent)) 25%, transparent);
   }
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Calm turns the dark LED matrix into a soft paper grid with quiet ink dots —
+   lightened wells, no inset gloom, no LED bloom (lit dots keep their colour via
+   the ::after gradient). */
+
+:global([data-theme="calm"]) .root {
+  background: var(--surface-2);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.06),
+    0 0 0 1px var(--border);
+}
+
+:global([data-theme="calm"]) .dot {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+:global([data-theme="calm"]) .dot[data-lit][data-glow] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dot-color, var(--accent)) 40%, var(--border));
+}
