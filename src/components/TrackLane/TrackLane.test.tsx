@@ -222,6 +222,93 @@ describe('TrackLane clip drag (move)', () => {
   })
 })
 
+// ─── Cross-lane move reporting + drop target ────────────────────────────────────
+// A standalone lane can't resolve a drop onto a sibling — only the Arrangement
+// composite sees every lane. During a MOVE drag the lane surfaces the live pointer
+// (onClipDragMove) so the composite can hit-test the lane stack, and accepts a
+// resolved `dropTarget` ('valid' | 'invalid') to paint the drop highlight. The
+// dragged clip lifts vertically (translateY) toward the target lane.
+
+describe('TrackLane cross-lane move reporting', () => {
+  it('fires onClipDragMove during a move drag with clip id and client coords', () => {
+    const onClipDragMove = vi.fn()
+    const { getByTestId, container } = lane({ clips: [CLIP_A], onClipDragMove })
+    const root = getByTestId('track-lane')
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10, clientY: 20 })
+    fireEvent.pointerMove(root, { clientX: 30, clientY: 70 })
+    expect(onClipDragMove).toHaveBeenCalledWith(
+      expect.objectContaining({ clipId: 'a', clientX: 30, clientY: 70 })
+    )
+  })
+
+  it('does NOT fire onClipDragMove during a trim drag', () => {
+    const onClipDragMove = vi.fn()
+    const { getByTestId, container } = lane({ clips: [CLIP_A], onClipDragMove })
+    const root      = getByTestId('track-lane')
+    const trimStart = container.querySelector('[data-clip-id="a"] [data-trim="start"]') as HTMLElement
+    fireEvent.pointerDown(trimStart, { clientX: 0, clientY: 20 })
+    fireEvent.pointerMove(root, { clientX: 30, clientY: 70 })
+    expect(onClipDragMove).not.toHaveBeenCalled()
+  })
+
+  it('fires onClipDragEnd when a move drag is released', () => {
+    const onClipDragEnd = vi.fn()
+    const { getByTestId, container } = lane({ clips: [CLIP_A], onClipDragEnd })
+    const root = getByTestId('track-lane')
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10, clientY: 20 })
+    fireEvent.pointerMove(root, { clientX: 30, clientY: 70 })
+    fireEvent.pointerUp(root,   { clientX: 30, clientY: 70 })
+    expect(onClipDragEnd).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT fire onClipDragEnd for a trim drag release', () => {
+    const onClipDragEnd = vi.fn()
+    const { getByTestId, container } = lane({ clips: [CLIP_A], onClipDragEnd })
+    const root      = getByTestId('track-lane')
+    const trimEnd   = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    fireEvent.pointerDown(trimEnd, { clientX: 100, clientY: 20 })
+    fireEvent.pointerUp(root,      { clientX: 148, clientY: 20 })
+    expect(onClipDragEnd).not.toHaveBeenCalled()
+  })
+
+  it('lifts the dragged clip slot vertically (translateY) following the pointer', () => {
+    const { getByTestId, container } = lane({ clips: [CLIP_A] })
+    const root = getByTestId('track-lane')
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10, clientY: 20 })
+    fireEvent.pointerMove(root, { clientX: 10, clientY: 75 }) // dy = 55
+    expect(slot.style.transform).toContain('translateY(55px)')
+  })
+
+  it('marks the lane data-drag-mode="move" while moving (so the clip can overflow)', () => {
+    const { getByTestId, container } = lane({ clips: [CLIP_A] })
+    const root = getByTestId('track-lane')
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10, clientY: 20 })
+    expect(root).toHaveAttribute('data-drag-mode', 'move')
+  })
+
+  it('reflects dropTarget="valid" on the lane and renders the highlight', () => {
+    const { getByTestId, container } = lane({ clips: [CLIP_A], dropTarget: 'valid' })
+    expect(getByTestId('track-lane')).toHaveAttribute('data-drop-target', 'valid')
+    expect(container.querySelector('[data-drop="valid"]')).toBeInTheDocument()
+  })
+
+  it('reflects dropTarget="invalid" on the lane and renders the invalid highlight', () => {
+    const { getByTestId, container } = lane({ clips: [CLIP_A], dropTarget: 'invalid' })
+    expect(getByTestId('track-lane')).toHaveAttribute('data-drop-target', 'invalid')
+    expect(container.querySelector('[data-drop="invalid"]')).toBeInTheDocument()
+  })
+
+  it('no drop highlight when dropTarget is unset', () => {
+    const { getByTestId, container } = lane({ clips: [CLIP_A] })
+    expect(getByTestId('track-lane')).not.toHaveAttribute('data-drop-target')
+    expect(container.querySelector('[data-drop]')).not.toBeInTheDocument()
+  })
+})
+
 // ─── Clip drag — trim ─────────────────────────────────────────────────────────
 
 describe('TrackLane clip trim', () => {

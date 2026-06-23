@@ -95,6 +95,22 @@ export interface ArrangementProps {
   /** Fires when a track's minimized (compact row) state changes via double-click. */
   onToggleMinimized?: (id: string, minimized: boolean) => void
   onClipMove?:        (trackId: string, intent: ClipMoveIntent) => void
+  /**
+   * Fires continuously while a clip is dragged, with the live pointer and the lane
+   * resolved beneath it. A standalone `TrackLane` can't see its siblings — only the
+   * arrangement hit-tests the whole lane stack — so this is where the consumer learns
+   * the drop target to paint its own highlight / invalid-folder cue. `targetTrackId`
+   * is the sibling lane under the pointer (or null past the stack); `invalid` is true
+   * when that lane can't accept a clip (a folder/bus lane). The kit also paints its
+   * own drop highlight so the gallery reads correctly with no consumer wiring.
+   */
+  onClipDragOver?:    (info: {
+    clipId:        string
+    clientX:       number
+    clientY:       number
+    targetTrackId: string | null
+    invalid:       boolean
+  }) => void
   onClipTrimStart?:   (trackId: string, intent: ClipTrimIntent) => void
   onClipTrimEnd?:     (trackId: string, intent: ClipTrimIntent) => void
   onClipDelete?:      (trackId: string, clipId: string) => void
@@ -169,6 +185,7 @@ export function Arrangement({
   onToggleFolder,
   onToggleMinimized,
   onClipMove,
+  onClipDragOver,
   onClipTrimStart,
   onClipTrimEnd,
   onClipDelete,
@@ -176,6 +193,7 @@ export function Arrangement({
 }: ArrangementProps) {
   const scrollBoxRef     = useRef<HTMLDivElement>(null)
   const headersScrollRef = useRef<HTMLDivElement>(null)
+  const lanesRef         = useRef<HTMLDivElement>(null)
 
   // ── Minimized state (localStorage-backed, arrangement-scoped) ──────────────
   const [minimizedTracks, setMinimizedTracks] = useState<Set<string>>(() => {
@@ -222,6 +240,69 @@ export function Arrangement({
     if (next.has(clipId)) next.delete(clipId)
     else next.add(clipId)
     commitSelection(next)
+  }
+
+  // ── Cross-track clip drag (composite-owned hit-test) ────────────────────────
+  // A lane can't resolve a drop onto a sibling — only the composite sees the stack.
+  // While a clip is dragged, each lane reports the live pointer up here; we hit-test
+  // it against the lane rects to find the lane underneath, decide if it can accept a
+  // clip (folder/bus lanes can't), paint that lane's highlight (live state), and stash
+  // the verdict in a ref so the drop's onClipMove can inject the resolved trackId.
+  interface DragResolve { originTrackId: string; targetTrackId: string | null; invalid: boolean }
+  const dragResolvedRef = useRef<DragResolve | null>(null)
+  const [dragOver, setDragOver] = useState<DragResolve & { clipId: string } | null>(null)
+
+  const isFolderTrack = useCallback(
+    (id: string | null) => id != null && (tracks.find(t => t.id === id)?.isFolder ?? false),
+    [tracks],
+  )
+
+  // Resolve the lane whose vertical band contains clientY (DOM order = visual order).
+  function laneAtClientY(clientY: number): string | null {
+    const region = lanesRef.current
+    if (!region) return null
+    const lanes = region.querySelectorAll<HTMLElement>('[data-track-id]')
+    for (const lane of lanes) {
+      const rect = lane.getBoundingClientRect()
+      if (clientY >= rect.top && clientY < rect.bottom) return lane.dataset.trackId ?? null
+    }
+    return null
+  }
+
+  function handleClipDragOver(
+    originTrackId: string,
+    info: { clipId: string; clientX: number; clientY: number },
+  ) {
+    const targetTrackId = laneAtClientY(info.clientY)
+    const invalid       = isFolderTrack(targetTrackId)
+    dragResolvedRef.current = { originTrackId, targetTrackId, invalid }
+    setDragOver({ ...dragResolvedRef.current, clipId: info.clipId })
+    onClipDragOver?.({ ...info, targetTrackId, invalid })
+  }
+
+  function handleClipDragEnd() {
+    dragResolvedRef.current = null
+    setDragOver(null)
+  }
+
+  // The drop highlight shows on the resolved sibling lane only (never the home lane).
+  function dropTargetFor(trackId: string): 'valid' | 'invalid' | null {
+    if (!dragOver || dragOver.targetTrackId !== trackId) return null
+    if (dragOver.targetTrackId === dragOver.originTrackId) return null
+    return dragOver.invalid ? 'invalid' : 'valid'
+  }
+
+  // Wrap a lane's move intent: inject the resolved sibling lane into intent.trackId
+  // (a valid cross-track drop); a same-lane or invalid (folder) drop stays same-track.
+  function handleClipMove(originTrackId: string, intent: ClipMoveIntent) {
+    const r = dragResolvedRef.current
+    const crossTrack =
+      r != null &&
+      r.originTrackId === originTrackId &&
+      r.targetTrackId != null &&
+      r.targetTrackId !== originTrackId &&
+      !r.invalid
+    onClipMove?.(originTrackId, crossTrack ? { ...intent, trackId: r!.targetTrackId! } : intent)
   }
 
   // ── Collapse all folders ────────────────────────────────────────────────────
@@ -393,6 +474,7 @@ export function Arrangement({
 
             {/* Lanes + arrangement-level overlays */}
             <div
+              ref={lanesRef}
               className={styles.lanesRegion}
               data-testid="arrangement-lanes"
               data-empty={isEmpty || undefined}
@@ -419,9 +501,12 @@ export function Arrangement({
                       height={rowHeight(track)}
                       selected={focusedTrackId === track.id}
                       disabled={disabled}
+                      dropTarget={dropTargetFor(track.id)}
                       onClipMove={onClipMove
-                        ? intent => onClipMove!(track.id, intent)
+                        ? intent => handleClipMove(track.id, intent)
                         : undefined}
+                      onClipDragMove={info => handleClipDragOver(track.id, info)}
+                      onClipDragEnd={handleClipDragEnd}
                       onClipTrimStart={onClipTrimStart
                         ? intent => onClipTrimStart!(track.id, intent)
                         : undefined}

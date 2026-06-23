@@ -82,6 +82,23 @@ export interface TrackLaneProps {
   selected?: boolean
   disabled?: boolean
   onClipMove?: (intent: ClipMoveIntent) => void
+  /**
+   * Fires on every pointer-move of a MOVE drag, surfacing the raw pointer position
+   * and the clip being dragged. A standalone lane can't resolve a drop onto a
+   * sibling lane — only the Arrangement composite sees the whole lane stack — so it
+   * hit-tests these coordinates against its lanes to derive the live drop target
+   * (and feed `dropTarget` back down + fire its own `onClipDragOver`).
+   */
+  onClipDragMove?: (info: { clipId: string; clientX: number; clientY: number }) => void
+  /** Fires once when a MOVE drag is released (pointer up / cancel) — lets the
+   *  composite clear its transient drop-target state. Trim/stretch don't fire it. */
+  onClipDragEnd?: () => void
+  /**
+   * Live drop-target verdict for THIS lane during a cross-lane drag, resolved and
+   * pushed down by the Arrangement composite: `'valid'` paints the accent drop
+   * highlight, `'invalid'` the amber folder-reject highlight. Unset = not a target.
+   */
+  dropTarget?: 'valid' | 'invalid' | null
   onClipTrimStart?: (intent: ClipTrimIntent) => void
   onClipTrimEnd?: (intent: ClipTrimIntent) => void
   /**
@@ -129,6 +146,10 @@ interface ActiveDrag {
   pointerX0: number
   currentLeft: number
   currentRight: number
+  /** Move only: pointer Y at grab + live vertical offset, so the clip lifts toward
+   *  a sibling lane while the composite resolves the cross-track target. */
+  pointerY0: number
+  offsetY: number
   /** Stretch only: source seconds in the clip + px length bounds derived from the rate range. */
   contentSec?: number
   minLenPx?: number
@@ -154,6 +175,8 @@ interface ClipSlotProps {
   stretching: boolean
   dragLeft?: number
   dragRight?: number
+  /** Vertical lift (px) while THIS clip is being moved across lanes. */
+  dragOffsetY?: number
   release?: ReleaseInfo
   disabled: boolean
   onKeyDelete: (clipId: string) => void
@@ -168,6 +191,7 @@ function ClipSlot({
   stretching,
   dragLeft,
   dragRight,
+  dragOffsetY,
   release,
   disabled,
   onKeyDelete,
@@ -218,11 +242,12 @@ function ClipSlot({
       data-stretching={stretching || undefined}
       data-stretchable={isStretchable(clip) || undefined}
       style={{
-        position: 'absolute',
-        left:     renderLeft,
-        width:    renderWidth,
-        top:      4,
-        bottom:   4,
+        position:  'absolute',
+        left:      renderLeft,
+        width:     renderWidth,
+        top:       4,
+        bottom:    4,
+        transform: dragOffsetY ? `translateY(${dragOffsetY}px)` : undefined,
       }}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={handleKeyDown}
@@ -264,6 +289,9 @@ export function TrackLane({
   selected  = false,
   disabled  = false,
   onClipMove,
+  onClipDragMove,
+  onClipDragEnd,
+  dropTarget = null,
   onClipTrimStart,
   onClipTrimEnd,
   onClipSetRate,
@@ -320,9 +348,17 @@ export function TrackLane({
     if (drag.mode === 'move') {
       const newLeft   = Math.max(0, drag.clip0Left + dx)
       const clipWidth = drag.clip0Right - drag.clip0Left
-      const updated   = { ...drag, currentLeft: newLeft, currentRight: newLeft + clipWidth }
+      const updated   = {
+        ...drag,
+        currentLeft:  newLeft,
+        currentRight: newLeft + clipWidth,
+        offsetY:      e.clientY - drag.pointerY0,
+      }
       activeDragRef.current = updated
       setActiveDrag(updated)
+      // Surface the live pointer so the composite can hit-test the lane stack and
+      // resolve the cross-track drop target (this lane can't see its siblings).
+      onClipDragMove?.({ clipId: drag.clipId, clientX: e.clientX, clientY: e.clientY })
     } else if (drag.mode === 'trim-start') {
       const newLeft = Math.max(0, Math.min(drag.clip0Left + dx, drag.clip0Right - 8))
       const updated = { ...drag, currentLeft: newLeft }
@@ -348,7 +384,7 @@ export function TrackLane({
       activeDragRef.current = updated
       setActiveDrag(updated)
     }
-  }, [])
+  }, [onClipDragMove])
 
   // ── Pointer up ─────────────────────────────────────────────────────────────
 
@@ -360,12 +396,17 @@ export function TrackLane({
 
     if (mode === 'move') {
       const snappedLeft = snapXToDivision(currentLeft, divisionPx)
+      // The composite injects the resolved sibling lane into `intent.trackId` (it owns
+      // the cross-lane hit-test); a standalone lane just emits the same-track start.
       onClipMove?.({ clipId, start: xToSeconds(snappedLeft, pxPerBeat, bpm) })
       // Seed spring settle: from drag-release position → natural (snapped) position.
       setReleaseMap(prev => ({
         ...prev,
         [clipId]: { fromX: currentLeft, key: (prev[clipId]?.key ?? 0) + 1 },
       }))
+      // Let the composite clear its transient drop-target state (fires after move so
+      // the onClipMove wrapper can still read the resolved target).
+      onClipDragEnd?.()
     } else if (mode === 'trim-start') {
       const snappedLeft = snapXToDivision(currentLeft, divisionPx)
       const clip = clips.find(c => c.clipId === clipId)
@@ -405,7 +446,7 @@ export function TrackLane({
 
     activeDragRef.current = null
     setActiveDrag(null)
-  }, [bpm, clips, divisionPx, onClipMove, onClipSetRate, onClipTrimEnd, onClipTrimStart, pxPerBeat])
+  }, [bpm, clips, divisionPx, onClipMove, onClipDragEnd, onClipSetRate, onClipTrimEnd, onClipTrimStart, pxPerBeat])
 
   // ── Start drag (called from lane pointer-down after target detection) ───────
 
@@ -428,8 +469,10 @@ export function TrackLane({
     const drag: ActiveDrag = {
       clipId, mode, clip0Left, clip0Right,
       pointerX0:    e.clientX,
+      pointerY0:    e.clientY,
       currentLeft:  clip0Left,
       currentRight: clip0Right,
+      offsetY:      0,
       ...stretch,
     }
     activeDragRef.current = drag
@@ -517,6 +560,8 @@ export function TrackLane({
       data-selected={selected  || undefined}
       data-disabled={disabled  || undefined}
       data-dragging={activeDrag?.clipId || undefined}
+      data-drag-mode={activeDrag?.mode}
+      data-drop-target={dropTarget ?? undefined}
       data-stretch-armed={(altArmed && !activeDrag) || undefined}
       data-stretching={(activeDrag && isStretchMode(activeDrag.mode)) || undefined}
       style={{ height }}
@@ -526,6 +571,12 @@ export function TrackLane({
       onPointerCancel={handlePointerUp}
       onContextMenu={handleLaneContextMenu}
     >
+      {/* Cross-lane drop highlight — painted when the composite resolves this lane as
+          the live drag target: accent for a valid landing, amber for a folder reject. */}
+      {dropTarget && (
+        <div className={styles.dropHighlight} data-drop={dropTarget} aria-hidden="true" />
+      )}
+
       {/* Beat/bar grid + paper texture (TimelineGrid already composites both). */}
       <div className={styles.gridLayer} aria-hidden="true">
         <TimelineGrid
@@ -549,6 +600,7 @@ export function TrackLane({
             stretching={isDragging && isStretchMode(activeDrag!.mode)}
             dragLeft={isDragging  ? activeDrag!.currentLeft  : undefined}
             dragRight={isDragging ? activeDrag!.currentRight : undefined}
+            dragOffsetY={isDragging && activeDrag!.mode === 'move' ? activeDrag!.offsetY : undefined}
             release={releaseMap[clip.clipId]}
             disabled={disabled}
             onKeyDelete={clipId => onClipDelete?.(clipId)}

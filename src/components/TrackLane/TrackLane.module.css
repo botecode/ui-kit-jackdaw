@@ -38,6 +38,46 @@
   cursor: grabbing;
 }
 
+/* During a MOVE drag the grabbed clip lifts vertically toward a sibling lane, so
+   the lane must stop clipping and rise above its neighbours for the duration. The
+   ledger overflow:hidden is only meaningful at rest (horizontal clip edges), so
+   relaxing it mid-drag costs nothing and lets the clip read as a lifted object. */
+
+.root[data-drag-mode='move'] {
+  overflow: visible;
+  z-index: 15;
+}
+
+/* ─── Cross-lane drop highlight ───────────────────────────────────────────────
+   Painted when the Arrangement composite resolves THIS lane as the live drop
+   target. Valid = accent keyline + faint accent wash (matches the focused-lane
+   language); invalid = amber (the attention/"can't land here" semantic) over a
+   folder/bus lane that holds no clips. Token-only; reskins through every theme. */
+
+.dropHighlight {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 2px;
+  /* Fade in on the state-change timing — functional cue, snaps under reduced-motion. */
+  transition: opacity var(--dur-state, 120ms) var(--ease-out, ease);
+}
+
+.dropHighlight[data-drop='valid'] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.dropHighlight[data-drop='invalid'] {
+  box-shadow: inset 0 0 0 2px var(--led-orange);
+  background: color-mix(in srgb, var(--led-orange) 9%, transparent);
+}
+
+/* Cursor signals the verdict for the whole target lane. */
+.root[data-drop-target='valid']   { cursor: grabbing; }
+.root[data-drop-target='invalid'] { cursor: not-allowed; }
+
 /* While a clip is being time-stretched, lock the dedicated stretch cursor. */
 
 .root[data-stretching] {
@@ -166,4 +206,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .trimHandle::after { transition: none; }
+  .dropHighlight     { transition: none; }
 }

@@ -1,5 +1,5 @@
 // src/components/Arrangement/Arrangement.demo.tsx
-import { useState, useCallback, useRef, type CSSProperties } from 'react'
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
@@ -467,7 +467,40 @@ function PlaygroundDemo() {
     setSelection(next ? { start: bar(3), end: bar(5) } : null)
   }
 
-  const tracks = withFolders ? TRACKS_WITH_FOLDERS : manyTracks ? MANY_TRACKS : FEW_TRACKS
+  // Controlled tracks so cross-track clip drags actually relocate the clip between
+  // lanes (the whole point of this card). Resets to the chosen fixture set when the
+  // track-count / folder toggles change which base set is shown.
+  const baseTracks = withFolders ? TRACKS_WITH_FOLDERS : manyTracks ? MANY_TRACKS : FEW_TRACKS
+  const [arrTracks, setArrTracks] = useState<ArrangementTrack[]>(baseTracks)
+  useEffect(() => { setArrTracks(baseTracks) }, [baseTracks])
+
+  // Live drop-target readout, fed by onClipDragOver (composite-resolved sibling lane).
+  const [dragOver, setDragOver] = useState<string | null>(null)
+
+  // clip:move — same-lane repositions; a populated intent.trackId relocates the clip
+  // to the resolved sibling lane (remove from origin, append to destination).
+  const handleClipMove = useCallback((trackId: string, intent: { clipId: string; start: number; trackId?: string }) => {
+    const destId = intent.trackId ?? trackId
+    setArrTracks(prev => {
+      if (destId === trackId) {
+        return prev.map(t => t.id === trackId
+          ? { ...t, clips: t.clips.map(c => c.clipId === intent.clipId ? { ...c, start: intent.start } : c) }
+          : t)
+      }
+      let moved: ArrangementTrack['clips'][number] | undefined
+      const without = prev.map(t => {
+        if (t.id !== trackId) return t
+        moved = t.clips.find(c => c.clipId === intent.clipId)
+        return { ...t, clips: t.clips.filter(c => c.clipId !== intent.clipId) }
+      })
+      if (!moved) return prev
+      const clip = { ...moved, start: intent.start }
+      return without.map(t => t.id === destId ? { ...t, clips: [...t.clips, clip] } : t)
+    })
+    setDragOver(null)
+  }, [])
+
+  const tracks = arrTracks
 
   return (
     <>
@@ -556,23 +589,28 @@ function PlaygroundDemo() {
           onRemovePlugin={() => {}}
           onAddPlugin={() => {}}
           onOpenPlugin={() => {}}
-          onClipMove={(trackId, intent) => {
-            console.log('clip:move', trackId, intent)
-          }}
+          onClipMove={handleClipMove}
+          onClipDragOver={info => setDragOver(
+            info.targetTrackId == null
+              ? null
+              : `${info.invalid ? '⊘ can’t drop on folder' : '→ drop on'} ${info.targetTrackId}`
+          )}
           onSelectClips={setSelectedClips}
         />
       </div>
 
-      {/* Selection readout — click a clip to select, Shift+click to extend across lanes */}
+      {/* Selection + drag readout — drag a clip vertically onto another lane to move it */}
       <div style={{
         marginTop:  'var(--space-2)',
         fontFamily: 'var(--font-mono)',
         fontSize:   'var(--text-xs)',
         color:      'var(--text-dim)',
       }}>
-        {selectedClips.length === 0
-          ? 'click a clip to select · Shift+click to extend selection across lanes'
-          : `selected (${selectedClips.length}): ${selectedClips.join(', ')}`}
+        {dragOver
+          ? dragOver
+          : selectedClips.length === 0
+            ? 'click a clip to select · Shift+click to extend across lanes · drag a clip onto another lane to move it'
+            : `selected (${selectedClips.length}): ${selectedClips.join(', ')}`}
       </div>
     </>
   )

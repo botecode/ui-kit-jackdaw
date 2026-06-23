@@ -247,6 +247,34 @@ function StatesDemo() {
           />
         </LaneWrap>
       </State>
+
+      {/* Drop-target verdict — the Arrangement resolves which lane sits under a
+          cross-track drag and pushes the verdict down as `dropTarget`. */}
+      <State label="drop target — valid (accent landing)">
+        <LaneWrap>
+          <TrackLane
+            trackId="dropvalid"
+            clips={BASS_CLIPS}
+            bpm={BPM} numerator={4} denominator={4}
+            pxPerBeat={PX_PER_BEAT} division="1/4"
+            height={56}
+            dropTarget="valid"
+          />
+        </LaneWrap>
+      </State>
+
+      <State label="drop target — invalid (folder/bus reject)">
+        <LaneWrap>
+          <TrackLane
+            trackId="dropinvalid"
+            clips={[]}
+            bpm={BPM} numerator={4} denominator={4}
+            pxPerBeat={PX_PER_BEAT} division="1/4"
+            height={56}
+            dropTarget="invalid"
+          />
+        </LaneWrap>
+      </State>
     </StatesGrid>
   )
 }

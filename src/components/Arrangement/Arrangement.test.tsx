@@ -306,6 +306,107 @@ describe('Arrangement — clip multi-select', () => {
   })
 })
 
+// ─── Cross-track clip drag ──────────────────────────────────────────────────────
+// Only the composite sees every lane, so it owns the drop-target hit-test: during a
+// move drag it resolves the pointer to a sibling lane (onClipDragOver), paints that
+// lane's drop highlight, and injects the resolved lane into intent.trackId on drop.
+// Folder/bus lanes hold no clips → invalid target (intent.trackId stays unset).
+
+describe('Arrangement — cross-track clip drag', () => {
+  function clipSlot(container: HTMLElement, clipId: string): HTMLElement {
+    return container.querySelector(`[data-clip-id="${clipId}"]`) as HTMLElement
+  }
+
+  // Stack lanes vertically with deterministic rects (jsdom returns zero-rects):
+  // lane index i spans clientY [i*100, i*100+100).
+  function stubLaneRects(lanes: HTMLElement[]) {
+    lanes.forEach((lane, i) => {
+      Object.defineProperty(lane, 'getBoundingClientRect', {
+        configurable: true,
+        value: () => ({ left: 0, right: 800, top: i * 100, bottom: i * 100 + 100, width: 800, height: 100 }),
+      })
+    })
+  }
+
+  it('fires onClipDragOver resolving the sibling lane under the pointer', () => {
+    const onClipDragOver = vi.fn()
+    const { container, getAllByTestId } = arrangement({ tracks: [TRACK_A, TRACK_B], onClipDragOver })
+    stubLaneRects(getAllByTestId('track-lane'))
+    const originLane = getAllByTestId('track-lane')[0]
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 10, clientY: 40 })
+    fireEvent.pointerMove(originLane, { clientX: 10, clientY: 140 }) // into lane 2 (t2)
+    expect(onClipDragOver).toHaveBeenLastCalledWith(
+      expect.objectContaining({ clipId: 't1-c1', targetTrackId: 't2', invalid: false })
+    )
+  })
+
+  it('marks the sibling lane as a valid drop target during the drag', () => {
+    const { container, getAllByTestId } = arrangement({ tracks: [TRACK_A, TRACK_B] })
+    const lanes = getAllByTestId('track-lane')
+    stubLaneRects(lanes)
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 10, clientY: 40 })
+    fireEvent.pointerMove(lanes[0], { clientX: 10, clientY: 140 })
+    expect(lanes[1]).toHaveAttribute('data-drop-target', 'valid')
+    expect(lanes[0]).not.toHaveAttribute('data-drop-target')
+  })
+
+  it('injects the resolved sibling into intent.trackId on drop', () => {
+    const onClipMove = vi.fn()
+    const { container, getAllByTestId } = arrangement({ tracks: [TRACK_A, TRACK_B], onClipMove })
+    const lanes = getAllByTestId('track-lane')
+    stubLaneRects(lanes)
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 10, clientY: 40 })
+    fireEvent.pointerMove(lanes[0], { clientX: 10, clientY: 140 })
+    fireEvent.pointerUp(lanes[0],   { clientX: 10, clientY: 140 })
+    expect(onClipMove).toHaveBeenCalledTimes(1)
+    const [originTrackId, intent] = onClipMove.mock.calls[0]
+    expect(originTrackId).toBe('t1')          // first arg = the lane the clip lives in
+    expect(intent.clipId).toBe('t1-c1')
+    expect(intent.trackId).toBe('t2')         // resolved destination lane
+  })
+
+  it('leaves intent.trackId undefined for a same-lane move', () => {
+    const onClipMove = vi.fn()
+    const { container, getAllByTestId } = arrangement({ tracks: [TRACK_A, TRACK_B], onClipMove })
+    const lanes = getAllByTestId('track-lane')
+    stubLaneRects(lanes)
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 10, clientY: 40 })
+    fireEvent.pointerMove(lanes[0], { clientX: 60, clientY: 50 }) // stays in lane 1
+    fireEvent.pointerUp(lanes[0],   { clientX: 60, clientY: 50 })
+    const [, intent] = onClipMove.mock.calls[0]
+    expect(intent.trackId).toBeUndefined()
+  })
+
+  it('a folder lane is an invalid target — intent.trackId stays unset on drop', () => {
+    const onClipMove     = vi.fn()
+    const onClipDragOver = vi.fn()
+    const FOLDER_B: ArrangementTrack = { ...TRACK_B, isFolder: true, clips: [] }
+    const { container, getAllByTestId } = arrangement({ tracks: [TRACK_A, FOLDER_B], onClipMove, onClipDragOver })
+    const lanes = getAllByTestId('track-lane')
+    stubLaneRects(lanes)
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 10, clientY: 40 })
+    fireEvent.pointerMove(lanes[0], { clientX: 10, clientY: 140 }) // over the folder lane
+    expect(onClipDragOver).toHaveBeenLastCalledWith(
+      expect.objectContaining({ targetTrackId: 't2', invalid: true })
+    )
+    expect(lanes[1]).toHaveAttribute('data-drop-target', 'invalid')
+    fireEvent.pointerUp(lanes[0], { clientX: 10, clientY: 140 })
+    const [originTrackId, intent] = onClipMove.mock.calls[0]
+    expect(originTrackId).toBe('t1')
+    expect(intent.trackId).toBeUndefined()    // rejected: clip can't land in a folder
+  })
+
+  it('clears the drop highlight after the drag ends', () => {
+    const { container, getAllByTestId } = arrangement({ tracks: [TRACK_A, TRACK_B] })
+    const lanes = getAllByTestId('track-lane')
+    stubLaneRects(lanes)
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 10, clientY: 40 })
+    fireEvent.pointerMove(lanes[0], { clientX: 10, clientY: 140 })
+    fireEvent.pointerUp(lanes[0],   { clientX: 10, clientY: 140 })
+    expect(lanes[1]).not.toHaveAttribute('data-drop-target')
+  })
+})
+
 // ─── Detail panel slot ────────────────────────────────────────────────────────
 
 describe('Arrangement — detailPanel slot', () => {
