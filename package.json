@@ -1,6 +1,6 @@
 {
   "name": "@jackdaw/kit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Jackdaw UI kit — the Chroma design system, consumed by the DAW.",
   "type": "module",
   "main": "./dist/jackdaw-kit.js",
