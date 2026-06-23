@@ -1,6 +1,7 @@
 // src/components/Fader/Fader.tsx
 import { useEffect, useRef, useState } from 'react'
 import { useSpring } from '../../motion/spring'
+import { useThemeComponent } from '../../theme/themeComponents'
 import { clamp, linearScale, quantizeValue } from './faderScales'
 import type { FaderScale } from './faderScales'
 import styles from './Fader.module.css'
@@ -43,7 +44,7 @@ export interface FaderProps {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export function Fader({
+function FaderBase({
   value,
   onChange,
   min = 0,
@@ -320,4 +321,10 @@ export function Fader({
       </span>
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function Fader(props: FaderProps) {
+  const Impl = useThemeComponent('Fader', FaderBase)
+  return <Impl {...props} />
 }

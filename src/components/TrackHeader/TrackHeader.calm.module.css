@@ -1,0 +1,154 @@
+/* src/components/TrackHeader/TrackHeader.calm.module.css */
+/* Calm trackhead: a soft paper card, the name as a serif hero, air around it. */
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background var(--dur-slow) var(--ease-out),
+    border-color var(--dur-slow) var(--ease-out);
+}
+
+.root[data-selected] {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.root[data-variant="folder"] {
+  background: var(--surface-2);
+}
+
+.root[data-disabled] { opacity: 0.5; pointer-events: none; }
+
+/* ── Track colour: a soft dot on the left margin, not an LED spine ── */
+.colorDot {
+  position: absolute;
+  left: var(--space-3);
+  top: calc(var(--space-3) + 7px);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--track-color, var(--accent));
+  opacity: 0.85;
+}
+
+/* ── Title row ── */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.glyph { color: var(--text-dim); flex: none; }
+
+.name,
+.nameInput {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: var(--text-md);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0.01em;
+  color: var(--text);
+  line-height: var(--leading-md);
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  outline: none;
+  border-radius: 3px;
+  cursor: text;
+}
+
+.name:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.nameInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  padding: 2px var(--space-1);
+  outline: none;
+}
+.nameInput:focus { border-color: var(--accent); }
+
+/* ── Folder disclosure ── */
+.disclosure {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+.disclosure:hover { color: var(--text); }
+.disclosure[data-open] { transform: rotate(90deg); }
+.disclosure:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* ── Controls row ── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.controls :global([role="slider"]) { flex: 1; }
+
+/* ── Collapsed (minimized) row ── */
+.collapsedRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.collapsedName {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: var(--text-base);
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.stateMarks {
+  display: inline-flex;
+  gap: var(--space-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+.stateMarks [data-active] { color: var(--accent); font-weight: var(--weight-bold); }
+.stateMarks [data-mark="arm"][data-active] { color: var(--danger); }

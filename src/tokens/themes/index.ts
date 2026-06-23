@@ -1,4 +1,5 @@
 import type { ThemeMeta } from '../types'
+import { calmTheme } from './calm'
 import { chromaTheme } from './chroma'
 import { defaultTheme } from './default'
 import { bowieTheme } from './bowie'
@@ -16,7 +17,7 @@ import { technoTheme } from './techno'
 import { tropicaliaTheme } from './tropicalia'
 
 export {
-  chromaTheme,
+  chromaTheme, calmTheme,
   defaultTheme, bowieTheme, bubbleGumPopTheme, buckleyTheme, gilTheme,
   goldenHourTheme, inkTheme, manuscriptTheme, nocturneTheme, pineTheme,
   reaperTheme, songwriterTheme, technoTheme, tropicaliaTheme,
@@ -38,4 +39,8 @@ export const THEMES: ThemeMeta[] = [
   { id: 'songwriter',     name: 'Songwriter',     tokens: songwriterTheme },
   { id: 'techno',         name: 'Techno',         tokens: technoTheme },
   { id: 'tropicalia',     name: 'Tropicália',     tokens: tropicaliaTheme },
+  // Calm — an "aware theme": ships its own DAW component variants (see
+  // theme/themeRegistry.tsx), not just colour tokens. Appended last so existing
+  // theme-ordering assumptions (e.g. LookAndFeelPanel) stay stable.
+  { id: 'calm',           name: 'Calm',           tokens: calmTheme },
 ]

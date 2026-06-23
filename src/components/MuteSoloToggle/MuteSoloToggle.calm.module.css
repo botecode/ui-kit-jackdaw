@@ -1,0 +1,64 @@
+/* src/components/MuteSoloToggle/MuteSoloToggle.calm.module.css */
+/* Calm: soft outlined pills; active = gentle filled tint. No wells, no glow. */
+
+.root {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.root[data-orientation="stacked"] { flex-direction: column; }
+.root[data-orientation="inline"]  { flex-direction: row; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.root[data-size="md"] .chip { min-width: 22px; height: 22px; padding: 0 var(--space-2); font-size: var(--text-sm); }
+.root[data-size="sm"] .chip { min-width: 18px; height: 18px; padding: 0 var(--space-1); font-size: var(--text-xs); }
+
+.chip:hover:not(:disabled) {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text-muted) 50%, var(--border-strong));
+}
+
+/* ── Active: soft filled pill ── */
+.chip[data-variant="mute"][data-active] {
+  color: var(--accent-contrast);
+  background: var(--text-muted);
+  border-color: var(--text-muted);
+}
+
+.chip[data-variant="solo"][data-active] {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Silenced-by-solo: dim the (active) mute so solo reads as the cause ── */
+.chip[data-variant="mute"][data-silenced] {
+  opacity: 0.55;
+}
+
+.chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.disabled { pointer-events: none; opacity: 0.4; }

@@ -1,0 +1,63 @@
+/* src/components/Meter/Meter.calm.module.css */
+/* Calm: a soft ink wash that rises with level. Sage → dusty amber → terracotta. */
+
+.root {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.root[data-orientation="vertical"]   { flex-direction: row; }
+.root[data-orientation="horizontal"] { flex-direction: column; }
+
+.channel { display: inline-flex; }
+
+/* ── Well (soft recess, not a black box) ── */
+.well {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--meter-track-bg);
+}
+
+.channel[data-orientation="vertical"] .well   { width: 5px; height: 80px; }
+.channel[data-orientation="horizontal"] .well { width: 80px; height: 5px; }
+
+.root[data-size="sm"] .channel[data-orientation="vertical"] .well { height: 56px; }
+.root[data-size="lg"] .channel[data-orientation="vertical"] .well { height: 112px; }
+
+/* ── Fill — a gentle gradient, the hot end warms ── */
+.fill {
+  position: absolute;
+  border-radius: 999px;
+  /* Gradient spans the FULL well so the colour at the top of the fill reflects
+     the absolute level (sage low → amber → terracotta hot), not the fill height. */
+  background: linear-gradient(
+    to top,
+    var(--meter-safe) 0%,
+    var(--meter-safe) 62%,
+    var(--meter-hot) 84%,
+    var(--meter-clip) 100%
+  );
+  /* Soft, ballistic-ish settle (functional motion — see reduced-motion below). */
+  transition: height 120ms var(--ease-out), width 120ms var(--ease-out);
+}
+
+.channel[data-orientation="vertical"] .fill {
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--pos) * 100%);
+}
+.channel[data-orientation="horizontal"] .fill {
+  top: 0; bottom: 0; left: 0;
+  width: calc(var(--pos) * 100%);
+  background: linear-gradient(
+    to right,
+    var(--meter-safe) 0%,
+    var(--meter-safe) 62%,
+    var(--meter-hot) 84%,
+    var(--meter-clip) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill { transition: none; }
+}

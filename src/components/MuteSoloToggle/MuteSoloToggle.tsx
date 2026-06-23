@@ -1,4 +1,5 @@
 // src/components/MuteSoloToggle/MuteSoloToggle.tsx
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './MuteSoloToggle.module.css'
 
 // ─── Pure utility ───────────────────────────────────────────────────────────
@@ -28,7 +29,7 @@ export interface MuteSoloToggleProps {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function MuteSoloToggle({
+function MuteSoloToggleBase({
   muted,
   soloed,
   onToggleMute,
@@ -74,4 +75,10 @@ export function MuteSoloToggle({
       </button>
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function MuteSoloToggle(props: MuteSoloToggleProps) {
+  const Impl = useThemeComponent('MuteSoloToggle', MuteSoloToggleBase)
+  return <Impl {...props} />
 }

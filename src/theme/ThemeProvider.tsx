@@ -3,6 +3,10 @@ import { createContext, useContext, useMemo, useRef, useState } from 'react'
 import type { ThemeId } from '../tokens/types'
 import { THEMES } from '../tokens/themes'
 import { chromaTheme } from '../tokens/themes/chroma'
+import { ThemeComponentsContext } from './themeComponents'
+import { THEME_COMPONENTS } from './themeRegistry'
+
+const NO_OVERRIDES = {}
 
 // ── Portal root ──────────────────────────────────────────────────────────────
 // ThemeProvider renders a portal root div inside the token scope so portaled
@@ -45,12 +49,16 @@ export function ThemeProvider({ theme, children }: Props) {
   // RULE: [data-theme] overrides in global.css affect structural tokens only.
   // Colour and radius are changed in the theme object — not via [data-theme] selectors.
   const tokens = THEMES.find(t => t.id === theme)?.tokens ?? chromaTheme
+  // Aware themes: a theme may also swap in its own DAW component implementations.
+  const components = THEME_COMPONENTS[theme] ?? NO_OVERRIDES
   return (
     <PortalContext.Provider value={portalRef}>
-      <div data-theme={theme} style={tokens as React.CSSProperties}>
-        {children}
-        <div ref={portalRef} />
-      </div>
+      <ThemeComponentsContext.Provider value={components}>
+        <div data-theme={theme} style={tokens as React.CSSProperties}>
+          {children}
+          <div ref={portalRef} />
+        </div>
+      </ThemeComponentsContext.Provider>
     </PortalContext.Provider>
   )
 }

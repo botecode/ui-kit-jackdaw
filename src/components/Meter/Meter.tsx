@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { dbScale, clamp } from '../Fader/faderScales'
 import type { FaderScale } from '../Fader/faderScales'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './Meter.module.css'
 
 // ─── LED ramp ────────────────────────────────────────────────────────────────
@@ -277,7 +278,7 @@ function MeterChannel({
 
 const PRESET_SIZES = new Set(['sm', 'md', 'lg'])
 
-export function Meter({
+function MeterBase({
   value,
   valueL,
   valueR,
@@ -327,4 +328,10 @@ export function Meter({
       )}
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function Meter(props: MeterProps) {
+  const Impl = useThemeComponent('Meter', MeterBase)
+  return <Impl {...props} />
 }

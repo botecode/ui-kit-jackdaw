@@ -12,6 +12,7 @@ import { InputSelect } from '../InputSelect'
 import type { InputSelectOption } from '../InputSelect'
 import { FxChip } from '../FxChip'
 import type { FxPlugin } from '../FxChip'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './TrackHeader.module.css'
 
 export type { FxPlugin, InputSelectOption }
@@ -428,7 +429,7 @@ function FolderControlStrip({
 
 // ── TrackHeader ───────────────────────────────────────────────────────────────
 
-export function TrackHeader({
+function TrackHeaderBase({
   track,
   onRename,
   onArm,
@@ -580,4 +581,11 @@ export function TrackHeader({
       )}
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant (e.g. the Calm trackhead), or
+// the base instrument-channel implementation above.
+export function TrackHeader(props: TrackHeaderProps) {
+  const Impl = useThemeComponent('TrackHeader', TrackHeaderBase)
+  return <Impl {...props} />
 }
