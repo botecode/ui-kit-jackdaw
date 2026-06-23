@@ -247,6 +247,65 @@ describe('Arrangement — seek + select from lane', () => {
   })
 })
 
+// ─── Cross-lane clip multi-select ─────────────────────────────────────────────
+
+describe('Arrangement — clip multi-select', () => {
+  function clipSlot(container: HTMLElement, clipId: string): HTMLElement {
+    return container.querySelector(`[data-clip-id="${clipId}"]`) as HTMLElement
+  }
+
+  it('plain click on a clip selects just that clip (replaces selection)', () => {
+    const onSelectClips = vi.fn()
+    const { container } = arrangement({ tracks: [TRACK_A, TRACK_B], onSelectClips })
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 5 })
+    expect(onSelectClips).toHaveBeenLastCalledWith(['t1-c1'])
+  })
+
+  it('plain click on a clip also focuses its track', () => {
+    const onSelectTrack = vi.fn()
+    const { container } = arrangement({ tracks: [TRACK_A, TRACK_B], onSelectTrack })
+    fireEvent.pointerDown(clipSlot(container, 't2-c1'), { clientX: 5 })
+    expect(onSelectTrack).toHaveBeenCalledWith('t2')
+  })
+
+  it('shift+click extends the selection across lanes', () => {
+    const onSelectClips = vi.fn()
+    const { container } = arrangement({ tracks: [TRACK_A, TRACK_B], onSelectClips })
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 5 })
+    fireEvent.pointerDown(clipSlot(container, 't2-c1'), { clientX: 5, shiftKey: true })
+    expect(onSelectClips).toHaveBeenLastCalledWith(['t1-c1', 't2-c1'])
+  })
+
+  it('shift+click does NOT change track focus', () => {
+    const onSelectTrack = vi.fn()
+    const { container } = arrangement({ tracks: [TRACK_A, TRACK_B], onSelectTrack })
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 5 })
+    onSelectTrack.mockClear()
+    fireEvent.pointerDown(clipSlot(container, 't2-c1'), { clientX: 5, shiftKey: true })
+    expect(onSelectTrack).not.toHaveBeenCalled()
+  })
+
+  it('shift+click on an already-selected clip toggles it off', () => {
+    const onSelectClips = vi.fn()
+    const { container } = arrangement({ tracks: [TRACK_A, TRACK_B], onSelectClips })
+    fireEvent.pointerDown(clipSlot(container, 't1-c1'), { clientX: 5 })
+    fireEvent.pointerDown(clipSlot(container, 't2-c1'), { clientX: 5, shiftKey: true })
+    fireEvent.pointerDown(clipSlot(container, 't2-c1'), { clientX: 5, shiftKey: true })
+    expect(onSelectClips).toHaveBeenLastCalledWith(['t1-c1'])
+  })
+
+  it('selection renders the selected clip with the Clip selected visual', () => {
+    const TRACK_SEL: ArrangementTrack = {
+      ...makeTrack('t1', 'Guitar', 'var(--chroma-blue)'),
+      clips: [{ clipId: 't1-c1', start: 0, length: 2, peaks: PEAKS, color: 'var(--chroma-blue)', selected: true }],
+    }
+    const { container } = arrangement({ tracks: [TRACK_SEL] })
+    // Initial per-clip `selected` flags seed the cross-lane set.
+    const root = container.querySelector('[data-clip-id="t1-c1"] [data-testid="clip-root"]') as HTMLElement
+    expect(root.className).toContain('selected')
+  })
+})
+
 // ─── Detail panel slot ────────────────────────────────────────────────────────
 
 describe('Arrangement — detailPanel slot', () => {

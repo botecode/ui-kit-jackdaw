@@ -55,6 +55,10 @@ export interface TrackLaneProps {
   onClipTrimStart?: (intent: ClipTrimIntent) => void
   onClipTrimEnd?: (intent: ClipTrimIntent) => void
   onClipDelete?: (clipId: string) => void
+  /** Plain click (or Enter) on a clip — replaces the selection with this clip. */
+  onClipSelect?: (clipId: string) => void
+  /** Shift+click (or Shift+Enter) on a clip — toggles it in the multi-clip selection. */
+  onClipShiftSelect?: (clipId: string) => void
   /** Called when the user clicks empty lane space; seconds are snapped to division. */
   onSetCursor?: (seconds: number) => void
 }
@@ -93,6 +97,7 @@ interface ClipSlotProps {
   release?: ReleaseInfo
   disabled: boolean
   onKeyDelete: (clipId: string) => void
+  onKeySelect: (clipId: string, additive: boolean) => void
 }
 
 function ClipSlot({
@@ -105,6 +110,7 @@ function ClipSlot({
   release,
   disabled,
   onKeyDelete,
+  onKeySelect,
 }: ClipSlotProps) {
   const naturalLeft  = secondsToX(clip.start, pxPerBeat, bpm)
   const naturalRight = secondsToX(clip.start + clip.length, pxPerBeat, bpm)
@@ -127,6 +133,10 @@ function ClipSlot({
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault()
       onKeyDelete(clip.clipId)
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      // Keyboard equivalent of click / shift+click; Shift extends the selection.
+      e.preventDefault()
+      onKeySelect(clip.clipId, e.shiftKey)
     }
   }
 
@@ -183,6 +193,8 @@ export function TrackLane({
   onClipTrimStart,
   onClipTrimEnd,
   onClipDelete,
+  onClipSelect,
+  onClipShiftSelect,
   onSetCursor,
 }: TrackLaneProps) {
   const laneRef      = useRef<HTMLDivElement>(null)
@@ -289,10 +301,23 @@ export function TrackLane({
 
     if (clipEl) {
       const clipId = clipEl.dataset.clipId!
-      const mode: DragMode = trimEl
-        ? (trimEl.dataset.trim === 'start' ? 'trim-start' : 'trim-end')
-        : 'move'
-      startDrag(e, clipId, mode)
+
+      // Trim handles: pure resize, no selection change.
+      if (trimEl) {
+        startDrag(e, clipId, trimEl.dataset.trim === 'start' ? 'trim-start' : 'trim-end')
+        return
+      }
+
+      // Clip body. Shift+click is a pure additive-selection gesture — it toggles
+      // the clip in the cross-lane set and must NOT arm a move drag (dragging a
+      // freshly-toggled multi-selection has no coherent meaning here). A plain
+      // click replaces the selection with this clip and then arms the move drag.
+      if (e.shiftKey) {
+        onClipShiftSelect?.(clipId)
+        return
+      }
+      onClipSelect?.(clipId)
+      startDrag(e, clipId, 'move')
       return
     }
 
@@ -344,6 +369,8 @@ export function TrackLane({
             release={releaseMap[clip.clipId]}
             disabled={disabled}
             onKeyDelete={clipId => onClipDelete?.(clipId)}
+            onKeySelect={(clipId, additive) =>
+              additive ? onClipShiftSelect?.(clipId) : onClipSelect?.(clipId)}
           />
         )
       })}

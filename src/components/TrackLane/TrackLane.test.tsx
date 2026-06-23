@@ -282,6 +282,84 @@ describe('TrackLane keyboard delete', () => {
   })
 })
 
+// ─── Clip selection ───────────────────────────────────────────────────────────
+
+describe('TrackLane clip selection', () => {
+  it('plain click on a clip body calls onClipSelect with the clip id', () => {
+    const onClipSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipSelect })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10 })
+    expect(onClipSelect).toHaveBeenCalledWith('a')
+  })
+
+  it('plain click does NOT call onClipShiftSelect', () => {
+    const onClipShiftSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipShiftSelect })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10 })
+    expect(onClipShiftSelect).not.toHaveBeenCalled()
+  })
+
+  it('shift+click on a clip body calls onClipShiftSelect with the clip id', () => {
+    const onClipShiftSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipShiftSelect })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10, shiftKey: true })
+    expect(onClipShiftSelect).toHaveBeenCalledWith('a')
+  })
+
+  it('shift+click does NOT call onClipSelect (pure additive gesture)', () => {
+    const onClipSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipSelect })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10, shiftKey: true })
+    expect(onClipSelect).not.toHaveBeenCalled()
+  })
+
+  it('shift+click does NOT start a move drag (no data-dragging)', () => {
+    const { getByTestId, container } = lane({ clips: [CLIP_A] })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10, shiftKey: true })
+    expect(getByTestId('track-lane')).not.toHaveAttribute('data-dragging')
+  })
+
+  it('does not call select handlers when disabled', () => {
+    const onClipSelect = vi.fn()
+    const onClipShiftSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipSelect, onClipShiftSelect, disabled: true })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(slot, { clientX: 10 })
+    fireEvent.pointerDown(slot, { clientX: 10, shiftKey: true })
+    expect(onClipSelect).not.toHaveBeenCalled()
+    expect(onClipShiftSelect).not.toHaveBeenCalled()
+  })
+
+  it('clicking a trim handle does not call onClipSelect', () => {
+    const onClipSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipSelect })
+    const trimStart = container.querySelector('[data-clip-id="a"] [data-trim="start"]') as HTMLElement
+    fireEvent.pointerDown(trimStart, { clientX: 0 })
+    expect(onClipSelect).not.toHaveBeenCalled()
+  })
+
+  it('Enter on a focused clip slot calls onClipSelect', () => {
+    const onClipSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipSelect })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.keyDown(slot, { key: 'Enter' })
+    expect(onClipSelect).toHaveBeenCalledWith('a')
+  })
+
+  it('Shift+Enter on a focused clip slot calls onClipShiftSelect', () => {
+    const onClipShiftSelect = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipShiftSelect })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.keyDown(slot, { key: 'Enter', shiftKey: true })
+    expect(onClipShiftSelect).toHaveBeenCalledWith('a')
+  })
+})
+
 // ─── Trim handle presence ─────────────────────────────────────────────────────
 
 describe('TrackLane trim handles', () => {

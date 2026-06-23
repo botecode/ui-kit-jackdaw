@@ -206,6 +206,18 @@ function StatesDemo() {
           />
         </LaneWrap>
       </State>
+
+      <State label="multi-selected clips (Shift+click)">
+        <LaneWrap>
+          <TrackLane
+            trackId="multisel"
+            clips={DRUMS_CLIPS.map((c, i) => (i !== 1 ? { ...c, selected: true } : c))}
+            bpm={BPM} numerator={4} denominator={4}
+            pxPerBeat={PX_PER_BEAT} division="1/4"
+            height={56}
+          />
+        </LaneWrap>
+      </State>
     </StatesGrid>
   )
 }
@@ -227,9 +239,26 @@ function PlaygroundDemo() {
     { clipId: 'p3', start: BAR(7), length: BAR(2) - BAR(1), peaks: PEAKS_DRUMS,  color: 'var(--chroma-orange)' },
   ])
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
   const [log, setLog] = useState<string>('—')
 
   const totalWidth = secondsToX(16, pxPerBeat, bpm)
+
+  const handleSelect = useCallback((clipId: string) => {
+    setLog(`clip.select → ${clipId}`)
+    setSelectedIds(new Set([clipId]))
+  }, [])
+
+  const handleShiftSelect = useCallback((clipId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(clipId)) next.delete(clipId)
+      else next.add(clipId)
+      setLog(`clip.shift-select → ${[...next].join(', ') || '(none)'}`)
+      return next
+    })
+  }, [])
 
   const handleMove = useCallback((intent: ClipMoveIntent) => {
     setLog(`clip.move → ${intent.clipId} @ ${intent.start.toFixed(2)}s`)
@@ -280,7 +309,7 @@ function PlaygroundDemo() {
             <div style={{ width: totalWidth, height: laneHeight }}>
               <TrackLane
                 trackId="playground"
-                clips={clips}
+                clips={clips.map(c => ({ ...c, selected: selectedIds.has(c.clipId) }))}
                 bpm={bpm}
                 numerator={4}
                 denominator={4}
@@ -291,6 +320,8 @@ function PlaygroundDemo() {
                 disabled={disabled}
                 onClipMove={handleMove}
                 onClipDelete={handleDelete}
+                onClipSelect={handleSelect}
+                onClipShiftSelect={handleShiftSelect}
                 onSetCursor={handleCursor}
               />
             </div>
@@ -385,7 +416,7 @@ function PlaygroundDemo() {
             color:      'var(--text-dim)',
             marginTop:  'var(--space-2)',
           }}>
-            drag clips · Delete removes · click lane sets cursor
+            click selects · Shift+click multi-selects · drag clips · Delete removes · click lane sets cursor
           </div>
         </div>
       </div>

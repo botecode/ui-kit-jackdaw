@@ -136,6 +136,17 @@ const SYNTH_BUS_TRACK: ArrangementTrack = {
   clips: [],
 }
 
+// Cross-lane selection: g1 (Guitar) + d2 (Drums) read as selected, spanning lanes.
+const withClipSelected = (t: ArrangementTrack, ...ids: string[]): ArrangementTrack => ({
+  ...t,
+  clips: t.clips.map(c => (ids.includes(c.clipId) ? { ...c, selected: true } : c)),
+})
+const MULTISELECT_TRACKS = [
+  withClipSelected(GUITAR_TRACK, 'g1'),
+  BASS_TRACK,
+  withClipSelected(DRUMS_TRACK, 'd2', 'd4'),
+]
+
 const FEW_TRACKS         = [GUITAR_TRACK, BASS_TRACK, DRUMS_TRACK]
 const MANY_TRACKS        = [GUITAR_TRACK, BASS_TRACK, KEYS_TRACK, DRUMS_TRACK, VOCAL_TRACK, SYNTH_TRACK, FX_TRACK, AMBIENT_TRACK]
 const TRACKS_WITH_FOLDERS = [DRUMS_BUS_TRACK, DRUMS_TRACK, GUITAR_TRACK, SYNTH_BUS_TRACK, SYNTH_TRACK, KEYS_TRACK, BASS_TRACK]
@@ -269,6 +280,20 @@ function StatesDemo() {
             {...NOOP_CALLBACKS}
             tracks={FEW_TRACKS}
             playheadSeconds={bar(2)}
+            getPlayheadSeconds={GET_ZERO}
+            focusedTrackId="guitar"
+          />
+        </Frame>
+      </State>
+
+      {/* Cross-lane multi-clip selection */}
+      <State label="multi-clip selection (cross-lane: Guitar + Drums)">
+        <Frame>
+          <Arrangement
+            {...STATIC}
+            {...NOOP_CALLBACKS}
+            tracks={MULTISELECT_TRACKS}
+            playheadSeconds={0}
             getPlayheadSeconds={GET_ZERO}
             focusedTrackId="guitar"
           />
@@ -435,6 +460,7 @@ function PlaygroundDemo() {
   }
 
   const [selection, setSelection] = useState<SelectionRange | null>(null)
+  const [selectedClips, setSelectedClips] = useState<string[]>([])
 
   function handleShowSelection(next: boolean) {
     setShowSelection(next)
@@ -533,7 +559,20 @@ function PlaygroundDemo() {
           onClipMove={(trackId, intent) => {
             console.log('clip:move', trackId, intent)
           }}
+          onSelectClips={setSelectedClips}
         />
+      </div>
+
+      {/* Selection readout — click a clip to select, Shift+click to extend across lanes */}
+      <div style={{
+        marginTop:  'var(--space-2)',
+        fontFamily: 'var(--font-mono)',
+        fontSize:   'var(--text-xs)',
+        color:      'var(--text-dim)',
+      }}>
+        {selectedClips.length === 0
+          ? 'click a clip to select · Shift+click to extend selection across lanes'
+          : `selected (${selectedClips.length}): ${selectedClips.join(', ')}`}
       </div>
     </>
   )

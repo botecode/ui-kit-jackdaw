@@ -98,6 +98,13 @@ export interface ArrangementProps {
   onClipTrimStart?:   (trackId: string, intent: ClipTrimIntent) => void
   onClipTrimEnd?:     (trackId: string, intent: ClipTrimIntent) => void
   onClipDelete?:      (trackId: string, clipId: string) => void
+  /**
+   * Fires whenever the cross-lane clip selection changes, with the full new
+   * selection (clip ids spanning every lane). The arrangement owns this set
+   * internally — seeded from the clips' `selected` flags — so the gallery works
+   * standalone; the app mirrors it into its own selection model via this intent.
+   */
+  onSelectClips?:     (clipIds: string[]) => void
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -165,6 +172,7 @@ export function Arrangement({
   onClipTrimStart,
   onClipTrimEnd,
   onClipDelete,
+  onSelectClips,
 }: ArrangementProps) {
   const scrollBoxRef     = useRef<HTMLDivElement>(null)
   const headersScrollRef = useRef<HTMLDivElement>(null)
@@ -185,6 +193,35 @@ export function Arrangement({
     })
     writeArrangementMinimized(id, minimized)
     onToggleMinimized?.(id, minimized)
+  }
+
+  // ── Cross-lane clip selection (owned here, seeded from clips' flags) ────────
+  // A single SET spanning every lane is the source of truth for which clips read
+  // as selected — shift-select reads/writes it, so a selection can straddle lanes.
+  const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(() => {
+    const set = new Set<string>()
+    tracks.forEach(t => t.clips.forEach(c => { if (c.selected) set.add(c.clipId) }))
+    return set
+  })
+
+  function commitSelection(next: Set<string>) {
+    setSelectedClipIds(next)
+    onSelectClips?.([...next])
+  }
+
+  // Plain click — replace the selection with this one clip, and focus its track
+  // (mirrors empty-lane click, which also focuses the track).
+  function handleClipSelect(trackId: string, clipId: string) {
+    commitSelection(new Set([clipId]))
+    onSelectTrack(trackId)
+  }
+
+  // Shift+click — toggle this clip in the cross-lane set; track focus is untouched.
+  function handleClipShiftSelect(clipId: string) {
+    const next = new Set(selectedClipIds)
+    if (next.has(clipId)) next.delete(clipId)
+    else next.add(clipId)
+    commitSelection(next)
   }
 
   // ── Collapse all folders ────────────────────────────────────────────────────
@@ -370,7 +407,10 @@ export function Arrangement({
                     <TrackLane
                       key={track.id}
                       trackId={track.id}
-                      clips={track.clips}
+                      clips={track.clips.map(c => ({
+                        ...c,
+                        selected: selectedClipIds.has(c.clipId),
+                      }))}
                       bpm={bpm}
                       numerator={numerator}
                       denominator={denominator}
@@ -391,6 +431,8 @@ export function Arrangement({
                       onClipDelete={onClipDelete
                         ? clipId => onClipDelete!(track.id, clipId)
                         : undefined}
+                      onClipSelect={clipId => handleClipSelect(track.id, clipId)}
+                      onClipShiftSelect={handleClipShiftSelect}
                       onSetCursor={s => {
                         onSeek(s)
                         onSelectTrack(track.id)
