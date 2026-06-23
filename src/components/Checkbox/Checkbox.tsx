@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './Checkbox.module.css'
 
 export interface CheckboxProps {
@@ -12,7 +13,7 @@ export interface CheckboxProps {
   autoFocus?: boolean
 }
 
-export function Checkbox({
+function CheckboxBase({
   checked,
   onChange,
   indeterminate = false,
@@ -55,4 +56,10 @@ export function Checkbox({
       {label && <span className={styles.label}>{label}</span>}
     </label>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function Checkbox(props: CheckboxProps) {
+  const Impl = useThemeComponent('Checkbox', CheckboxBase)
+  return <Impl {...props} />
 }

@@ -1,27 +1,12 @@
-// src/components/AutomationButton/AutomationButton.tsx
+// src/components/AutomationButton/AutomationButton.calm.tsx
+// Calm-theme variant: a soft automation toggle (engaged = gentle violet fill),
+// with the optional mode menu on the ContextMenu's light "paper" surface.
 import { useRef, useState } from 'react'
 import { ChartLine, CaretDown } from '@phosphor-icons/react'
-import styles from './AutomationButton.module.css'
 import { ContextMenu } from '../ContextMenu'
 import type { MenuEntry } from '../ContextMenu'
-import { useThemeComponent } from '../../theme/themeComponents'
-
-export type AutomationMode = 'read' | 'write'
-
-export interface AutomationButtonProps {
-  /** Whether automation is engaged for this scope. */
-  engaged: boolean
-  onToggle: (e: React.MouseEvent<HTMLButtonElement>) => void
-  size?: 'sm' | 'md'
-  /** 'track' = per-track in the detail panel; 'master' = global in the transport bar. */
-  scope?: 'track' | 'master'
-  /** Current read/write mode. Only meaningful when onModeChange is provided. */
-  mode?: AutomationMode
-  /** Providing this prop shows the caret → mode menu (Read / Write). */
-  onModeChange?: (mode: AutomationMode) => void
-  disabled?: boolean
-  'aria-label'?: string
-}
+import type { AutomationButtonProps } from './AutomationButton'
+import styles from './AutomationButton.calm.module.css'
 
 const ICON_SIZE:  Record<'sm' | 'md', number> = { sm: 16, md: 20 }
 const CARET_SIZE: Record<'sm' | 'md', number> = { sm: 10, md: 12 }
@@ -31,7 +16,7 @@ const DEFAULT_LABELS: Record<'track' | 'master', string> = {
   master: 'Master automation',
 }
 
-function AutomationButtonBase({
+export function AutomationButtonCalm({
   engaged,
   onToggle,
   size = 'md',
@@ -50,17 +35,14 @@ function AutomationButtonBase({
   const iconSize = ICON_SIZE[size]
 
   function openMenu() {
-    // Guard: Popover's outside-click mousedown fires on the caret just before
-    // this click — closeMenu() stamps closeTimeRef to skip the reopen.
     if (Date.now() - closeTimeRef.current < 300) return
     const el = caretRef.current
     if (!el) return
-    el.focus() // WebKit: mouse click doesn't focus <button>
+    el.focus()
     const rect = el.getBoundingClientRect()
     setMenuPos({ x: rect.left, y: rect.bottom + 2 })
     setMenuOpen(true)
   }
-
   function closeMenu() {
     closeTimeRef.current = Date.now()
     setMenuOpen(false)
@@ -68,20 +50,8 @@ function AutomationButtonBase({
 
   const menuItems: MenuEntry[] = onModeChange
     ? [
-        {
-          id:       'read',
-          label:    'Read',
-          role:     'menuitemradio',
-          checked:  mode === 'read',
-          onSelect: () => onModeChange('read'),
-        },
-        {
-          id:       'write',
-          label:    'Write',
-          role:     'menuitemradio',
-          checked:  mode === 'write',
-          onSelect: () => onModeChange('write'),
-        },
+        { id: 'read',  label: 'Read',  role: 'menuitemradio', checked: mode === 'read',  onSelect: () => onModeChange('read') },
+        { id: 'write', label: 'Write', role: 'menuitemradio', checked: mode === 'write', onSelect: () => onModeChange('write') },
       ]
     : []
 
@@ -100,9 +70,7 @@ function AutomationButtonBase({
     </button>
   )
 
-  if (!onModeChange) {
-    return toggleBtn
-  }
+  if (!onModeChange) return toggleBtn
 
   return (
     <div className={styles.root} data-size={size}>
@@ -126,16 +94,11 @@ function AutomationButtonBase({
           open
           x={menuPos.x}
           y={menuPos.y}
+          surface="paper"
           onClose={closeMenu}
           aria-label="Automation mode"
         />
       )}
     </div>
   )
-}
-
-// Theme-aware resolver: the active theme's variant, or the base.
-export function AutomationButton(props: AutomationButtonProps) {
-  const Impl = useThemeComponent('AutomationButton', AutomationButtonBase)
-  return <Impl {...props} />
 }

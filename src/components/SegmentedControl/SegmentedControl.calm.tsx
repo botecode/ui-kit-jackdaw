@@ -1,24 +1,11 @@
+// src/components/SegmentedControl/SegmentedControl.calm.tsx
+// Calm-theme variant: a soft pill track; the selected segment lifts on a quiet
+// paper surface instead of a recessed/lit console segment.
 import { useRef } from 'react'
-import { useThemeComponent } from '../../theme/themeComponents'
-import styles from './SegmentedControl.module.css'
+import type { SegmentedControlProps } from './SegmentedControl'
+import styles from './SegmentedControl.calm.module.css'
 
-export interface SegmentedControlOption {
-  value: string
-  label?: string
-  icon?: React.ReactNode
-}
-
-export interface SegmentedControlProps {
-  options: SegmentedControlOption[]
-  value: string
-  onChange: (value: string) => void
-  size?: 'sm' | 'md'
-  disabled?: boolean
-  'aria-label': string
-  autoFocus?: boolean
-}
-
-function SegmentedControlBase({
+export function SegmentedControlCalm({
   options,
   value,
   onChange,
@@ -29,8 +16,6 @@ function SegmentedControlBase({
 }: SegmentedControlProps) {
   const segmentRefs = useRef<(HTMLButtonElement | null)[]>([])
 
-  // Roving tabindex: if value matches an option, that one is active;
-  // otherwise fall back to the first so the group is always reachable by Tab.
   const selectedIdx = options.findIndex(o => o.value === value)
   const activeIdx = selectedIdx >= 0 ? selectedIdx : 0
 
@@ -80,10 +65,4 @@ function SegmentedControlBase({
       })}
     </div>
   )
-}
-
-// Theme-aware resolver: the active theme's variant, or the base.
-export function SegmentedControl(props: SegmentedControlProps) {
-  const Impl = useThemeComponent('SegmentedControl', SegmentedControlBase)
-  return <Impl {...props} />
 }

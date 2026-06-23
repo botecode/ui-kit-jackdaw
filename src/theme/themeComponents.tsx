@@ -31,6 +31,12 @@ import type { RepeatToggleProps } from '../components/RepeatToggle/RepeatToggle'
 import type { RecordModeProps } from '../components/RecordMode/RecordMode'
 import type { ClockProps } from '../components/Clock/Clock'
 import type { TransportBarProps } from '../components/TransportBar/TransportBar'
+import type { ToggleProps } from '../components/Toggle/Toggle'
+import type { CheckboxProps } from '../components/Checkbox/Checkbox'
+import type { KnobProps } from '../components/Knob/Knob'
+import type { SegmentedControlProps } from '../components/SegmentedControl/SegmentedControl'
+import type { AutomationButtonProps } from '../components/AutomationButton/AutomationButton'
+import type { PhaseInvertProps } from '../components/PhaseInvert/PhaseInvert'
 
 /**
  * The set of DAW components a theme is allowed to override, keyed by the public
@@ -51,6 +57,12 @@ export interface ThemeComponentOverrides {
   RecordMode?:     ComponentType<RecordModeProps>
   Clock?:          ComponentType<ClockProps>
   TransportBar?:   ComponentType<TransportBarProps>
+  Toggle?:         ComponentType<ToggleProps>
+  Checkbox?:       ComponentType<CheckboxProps>
+  Knob?:           ComponentType<KnobProps>
+  SegmentedControl?: ComponentType<SegmentedControlProps>
+  AutomationButton?: ComponentType<AutomationButtonProps>
+  PhaseInvert?:    ComponentType<PhaseInvertProps>
 }
 
 /** Active theme's component overrides. Empty = every control uses its base. */

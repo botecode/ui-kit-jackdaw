@@ -1,3 +1,4 @@
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './Toggle.module.css'
 
 export interface ToggleProps {
@@ -11,7 +12,7 @@ export interface ToggleProps {
   autoFocus?: boolean
 }
 
-export function Toggle({
+function ToggleBase({
   checked,
   onChange,
   size = 'md',
@@ -44,4 +45,10 @@ export function Toggle({
       </span>
     </button>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function Toggle(props: ToggleProps) {
+  const Impl = useThemeComponent('Toggle', ToggleBase)
+  return <Impl {...props} />
 }

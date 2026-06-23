@@ -24,21 +24,33 @@ import { RepeatToggleCalm } from '../components/RepeatToggle/RepeatToggle.calm'
 import { RecordModeCalm } from '../components/RecordMode/RecordMode.calm'
 import { ClockCalm } from '../components/Clock/Clock.calm'
 import { TransportBarCalm } from '../components/TransportBar/TransportBar.calm'
+import { ToggleCalm } from '../components/Toggle/Toggle.calm'
+import { CheckboxCalm } from '../components/Checkbox/Checkbox.calm'
+import { KnobCalm } from '../components/Knob/Knob.calm'
+import { SegmentedControlCalm } from '../components/SegmentedControl/SegmentedControl.calm'
+import { AutomationButtonCalm } from '../components/AutomationButton/AutomationButton.calm'
+import { PhaseInvertCalm } from '../components/PhaseInvert/PhaseInvert.calm'
 
 export const THEME_COMPONENTS: Partial<Record<ThemeId, ThemeComponentOverrides>> = {
   calm: {
-    ArmButton:       ArmButtonCalm,
-    MuteSoloToggle:  MuteSoloToggleCalm,
-    Fader:           FaderCalm,
-    Meter:           MeterCalm,
-    PanKnob:         PanKnobCalm,
-    InputSelect:     InputSelectCalm,
-    FxChip:          FxChipCalm,
-    TrackHeader:     TrackHeaderCalm,
-    TransportButton: TransportButtonCalm,
-    RepeatToggle:    RepeatToggleCalm,
-    RecordMode:      RecordModeCalm,
-    Clock:           ClockCalm,
-    TransportBar:    TransportBarCalm,
+    ArmButton:        ArmButtonCalm,
+    MuteSoloToggle:   MuteSoloToggleCalm,
+    Fader:            FaderCalm,
+    Meter:            MeterCalm,
+    PanKnob:          PanKnobCalm,
+    InputSelect:      InputSelectCalm,
+    FxChip:           FxChipCalm,
+    TrackHeader:      TrackHeaderCalm,
+    TransportButton:  TransportButtonCalm,
+    RepeatToggle:     RepeatToggleCalm,
+    RecordMode:       RecordModeCalm,
+    Clock:            ClockCalm,
+    TransportBar:     TransportBarCalm,
+    Toggle:           ToggleCalm,
+    Checkbox:         CheckboxCalm,
+    Knob:             KnobCalm,
+    SegmentedControl: SegmentedControlCalm,
+    AutomationButton: AutomationButtonCalm,
+    PhaseInvert:      PhaseInvertCalm,
   },
 }
