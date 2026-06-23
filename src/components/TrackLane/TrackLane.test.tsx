@@ -254,6 +254,173 @@ describe('TrackLane clip trim', () => {
   })
 })
 
+// ─── Clip edge time-stretch (rate) ──────────────────────────────────────────────
+// Model: a stretchable clip carries `sourceDuration` (source seconds at rate 1.0)
+// and `offset` (in-point). Content = sourceDuration - offset. rate = content / length.
+// Alt + drag on a trim edge time-stretches instead of trimming; the left edge is
+// end-anchored (moves start). Bounds: rate ∈ [0.25, 4]. Snapped to division.
+// Geometry here: pxPerBeat=48, bpm=120 → 96 px/s.
+
+const STRETCHABLE: ClipInfo = {
+  clipId: 'a', start: 0, length: 4, peaks: PEAKS,
+  sourceDuration: 4, offset: 0,   // content = 4s, natural length = 4s (rate 1.0)
+}
+
+describe('TrackLane clip time-stretch', () => {
+  it('Alt+drag on trim-end stretches: onClipSetRate(clipId, rate, undefined)', () => {
+    const onClipSetRate = vi.fn()
+    const onClipTrimEnd = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [STRETCHABLE], onClipSetRate, onClipTrimEnd, pxPerBeat: 48, bpm: 120,
+    })
+    const root    = getByTestId('track-lane')
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    // clip0Right = secondsToX(4) = 384px. Drag end to 192px → length 2s → rate 4/2 = 2.
+    fireEvent.pointerDown(trimEnd, { clientX: 384, altKey: true })
+    fireEvent.pointerMove(root,    { clientX: 192 })
+    fireEvent.pointerUp(root,      { clientX: 192 })
+    expect(onClipTrimEnd).not.toHaveBeenCalled()
+    expect(onClipSetRate).toHaveBeenCalledTimes(1)
+    const [clipId, rate, newStart] = onClipSetRate.mock.calls[0]
+    expect(clipId).toBe('a')
+    expect(rate).toBeCloseTo(2, 2)
+    expect(newStart).toBeUndefined()
+  })
+
+  it('Alt+drag on trim-start is end-anchored: onClipSetRate(clipId, rate, newStart)', () => {
+    const onClipSetRate   = vi.fn()
+    const onClipTrimStart = vi.fn()
+    // start=4 length=4 → left=384px right=768px. content=4s.
+    const clip: ClipInfo = { ...STRETCHABLE, start: 4, length: 4 }
+    const { getByTestId, container } = lane({
+      clips: [clip], onClipSetRate, onClipTrimStart, pxPerBeat: 48, bpm: 120,
+    })
+    const root      = getByTestId('track-lane')
+    const trimStart = container.querySelector('[data-clip-id="a"] [data-trim="start"]') as HTMLElement
+    // Drag left edge right to 576px → length = 768-576 = 192px = 2s → rate 2, newStart = 6s.
+    fireEvent.pointerDown(trimStart, { clientX: 384, altKey: true })
+    fireEvent.pointerMove(root,      { clientX: 576 })
+    fireEvent.pointerUp(root,        { clientX: 576 })
+    expect(onClipTrimStart).not.toHaveBeenCalled()
+    expect(onClipSetRate).toHaveBeenCalledTimes(1)
+    const [clipId, rate, newStart] = onClipSetRate.mock.calls[0]
+    expect(clipId).toBe('a')
+    expect(rate).toBeCloseTo(2, 2)
+    expect(newStart).toBeCloseTo(6, 2)
+  })
+
+  it('clamps to the max rate (4×) when dragged shorter than the floor length', () => {
+    const onClipSetRate = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [STRETCHABLE], onClipSetRate, pxPerBeat: 48, bpm: 120,
+    })
+    const root    = getByTestId('track-lane')
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    // Drag the end far left (past the floor): length clamps to content/4 = 1s → rate 4.
+    fireEvent.pointerDown(trimEnd, { clientX: 384, altKey: true })
+    fireEvent.pointerMove(root,    { clientX: -2000 })
+    fireEvent.pointerUp(root,      { clientX: -2000 })
+    expect(onClipSetRate.mock.calls[0][1]).toBeCloseTo(4, 2)
+  })
+
+  it('clamps to the min rate (0.25×) when dragged longer than the ceiling length', () => {
+    const onClipSetRate = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [STRETCHABLE], onClipSetRate, pxPerBeat: 48, bpm: 120,
+    })
+    const root    = getByTestId('track-lane')
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    // Drag the end far right (past the ceiling): length clamps to content/0.25 = 16s → rate 0.25.
+    fireEvent.pointerDown(trimEnd, { clientX: 384, altKey: true })
+    fireEvent.pointerMove(root,    { clientX: 4000 })
+    fireEvent.pointerUp(root,      { clientX: 4000 })
+    expect(onClipSetRate.mock.calls[0][1]).toBeCloseTo(0.25, 2)
+  })
+
+  it('end-anchored stretch never moves start before 0', () => {
+    const onClipSetRate = vi.fn()
+    // start=1 (96px), length=2 (192px) → right=288px. content=2s.
+    const clip: ClipInfo = { clipId: 'a', start: 1, length: 2, peaks: PEAKS, sourceDuration: 2, offset: 0 }
+    const { getByTestId, container } = lane({
+      clips: [clip], onClipSetRate, pxPerBeat: 48, bpm: 120,
+    })
+    const root      = getByTestId('track-lane')
+    const trimStart = container.querySelector('[data-clip-id="a"] [data-trim="start"]') as HTMLElement
+    // Drag left edge far left — would push start negative; must clamp newStart ≥ 0.
+    fireEvent.pointerDown(trimStart, { clientX: 96, altKey: true })
+    fireEvent.pointerMove(root,      { clientX: -4000 })
+    fireEvent.pointerUp(root,        { clientX: -4000 })
+    const newStart = onClipSetRate.mock.calls[0][2]
+    expect(newStart).toBeGreaterThanOrEqual(0)
+  })
+
+  it('Alt+drag WITHOUT sourceDuration falls back to trim (no stretch possible)', () => {
+    const onClipSetRate = vi.fn()
+    const onClipTrimEnd = vi.fn()
+    const plain: ClipInfo = { clipId: 'a', start: 0, length: 4, peaks: PEAKS }  // no sourceDuration
+    const { getByTestId, container } = lane({
+      clips: [plain], onClipSetRate, onClipTrimEnd, pxPerBeat: 48, bpm: 120,
+    })
+    const root    = getByTestId('track-lane')
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    fireEvent.pointerDown(trimEnd, { clientX: 384, altKey: true })
+    fireEvent.pointerMove(root,    { clientX: 192 })
+    fireEvent.pointerUp(root,      { clientX: 192 })
+    expect(onClipSetRate).not.toHaveBeenCalled()
+    expect(onClipTrimEnd).toHaveBeenCalledTimes(1)
+  })
+
+  it('plain (no Alt) edge drag still trims a stretchable clip — does not stretch', () => {
+    const onClipSetRate = vi.fn()
+    const onClipTrimEnd = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [STRETCHABLE], onClipSetRate, onClipTrimEnd, pxPerBeat: 48, bpm: 120,
+    })
+    const root    = getByTestId('track-lane')
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    fireEvent.pointerDown(trimEnd, { clientX: 384 })       // no altKey
+    fireEvent.pointerMove(root,    { clientX: 192 })
+    fireEvent.pointerUp(root,      { clientX: 192 })
+    expect(onClipSetRate).not.toHaveBeenCalled()
+    expect(onClipTrimEnd).toHaveBeenCalledTimes(1)
+  })
+
+  it('recognises stretch (not trim) even when no onClipSetRate is wired', () => {
+    // Alt + sourceDuration → stretch mode; trim callback must NOT fire as a fallback.
+    const onClipTrimEnd = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [STRETCHABLE], onClipTrimEnd, pxPerBeat: 48, bpm: 120,
+    })
+    const root    = getByTestId('track-lane')
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    fireEvent.pointerDown(trimEnd, { clientX: 384, altKey: true })
+    fireEvent.pointerMove(root,    { clientX: 192 })
+    fireEvent.pointerUp(root,      { clientX: 192 })
+    expect(onClipTrimEnd).not.toHaveBeenCalled()
+  })
+
+  it('marks the slot data-stretching while an Alt+edge drag is active', () => {
+    const { container } = lane({ clips: [STRETCHABLE], pxPerBeat: 48, bpm: 120 })
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    const slot    = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.pointerDown(trimEnd, { clientX: 384, altKey: true })
+    expect(slot).toHaveAttribute('data-stretching')
+  })
+
+  it('does not stretch when the lane is disabled', () => {
+    const onClipSetRate = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [STRETCHABLE], onClipSetRate, disabled: true, pxPerBeat: 48, bpm: 120,
+    })
+    const root    = getByTestId('track-lane')
+    const trimEnd = container.querySelector('[data-clip-id="a"] [data-trim="end"]') as HTMLElement
+    fireEvent.pointerDown(trimEnd, { clientX: 384, altKey: true })
+    fireEvent.pointerMove(root,    { clientX: 192 })
+    fireEvent.pointerUp(root,      { clientX: 192 })
+    expect(onClipSetRate).not.toHaveBeenCalled()
+  })
+})
+
 // ─── Keyboard delete ──────────────────────────────────────────────────────────
 
 describe('TrackLane keyboard delete', () => {

@@ -120,8 +120,18 @@ export interface ClipProps {
   /** Hard-cut seam on the right edge (vs a natural clip boundary). */
   splitRight?: boolean
   muted?: boolean
+  /**
+   * Playback rate (time-stretch factor). 1 = natural, >1 = faster/compressed,
+   * <1 = slower/expanded. When meaningfully ≠ 1 the clip shows a stretch indicator
+   * (diagonal hatch + a mono rate chip). Default 1. The interaction that produces a
+   * rate lives in TrackLane (Alt + drag an edge); Clip only renders the state.
+   */
+  rate?: number
   'aria-label'?: string
 }
+
+/** Below this delta from 1.0 a clip is treated as un-stretched (no indicator). */
+const STRETCH_EPSILON = 0.01
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -136,6 +146,7 @@ export function Clip({
   splitLeft      = false,
   splitRight     = false,
   muted          = false,
+  rate           = 1,
   'aria-label': ariaLabel = 'Clip',
 }: ClipProps) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -208,6 +219,13 @@ export function Clip({
   const isRecording = state === 'recording'
   const showLabelEl = showLabel && !!label && zoom === 'wide'
 
+  // ── Time-stretch (rate) ──────────────────────────────────────────────────────
+  // A meaningfully non-unity rate paints the body with a diagonal hatch and a mono
+  // rate chip so a stretched clip reads as stretched at rest — not only mid-drag.
+  // Chip is hidden at sliver zoom where there's no room (matches the label rule).
+  const isStretched   = Math.abs(rate - 1) > STRETCH_EPSILON
+  const showRateChip  = isStretched && zoom !== 'sliver'
+
   const classNames = [
     styles.root,
     isRecording && styles.recording,
@@ -224,6 +242,7 @@ export function Clip({
       data-split-left={splitLeft  || undefined}
       data-split-right={splitRight || undefined}
       data-state={state}
+      data-stretched={isStretched || undefined}
       data-testid="clip-root"
       style={{ '--clip-color': clipColor } as React.CSSProperties}
       aria-label={ariaLabel}
@@ -264,10 +283,22 @@ export function Clip({
         )}
       </svg>
 
+      {/* ── Stretch hatch — faint diagonal weave over the body when stretched ── */}
+      {isStretched && (
+        <span className={styles.stretchHatch} aria-hidden="true" />
+      )}
+
       {/* ── Label ─────────────────────────────────────────────────────────── */}
       {showLabelEl && (
         <span className={styles.label} data-testid="clip-label">
           {label}
+        </span>
+      )}
+
+      {/* ── Rate chip (time-stretch readout) ──────────────────────────────── */}
+      {showRateChip && (
+        <span className={styles.rateChip} data-testid="clip-rate" aria-hidden="true">
+          {rate.toFixed(2)}×
         </span>
       )}
 

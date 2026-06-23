@@ -38,6 +38,12 @@
   cursor: grabbing;
 }
 
+/* While a clip is being time-stretched, lock the dedicated stretch cursor. */
+
+.root[data-stretching] {
+  cursor: col-resize;
+}
+
 /* Disabled: no interaction, visually dimmed. */
 
 .root[data-disabled] {
@@ -119,6 +125,43 @@
 
 .trimHandle:hover::after {
   opacity: 0.7;
+}
+
+/* ─── Stretch affordance (Alt-armed) ──────────────────────────────────────────
+   When Alt is held over a lane with stretchable clips, the edges of stretchable
+   clips switch from a trim edge (ew-resize, hairline accent) to a stretch edge:
+   the col-resize cursor + a taller, double-barred mark so the gesture reads as
+   "stretch the whole body" rather than "trim this end". Non-stretchable clips
+   keep the trim affordance even while armed.                                    */
+
+.root[data-stretch-armed] .clipSlot[data-stretchable] .trimHandle {
+  cursor: col-resize;
+}
+
+.root[data-stretch-armed] .clipSlot[data-stretchable] .trimHandle::after {
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  opacity: 0.55;
+  background:
+    linear-gradient(var(--accent), var(--accent)) left / 1px 100% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) right / 1px 100% no-repeat;
+}
+
+.root[data-stretch-armed] .clipSlot[data-stretchable] .trimHandle[data-trim='start']::after { left:  2px; }
+.root[data-stretch-armed] .clipSlot[data-stretchable] .trimHandle[data-trim='end']::after   { right: 2px; }
+
+.root[data-stretch-armed] .clipSlot[data-stretchable] .trimHandle:hover::after {
+  opacity: 0.9;
+}
+
+/* The clip being stretched lifts and warms its outline with the accent so the
+   live rate chip (rendered inside the Clip) reads as the active parameter. */
+
+.clipSlot[data-stretching] {
+  z-index: 10;
+  cursor: col-resize;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 32%, transparent));
 }
 
 @media (prefers-reduced-motion: reduce) {

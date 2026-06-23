@@ -127,6 +127,24 @@ function StatesDemo() {
           <Clip peaks={PEAKS} color="var(--track-color-3)" muted />
         </ClipBox>
       </State>
+
+      <State label="stretched — faster (2.00× rate)">
+        <ClipBox width={380}>
+          <Clip peaks={PEAKS} color="var(--track-color-1)" rate={2} label="Drum loop" showLabel />
+        </ClipBox>
+      </State>
+
+      <State label="stretched — slower (0.50× rate)">
+        <ClipBox width={380}>
+          <Clip peaks={PEAKS} color="var(--track-color-2)" rate={0.5} label="Pad" showLabel />
+        </ClipBox>
+      </State>
+
+      <State label="stretched — selected">
+        <ClipBox width={380}>
+          <Clip peaks={PEAKS} color="var(--track-color-5)" rate={1.5} selected />
+        </ClipBox>
+      </State>
     </StatesGrid>
   )
 }
@@ -161,6 +179,7 @@ function PlaygroundDemo() {
   const [recording,    setRecording]    = useState(false)
   const [waveformColor, setWaveformColor] = useState<ClipProps['waveformColor']>('ink')
   const [colorKey,     setColorKey]     = useState('var(--track-color-3)')
+  const [rate,         setRate]         = useState(1)
 
   const peaks = useMemo(() => makePeaks(500), [])
 
@@ -205,6 +224,7 @@ function PlaygroundDemo() {
             showLabel={showLabel}
             label="Electric Guitar"
             muted={muted}
+            rate={rate}
           />
         </div>
 
@@ -225,6 +245,13 @@ function PlaygroundDemo() {
               <div style={{ marginTop: 'var(--space-1)' }}>
                 <Fader value={clipHeight} onChange={setClipHeight}
                   min={24} max={120} orientation="horizontal" aria-label="Clip height" />
+              </div>
+            </label>
+            <label style={labelStyle}>
+              rate: {rate.toFixed(2)}× {Math.abs(rate - 1) <= 0.01 && '(natural)'}
+              <div style={{ marginTop: 'var(--space-1)' }}>
+                <Fader value={rate} onChange={v => setRate(Math.round(v * 100) / 100)}
+                  min={0.25} max={4} orientation="horizontal" aria-label="Stretch rate" />
               </div>
             </label>
           </div>
@@ -260,7 +287,8 @@ function PlaygroundDemo() {
 
         <p style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', margin: 0 }}>
           Drag width → 80 px (narrow), 40 px (sliver), 400 px+ (line waveform at ultra-wide zoom).
-          Toggle waveformColor to compare ink vs track.
+          Toggle waveformColor to compare ink vs track. Push rate off 1.00× to reveal the
+          stretch hatch + rate chip (the edge-drag gesture that sets it lives in TrackLane).
         </p>
       </div>
     </Playground>

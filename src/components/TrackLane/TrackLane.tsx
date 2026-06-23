@@ -1,5 +1,5 @@
 // src/components/TrackLane/TrackLane.tsx
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Clip } from '../Clip'
 import { TimelineGrid, type Division } from '../TimelineGrid'
 import { divisionToPx, snapXToDivision } from '../TimelineGrid'
@@ -7,13 +7,34 @@ import { secondsToX, xToSeconds } from '../TimelineRuler'
 import { useSpring } from '../../motion/spring'
 import styles from './TrackLane.module.css'
 
+// ─── Time-stretch bounds ────────────────────────────────────────────────────────
+// A clip's playback rate is constrained to ±2 octaves of speed. Symmetric in the
+// time domain (0.25× = a quarter speed = 4× longer; 4× = 4× faster = a quarter the
+// length) so a stretch reads the same dragging either edge in either direction.
+
+const RATE_MIN = 0.25
+const RATE_MAX = 4
+/** Floor so a degenerate (zero/near-zero) length never divides into NaN/∞. */
+const MIN_LEN_SEC = 0.02
+
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+
+/** Source seconds available to a clip = sourceDuration minus its in-point offset. */
+function contentSeconds(clip: ClipInfo): number {
+  if (clip.sourceDuration == null) return 0
+  return Math.max(MIN_LEN_SEC, clip.sourceDuration - (clip.offset ?? 0))
+}
+
+/** Whether a clip can be time-stretched (needs a known source extent to bound it). */
+const isStretchable = (clip: ClipInfo) => clip.sourceDuration != null
+
 // ─── Public types ──────────────────────────────────────────────────────────────
 
 export interface ClipInfo {
   clipId: string
   /** Seconds from project start. */
   start: number
-  /** Duration in seconds. */
+  /** Duration in seconds (the stretched, on-timeline length). */
   length: number
   peaks: number[]
   color?: string
@@ -24,6 +45,15 @@ export interface ClipInfo {
   muted?: boolean
   splitLeft?: boolean
   splitRight?: boolean
+  /**
+   * Total duration of the underlying source audio at rate 1.0 (seconds). Presence
+   * of this field enables edge time-stretch — it bounds the rate (the clip plays
+   * its source from `offset` to the source end, so the stretchable content is
+   * `sourceDuration - offset`). Implied current rate = content / length.
+   */
+  sourceDuration?: number
+  /** Seconds into the source where this clip's content begins (the in-point). Default 0. */
+  offset?: number
 }
 
 export interface ClipMoveIntent {
@@ -54,6 +84,15 @@ export interface TrackLaneProps {
   onClipMove?: (intent: ClipMoveIntent) => void
   onClipTrimStart?: (intent: ClipTrimIntent) => void
   onClipTrimEnd?: (intent: ClipTrimIntent) => void
+  /**
+   * Edge time-stretch — Alt + drag a clip edge changes its playback `rate` instead
+   * of trimming (only when the clip carries `sourceDuration`). `rate` is absolute:
+   * `(sourceDuration - offset) / newLength`, clamped to [0.25, 4]. The left edge is
+   * end-anchored, so it also moves the start — `newStart` is the snapped new start
+   * (seconds) for left-edge stretches and omitted for right-edge stretches.
+   * Positional signature mirrors the DAW's `useClipStretch` / ClipStretchLayer.
+   */
+  onClipSetRate?: (clipId: string, rate: number, newStart?: number) => void
   onClipDelete?: (clipId: string) => void
   /** Plain click (or Enter) on a clip — replaces the selection with this clip. */
   onClipSelect?: (clipId: string) => void
@@ -78,7 +117,9 @@ export interface TrackLaneProps {
 
 // ─── Internal types ────────────────────────────────────────────────────────────
 
-type DragMode = 'move' | 'trim-start' | 'trim-end'
+type DragMode = 'move' | 'trim-start' | 'trim-end' | 'stretch-start' | 'stretch-end'
+
+const isStretchMode = (m: DragMode) => m === 'stretch-start' || m === 'stretch-end'
 
 interface ActiveDrag {
   clipId: string
@@ -88,6 +129,10 @@ interface ActiveDrag {
   pointerX0: number
   currentLeft: number
   currentRight: number
+  /** Stretch only: source seconds in the clip + px length bounds derived from the rate range. */
+  contentSec?: number
+  minLenPx?: number
+  maxLenPx?: number
 }
 
 interface ReleaseInfo {
@@ -105,6 +150,8 @@ interface ClipSlotProps {
   pxPerBeat: number
   bpm: number
   isDragging: boolean
+  /** True while THIS clip is being time-stretched (vs moved/trimmed). */
+  stretching: boolean
   dragLeft?: number
   dragRight?: number
   release?: ReleaseInfo
@@ -118,6 +165,7 @@ function ClipSlot({
   pxPerBeat,
   bpm,
   isDragging,
+  stretching,
   dragLeft,
   dragRight,
   release,
@@ -142,6 +190,15 @@ function ClipSlot({
   const renderRight = isDragging ? (dragRight ?? naturalRight) : springLeft + naturalWidth
   const renderWidth = Math.max(8, renderRight - renderLeft)
 
+  // Implied playback rate = source content / on-timeline length. Computed from the
+  // live rendered width so the rate chip tracks the edge 1:1 during a stretch drag.
+  // Only meaningful for stretchable clips; others render at rate 1 (no indicator).
+  const content     = isStretchable(clip) ? contentSeconds(clip) : null
+  const renderLenSec = xToSeconds(renderWidth, pxPerBeat, bpm)
+  const rate = content != null
+    ? clamp(content / Math.max(MIN_LEN_SEC, renderLenSec), RATE_MIN, RATE_MAX)
+    : 1
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault()
@@ -158,6 +215,8 @@ function ClipSlot({
       className={styles.clipSlot}
       data-clip-id={clip.clipId}
       data-dragging={isDragging || undefined}
+      data-stretching={stretching || undefined}
+      data-stretchable={isStretchable(clip) || undefined}
       style={{
         position: 'absolute',
         left:     renderLeft,
@@ -168,7 +227,8 @@ function ClipSlot({
       tabIndex={disabled ? -1 : 0}
       onKeyDown={handleKeyDown}
     >
-      {/* Trim handles — invisible hit-zones; cursor + visual indicator via CSS. */}
+      {/* Trim handles — invisible hit-zones; cursor + visual indicator via CSS.
+          On a stretchable clip these double as stretch handles when Alt is held. */}
       <div className={styles.trimHandle} data-trim="start" />
       <div className={styles.trimHandle} data-trim="end"   />
 
@@ -183,6 +243,7 @@ function ClipSlot({
         muted={clip.muted}
         splitLeft={clip.splitLeft}
         splitRight={clip.splitRight}
+        rate={rate}
         aria-label={clip.label ? `Clip: ${clip.label}` : 'Clip'}
       />
     </div>
@@ -205,6 +266,7 @@ export function TrackLane({
   onClipMove,
   onClipTrimStart,
   onClipTrimEnd,
+  onClipSetRate,
   onClipDelete,
   onClipSelect,
   onClipShiftSelect,
@@ -219,6 +281,33 @@ export function TrackLane({
   const [releaseMap, setReleaseMap] = useState<Record<string, ReleaseInfo>>({})
 
   const divisionPx = divisionToPx(division, pxPerBeat, numerator, denominator)
+  const pxPerSec   = secondsToX(1, pxPerBeat, bpm)
+
+  // ── Stretch-armed (Alt) ───────────────────────────────────────────────────────
+  // Holding Alt over a lane that has stretchable clips arms the edges for
+  // time-stretch: the cursor + edge affordance switch from trim to stretch. The
+  // gesture itself is read from the live `event.altKey` at pointer-down — this
+  // state only drives the at-rest cursor/affordance so it costs nothing functional.
+  const [altArmed, setAltArmed] = useState(false)
+  const hasStretchable = clips.some(isStretchable)
+
+  useEffect(() => {
+    if (disabled || !hasStretchable) {
+      setAltArmed(false)
+      return
+    }
+    const sync = (e: KeyboardEvent) => setAltArmed(e.altKey)
+    window.addEventListener('keydown', sync)
+    window.addEventListener('keyup', sync)
+    // A blur (e.g. tab-away while held) must not leave the lane stuck armed.
+    const clear = () => setAltArmed(false)
+    window.addEventListener('blur', clear)
+    return () => {
+      window.removeEventListener('keydown', sync)
+      window.removeEventListener('keyup', sync)
+      window.removeEventListener('blur', clear)
+    }
+  }, [disabled, hasStretchable])
 
   // ── Pointer move ────────────────────────────────────────────────────────────
 
@@ -239,9 +328,23 @@ export function TrackLane({
       const updated = { ...drag, currentLeft: newLeft }
       activeDragRef.current = updated
       setActiveDrag(updated)
-    } else {
+    } else if (drag.mode === 'trim-end') {
       const newRight = Math.max(drag.clip0Left + 8, drag.clip0Right + dx)
       const updated  = { ...drag, currentRight: newRight }
+      activeDragRef.current = updated
+      setActiveDrag(updated)
+    } else if (drag.mode === 'stretch-end') {
+      // Right edge stretches the length within the rate-derived px bounds; left fixed.
+      const min = drag.clip0Left + (drag.minLenPx ?? 8)
+      const max = drag.clip0Left + (drag.maxLenPx ?? Infinity)
+      const updated = { ...drag, currentRight: clamp(drag.clip0Right + dx, min, max) }
+      activeDragRef.current = updated
+      setActiveDrag(updated)
+    } else {
+      // stretch-start — end-anchored: right edge fixed, left edge moves the start.
+      const min = drag.clip0Right - (drag.maxLenPx ?? drag.clip0Right)
+      const max = drag.clip0Right - (drag.minLenPx ?? 8)
+      const updated = { ...drag, currentLeft: Math.max(0, clamp(drag.clip0Left + dx, min, max)) }
       activeDragRef.current = updated
       setActiveDrag(updated)
     }
@@ -271,18 +374,38 @@ export function TrackLane({
         const newLength = Math.max(0.01, clip.start + clip.length - newStart)
         onClipTrimStart?.({ clipId, start: newStart, length: newLength })
       }
-    } else {
+    } else if (mode === 'trim-end') {
       const snappedRight = snapXToDivision(currentRight, divisionPx)
       const clip = clips.find(c => c.clipId === clipId)
       if (clip) {
         const newLength = Math.max(0.01, xToSeconds(snappedRight, pxPerBeat, bpm) - clip.start)
         onClipTrimEnd?.({ clipId, start: clip.start, length: newLength })
       }
+    } else if (mode === 'stretch-end') {
+      // Right edge: start fixed, length snaps to grid, rate = content / length.
+      const clip = clips.find(c => c.clipId === clipId)
+      if (clip) {
+        const snappedRight = snapXToDivision(currentRight, divisionPx)
+        const lengthSec    = Math.max(MIN_LEN_SEC, xToSeconds(snappedRight, pxPerBeat, bpm) - clip.start)
+        const rate         = clamp(contentSeconds(clip) / lengthSec, RATE_MIN, RATE_MAX)
+        onClipSetRate?.(clipId, rate)
+      }
+    } else {
+      // stretch-start — end-anchored: end fixed, start moves; emit rate + new start.
+      const clip = clips.find(c => c.clipId === clipId)
+      if (clip) {
+        const snappedLeft = snapXToDivision(currentLeft, divisionPx)
+        const newStart    = Math.max(0, xToSeconds(snappedLeft, pxPerBeat, bpm))
+        const endSec      = clip.start + clip.length
+        const lengthSec   = Math.max(MIN_LEN_SEC, endSec - newStart)
+        const rate        = clamp(contentSeconds(clip) / lengthSec, RATE_MIN, RATE_MAX)
+        onClipSetRate?.(clipId, rate, newStart)
+      }
     }
 
     activeDragRef.current = null
     setActiveDrag(null)
-  }, [bpm, clips, divisionPx, onClipMove, onClipTrimEnd, onClipTrimStart, pxPerBeat])
+  }, [bpm, clips, divisionPx, onClipMove, onClipSetRate, onClipTrimEnd, onClipTrimStart, pxPerBeat])
 
   // ── Start drag (called from lane pointer-down after target detection) ───────
 
@@ -293,11 +416,21 @@ export function TrackLane({
     const clip0Left  = secondsToX(clip.start, pxPerBeat, bpm)
     const clip0Right = secondsToX(clip.start + clip.length, pxPerBeat, bpm)
 
+    // Stretch modes precompute the px length window the rate range allows so the
+    // edge can be clamped 1:1 during the drag (shorter ⇒ faster, longer ⇒ slower).
+    const stretch = isStretchMode(mode)
+      ? (() => {
+          const c = contentSeconds(clip)
+          return { contentSec: c, minLenPx: (c / RATE_MAX) * pxPerSec, maxLenPx: (c / RATE_MIN) * pxPerSec }
+        })()
+      : {}
+
     const drag: ActiveDrag = {
       clipId, mode, clip0Left, clip0Right,
       pointerX0:    e.clientX,
       currentLeft:  clip0Left,
       currentRight: clip0Right,
+      ...stretch,
     }
     activeDragRef.current = drag
     setActiveDrag(drag)
@@ -317,9 +450,16 @@ export function TrackLane({
     if (clipEl) {
       const clipId = clipEl.dataset.clipId!
 
-      // Trim handles: pure resize, no selection change.
+      // Edge handles. Alt + a stretchable clip → time-stretch (rate); otherwise the
+      // same handle trims. Both are pure-resize gestures: no selection change.
       if (trimEl) {
-        startDrag(e, clipId, trimEl.dataset.trim === 'start' ? 'trim-start' : 'trim-end')
+        const atStart  = trimEl.dataset.trim === 'start'
+        const clip     = clips.find(c => c.clipId === clipId)
+        const stretch  = e.altKey && !!clip && isStretchable(clip)
+        const mode: DragMode = stretch
+          ? (atStart ? 'stretch-start' : 'stretch-end')
+          : (atStart ? 'trim-start'    : 'trim-end')
+        startDrag(e, clipId, mode)
         return
       }
 
@@ -377,6 +517,8 @@ export function TrackLane({
       data-selected={selected  || undefined}
       data-disabled={disabled  || undefined}
       data-dragging={activeDrag?.clipId || undefined}
+      data-stretch-armed={(altArmed && !activeDrag) || undefined}
+      data-stretching={(activeDrag && isStretchMode(activeDrag.mode)) || undefined}
       style={{ height }}
       onPointerDown={handleLanePointerDown}
       onPointerMove={handlePointerMove}
@@ -404,6 +546,7 @@ export function TrackLane({
             pxPerBeat={pxPerBeat}
             bpm={bpm}
             isDragging={isDragging}
+            stretching={isDragging && isStretchMode(activeDrag!.mode)}
             dragLeft={isDragging  ? activeDrag!.currentLeft  : undefined}
             dragRight={isDragging ? activeDrag!.currentRight : undefined}
             release={releaseMap[clip.clipId]}

@@ -55,6 +55,21 @@ const DRUMS_CLIPS: ClipInfo[] = [
   { clipId: 'd3', start: BAR(5), length: BAR(1) - BAR(0), peaks: PEAKS_DRUMS,  color: 'var(--chroma-orange)' },
 ]
 
+// Time-stretchable clips: `sourceDuration` (source seconds at rate 1.0) bounds the
+// stretch. Content = sourceDuration - offset; implied rate = content / length.
+const ONE_BAR = BAR(2) - BAR(1)   // 2 s at this tempo
+const STRETCH_CLIPS: ClipInfo[] = [
+  // 2-bar source on a 2-bar timeline → rate 1.0 (natural, no hatch).
+  { clipId: 'sx1', start: BAR(1), length: 2 * ONE_BAR, peaks: PEAKS_DRUMS, color: 'var(--chroma-orange)',
+    label: 'Loop', sourceDuration: 2 * ONE_BAR, offset: 0 },
+  // 2-bar source compressed into 1 bar → rate 2.0 (faster).
+  { clipId: 'sx2', start: BAR(4), length: ONE_BAR, peaks: PEAKS_DRUMS, color: 'var(--chroma-orange)',
+    label: '2.00×', sourceDuration: 2 * ONE_BAR, offset: 0 },
+  // 1-bar source expanded across 2 bars → rate 0.5 (slower).
+  { clipId: 'sx3', start: BAR(5), length: 2 * ONE_BAR, peaks: PEAKS_DRUMS, color: 'var(--chroma-orange)',
+    label: '0.50×', sourceDuration: ONE_BAR, offset: 0 },
+]
+
 // ─── Shared lane wrapper ──────────────────────────────────────────────────────
 
 function LaneWrap({
@@ -220,6 +235,18 @@ function StatesDemo() {
           />
         </LaneWrap>
       </State>
+
+      <State label="time-stretched clips (rate ≠ 1 → hatch + chip)">
+        <LaneWrap>
+          <TrackLane
+            trackId="stretch"
+            clips={STRETCH_CLIPS}
+            bpm={BPM} numerator={4} denominator={4}
+            pxPerBeat={PX_PER_BEAT} division="1/4"
+            height={56}
+          />
+        </LaneWrap>
+      </State>
     </StatesGrid>
   )
 }
@@ -234,11 +261,12 @@ function PlaygroundDemo() {
   const [disabled,   setDisabled]   = useState(false)
   const [bpm,        setBpm]        = useState(120)
 
-  // Controlled clips for interactive drag demo
+  // Controlled clips for interactive drag demo. Each carries sourceDuration/offset
+  // so Alt + dragging an edge time-stretches (rate) instead of trimming.
   const [clips, setClips] = useState<ClipInfo[]>([
-    { clipId: 'p1', start: BAR(1), length: BAR(2) - BAR(1), peaks: PEAKS_GUITAR, color: 'var(--chroma-blue)',   label: 'Guitar' },
-    { clipId: 'p2', start: BAR(4), length: BAR(2) - BAR(1), peaks: PEAKS_BASS,   color: 'var(--chroma-green)',  label: 'Bass' },
-    { clipId: 'p3', start: BAR(7), length: BAR(2) - BAR(1), peaks: PEAKS_DRUMS,  color: 'var(--chroma-orange)' },
+    { clipId: 'p1', start: BAR(1), length: BAR(2) - BAR(1), peaks: PEAKS_GUITAR, color: 'var(--chroma-blue)',   label: 'Guitar', sourceDuration: BAR(2) - BAR(1), offset: 0 },
+    { clipId: 'p2', start: BAR(4), length: BAR(2) - BAR(1), peaks: PEAKS_BASS,   color: 'var(--chroma-green)',  label: 'Bass',   sourceDuration: BAR(2) - BAR(1), offset: 0 },
+    { clipId: 'p3', start: BAR(7), length: BAR(2) - BAR(1), peaks: PEAKS_DRUMS,  color: 'var(--chroma-orange)',                  sourceDuration: BAR(2) - BAR(1), offset: 0 },
   ])
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -280,6 +308,19 @@ function PlaygroundDemo() {
   const handleDelete = useCallback((clipId: string) => {
     setLog(`clip.delete → ${clipId}`)
     setClips(prev => prev.filter(c => c.clipId !== clipId))
+  }, [])
+
+  // Edge time-stretch. rate is absolute (content / length); reconstruct length from
+  // it so the clip stays consistent (content / length === rate). newStart is present
+  // only for the end-anchored left edge.
+  const handleSetRate = useCallback((clipId: string, rate: number, newStart?: number) => {
+    setLog(`clip.set-rate → ${clipId} @ ${rate.toFixed(2)}×${newStart != null ? ` · start ${newStart.toFixed(2)}s` : ''}`)
+    setClips(prev => prev.map(c => {
+      if (c.clipId !== clipId) return c
+      const content   = (c.sourceDuration ?? c.length) - (c.offset ?? 0)
+      const newLength = content / rate
+      return { ...c, start: newStart ?? c.start, length: newLength }
+    }))
   }, [])
 
   const handleCursor = useCallback((seconds: number) => {
@@ -363,6 +404,7 @@ function PlaygroundDemo() {
                 selected={selected}
                 disabled={disabled}
                 onClipMove={handleMove}
+                onClipSetRate={handleSetRate}
                 onClipDelete={handleDelete}
                 onClipSelect={handleSelect}
                 onClipShiftSelect={handleShiftSelect}
@@ -472,7 +514,7 @@ function PlaygroundDemo() {
             color:      'var(--text-dim)',
             marginTop:  'var(--space-2)',
           }}>
-            click selects · Shift+click multi-selects · drag clips · Delete removes · click lane sets cursor · right-click a clip or empty lane for the menu
+            click selects · Shift+click multi-selects · drag clips · drag an edge trims · Alt+drag an edge time-stretches (left edge is end-anchored) · Delete removes · click lane sets cursor · right-click a clip or empty lane for the menu
           </div>
         </div>
       </div>

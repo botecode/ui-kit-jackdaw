@@ -84,6 +84,47 @@ describe('Clip state', () => {
   })
 })
 
+// ─── Time-stretch (rate) ──────────────────────────────────────────────────────
+
+describe('Clip time-stretch indicator', () => {
+  beforeEach(() => mockMatchMedia(false))
+
+  it('rate=1 (default) → no data-stretched, no rate chip', () => {
+    const { container } = render(<Clip peaks={PEAKS} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).not.toHaveAttribute('data-stretched')
+    expect(container.querySelector('[data-testid="clip-rate"]')).toBeNull()
+  })
+
+  it('rate ≈ 1 (within epsilon) → treated as un-stretched', () => {
+    const { container } = render(<Clip peaks={PEAKS} rate={1.004} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).not.toHaveAttribute('data-stretched')
+  })
+
+  it('rate=2 → data-stretched present', () => {
+    const { container } = render(<Clip peaks={PEAKS} rate={2} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).toHaveAttribute('data-stretched')
+  })
+
+  it('rate ≠ 1 → renders a rate chip with the formatted multiplier', () => {
+    const { container } = render(<Clip peaks={PEAKS} rate={2} />)
+    const chip = container.querySelector('[data-testid="clip-rate"]') as HTMLElement
+    expect(chip).not.toBeNull()
+    expect(chip.textContent).toContain('2.00')
+    expect(chip.textContent).toContain('×')
+  })
+
+  it('rate < 1 (slower / expanded) still shows the indicator', () => {
+    const { container } = render(<Clip peaks={PEAKS} rate={0.5} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).toHaveAttribute('data-stretched')
+    expect((container.querySelector('[data-testid="clip-rate"]') as HTMLElement).textContent)
+      .toContain('0.50')
+  })
+})
+
 // ─── Props → attributes ───────────────────────────────────────────────────────
 
 describe('Clip props', () => {
