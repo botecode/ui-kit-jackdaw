@@ -36,9 +36,29 @@ describe('TrackHeaderCalm', () => {
     expect(getByLabelText('Solo')).toBeInTheDocument()
   })
 
-  it('omits the input select + FX console (distraction-free)', () => {
-    const { queryByLabelText } = render(<TrackHeaderCalm {...props(makeTrack())} />)
-    expect(queryByLabelText('Audio input')).not.toBeInTheDocument()
+  it('surfaces the input select and FX chip in the title row', () => {
+    const { getByLabelText } = render(<TrackHeaderCalm {...props(makeTrack())} />)
+    expect(getByLabelText('Audio input')).toBeInTheDocument()
+    expect(getByLabelText('FX chain')).toBeInTheDocument()
+  })
+
+  it('hides the pan knob when the track is unselected', () => {
+    const { queryByLabelText } = render(<TrackHeaderCalm {...props(makeTrack({ selected: false }))} />)
+    expect(queryByLabelText('Pan')).not.toBeInTheDocument()
+  })
+
+  it('shows the pan knob when the track is selected', () => {
+    const { getByLabelText } = render(<TrackHeaderCalm {...props(makeTrack({ selected: true }))} />)
+    expect(getByLabelText('Pan')).toBeInTheDocument()
+  })
+
+  it('routes pan changes through onPan', () => {
+    const onPan = vi.fn()
+    const { getByLabelText } = render(
+      <TrackHeaderCalm {...props(makeTrack({ selected: true }), { onPan })} />,
+    )
+    fireEvent.keyDown(getByLabelText('Pan'), { key: 'ArrowRight' })
+    expect(onPan).toHaveBeenCalled()
   })
 
   it('renames on double-click + Enter', () => {

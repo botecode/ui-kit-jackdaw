@@ -1,23 +1,22 @@
 // src/components/TrackHeader/TrackHeader.calm.tsx
 //
 // Calm-theme variant of the trackhead. The base TrackHeader is an instrument
-// channel: type glyph, input chip, FX console, R/M/S cluster, fader, pan knob,
-// segmented meter — dense and capable. The Calm trackhead is the opposite mood:
-// the track NAME is the hero (soft serif), surrounded by air, with only the
-// essential controls present as quiet marks.
+// channel — dense and capable. The Calm trackhead keeps the same controls but in
+// a quieter mood: the track NAME is the hero (soft serif), the input + FX live as
+// understated marks up in the title row, and the controls row stays airy.
 //
-// Deliberate omissions (writerly / distraction-free, per the reference):
-//   • Input select + FX console chrome are hidden — production routing lives in
-//     the focused-track detail panel, not on every header (KIT-LEAD §6).
-//   • Pan is omitted from the header for the same reason.
-// The callbacks for those still exist on the props (shared contract) — Calm
-// simply doesn't surface them here.
+// Pan is progressive: the knob only appears once the track is SELECTED, so an
+// unselected row reads as calm as possible and the knob arrives when you're
+// actually working that track.
 import { useRef, useState } from 'react'
 import { Waveform, PianoKeys, MusicNote, FolderSimple, CaretRight } from '@phosphor-icons/react'
 import { ArmButtonCalm } from '../ArmButton/ArmButton.calm'
 import { MuteSoloToggleCalm } from '../MuteSoloToggle/MuteSoloToggle.calm'
 import { FaderCalm } from '../Fader/Fader.calm'
 import { MeterCalm } from '../Meter/Meter.calm'
+import { PanKnobCalm } from '../PanKnob/PanKnob.calm'
+import { InputSelectCalm } from '../InputSelect/InputSelect.calm'
+import { FxChipCalm } from '../FxChip/FxChip.calm'
 import { dbScale } from '../Fader'
 import type { TrackHeaderProps } from './TrackHeader'
 import styles from './TrackHeader.calm.module.css'
@@ -93,10 +92,13 @@ function NameField({ name, onRename }: { name: string; onRename: (n: string) => 
 
 export function TrackHeaderCalm(props: TrackHeaderProps) {
   const {
-    track, onRename, onArm, onMute, onSolo, onVolume, onSelect,
+    track, onRename, onArm, onMute, onSolo, onVolume, onPan, onSelect,
+    onSelectInput, onToggleChain, onTogglePlugin, onReorder,
+    onRemovePlugin, onAddPlugin, onOpenPlugin,
     onToggleFolder = () => {},
     folderOpen = false,
     variant = 'track',
+    inputOptions,
     meterLevel, meterLevelL, meterLevelR,
     anySoloActive = false,
     disabled = false,
@@ -162,7 +164,7 @@ export function TrackHeaderCalm(props: TrackHeaderProps) {
           <div className={styles.titleRow}>
             <TypeGlyph size={15} className={styles.glyph} aria-hidden />
             <NameField name={track.name} onRename={onRename} />
-            {isFolder && (
+            {isFolder ? (
               <button
                 className={styles.disclosure}
                 aria-label={folderOpen ? `Collapse ${track.name}` : `Expand ${track.name}`}
@@ -173,6 +175,30 @@ export function TrackHeaderCalm(props: TrackHeaderProps) {
               >
                 <CaretRight size={13} />
               </button>
+            ) : (
+              <div className={styles.cornerChips} data-no-collapse>
+                <InputSelectCalm
+                  value={track.inputId}
+                  onChange={onSelectInput}
+                  options={inputOptions}
+                  variant="chip"
+                  size="sm"
+                  disabled={disabled}
+                  aria-label="Audio input"
+                />
+                <FxChipCalm
+                  plugins={track.plugins}
+                  chainEnabled={track.chainEnabled}
+                  onToggleChain={onToggleChain}
+                  onTogglePlugin={onTogglePlugin}
+                  onReorder={onReorder}
+                  onRemove={onRemovePlugin}
+                  onAdd={onAddPlugin}
+                  onOpenPlugin={onOpenPlugin}
+                  size="sm"
+                  disabled={disabled}
+                />
+              </div>
             )}
           </div>
 
@@ -204,6 +230,17 @@ export function TrackHeaderCalm(props: TrackHeaderProps) {
               disabled={disabled}
               aria-label={isFolder ? 'Group volume' : 'Volume'}
             />
+
+            {/* Pan arrives only when the track is selected (progressive disclosure). */}
+            {track.selected && (
+              <PanKnobCalm
+                pan={track.pan}
+                onChange={onPan}
+                color={track.color}
+                size="sm"
+                disabled={disabled}
+              />
+            )}
 
             {showMeter && (
               <MeterCalm

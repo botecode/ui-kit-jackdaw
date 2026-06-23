@@ -22,6 +22,9 @@ import type { ArmButtonProps } from '../components/ArmButton/ArmButton'
 import type { MuteSoloToggleProps } from '../components/MuteSoloToggle/MuteSoloToggle'
 import type { FaderProps } from '../components/Fader/Fader'
 import type { MeterProps } from '../components/Meter/Meter'
+import type { PanKnobProps } from '../components/PanKnob/PanKnob'
+import type { InputSelectProps } from '../components/InputSelect/InputSelect'
+import type { FxChipProps } from '../components/FxChip/FxChip'
 import type { TrackHeaderProps } from '../components/TrackHeader/TrackHeader'
 
 /**
@@ -34,6 +37,9 @@ export interface ThemeComponentOverrides {
   MuteSoloToggle?: ComponentType<MuteSoloToggleProps>
   Fader?:          ComponentType<FaderProps>
   Meter?:          ComponentType<MeterProps>
+  PanKnob?:        ComponentType<PanKnobProps>
+  InputSelect?:    ComponentType<InputSelectProps>
+  FxChip?:         ComponentType<FxChipProps>
   TrackHeader?:    ComponentType<TrackHeaderProps>
 }
 

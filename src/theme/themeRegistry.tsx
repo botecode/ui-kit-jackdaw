@@ -15,6 +15,9 @@ import { ArmButtonCalm } from '../components/ArmButton/ArmButton.calm'
 import { MuteSoloToggleCalm } from '../components/MuteSoloToggle/MuteSoloToggle.calm'
 import { FaderCalm } from '../components/Fader/Fader.calm'
 import { MeterCalm } from '../components/Meter/Meter.calm'
+import { PanKnobCalm } from '../components/PanKnob/PanKnob.calm'
+import { InputSelectCalm } from '../components/InputSelect/InputSelect.calm'
+import { FxChipCalm } from '../components/FxChip/FxChip.calm'
 import { TrackHeaderCalm } from '../components/TrackHeader/TrackHeader.calm'
 
 export const THEME_COMPONENTS: Partial<Record<ThemeId, ThemeComponentOverrides>> = {
@@ -23,6 +26,9 @@ export const THEME_COMPONENTS: Partial<Record<ThemeId, ThemeComponentOverrides>>
     MuteSoloToggle: MuteSoloToggleCalm,
     Fader:          FaderCalm,
     Meter:          MeterCalm,
+    PanKnob:        PanKnobCalm,
+    InputSelect:    InputSelectCalm,
+    FxChip:         FxChipCalm,
     TrackHeader:    TrackHeaderCalm,
   },
 }

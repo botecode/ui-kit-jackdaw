@@ -3,6 +3,7 @@ import { CSSProperties, useEffect, useRef, useState } from 'react'
 import styles from './FxChip.module.css'
 import { Popover } from '../Popover'
 import { Panel } from '../Panel'
+import { useThemeComponent } from '../../theme/themeComponents'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -201,7 +202,9 @@ interface ChainEditorProps {
   masterLedRef:   React.RefObject<HTMLButtonElement | null>
 }
 
-function ChainEditor({
+// ChainEditor is the dropdown body (slot list + drag-reorder + add). Exported so
+// theme variants (e.g. the Calm FxChip) can reuse it behind a restyled trigger.
+export function ChainEditor({
   plugins, chainEnabled, onToggleChain, onTogglePlugin, onReorder, onRemove, onAdd, onOpenPlugin, masterLedRef,
 }: ChainEditorProps) {
   const [announcement, setAnnouncement] = useState('')
@@ -324,7 +327,7 @@ function ChainEditor({
 
 // ── FxChip ────────────────────────────────────────────────────────────────────
 
-export function FxChip({
+function FxChipBase({
   plugins,
   chainEnabled,
   onToggleChain,
@@ -409,4 +412,10 @@ export function FxChip({
       )}
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function FxChip(props: FxChipProps) {
+  const Impl = useThemeComponent('FxChip', FxChipBase)
+  return <Impl {...props} />
 }

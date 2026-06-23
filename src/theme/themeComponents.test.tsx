@@ -74,7 +74,7 @@ function trackHeaderProps(track: Track): TrackHeaderProps {
 }
 
 describe('aware themes — TrackHeader swap', () => {
-  it('renders the base instrument channel (with input select) under chroma', () => {
+  it('keeps the input select under the base (chroma) trackhead', () => {
     const { queryByLabelText } = render(
       <ThemeProvider theme="chroma">
         <TrackHeader {...trackHeaderProps(makeTrack())} />
@@ -83,15 +83,39 @@ describe('aware themes — TrackHeader swap', () => {
     expect(queryByLabelText('Audio input')).toBeInTheDocument()
   })
 
-  it('renders the distraction-free Calm trackhead (no input/FX chrome) under calm', () => {
-    const { queryByLabelText, getByText } = render(
+  it('keeps the input select under the Calm trackhead', () => {
+    const { queryByLabelText } = render(
       <ThemeProvider theme="calm">
         <TrackHeader {...trackHeaderProps(makeTrack())} />
       </ThemeProvider>,
     )
-    // Calm omits the input select + FX console by design.
-    expect(queryByLabelText('Audio input')).not.toBeInTheDocument()
-    // The name is still the hero.
-    expect(getByText('Vocals')).toBeInTheDocument()
+    expect(queryByLabelText('Audio input')).toBeInTheDocument()
+  })
+
+  it('base shows pan even when the track is unselected', () => {
+    const { queryByLabelText } = render(
+      <ThemeProvider theme="chroma">
+        <TrackHeader {...trackHeaderProps(makeTrack({ selected: false }))} />
+      </ThemeProvider>,
+    )
+    expect(queryByLabelText('Pan')).toBeInTheDocument()
+  })
+
+  it('Calm hides pan until the track is selected', () => {
+    const { queryByLabelText } = render(
+      <ThemeProvider theme="calm">
+        <TrackHeader {...trackHeaderProps(makeTrack({ selected: false }))} />
+      </ThemeProvider>,
+    )
+    expect(queryByLabelText('Pan')).not.toBeInTheDocument()
+  })
+
+  it('Calm shows pan once the track is selected', () => {
+    const { queryByLabelText } = render(
+      <ThemeProvider theme="calm">
+        <TrackHeader {...trackHeaderProps(makeTrack({ selected: true }))} />
+      </ThemeProvider>,
+    )
+    expect(queryByLabelText('Pan')).toBeInTheDocument()
   })
 })

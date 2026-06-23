@@ -50,6 +50,16 @@
 
 .glyph { color: var(--text-dim); flex: none; }
 
+/* Input + FX live quietly at the end of the title row. */
+.cornerChips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+  min-width: 0;
+  flex: none;
+}
+
 .name,
 .nameInput {
   font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;

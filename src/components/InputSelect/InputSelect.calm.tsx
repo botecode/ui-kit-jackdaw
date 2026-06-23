@@ -1,32 +1,19 @@
-// src/components/InputSelect/InputSelect.tsx
+// src/components/InputSelect/InputSelect.calm.tsx
+// Calm-theme variant of InputSelect. Same dropdown (the shared Popover +
+// ListboxPopover, which are token-themed), but the trigger is a quiet calm
+// chip/field instead of the recessed console control.
 import { useId, useRef, useState } from 'react'
-import styles from './InputSelect.module.css'
 import { ListboxPopover } from './ListboxPopover'
-import type { ListboxOption } from './ListboxPopover'
+import type { InputSelectProps } from './InputSelect'
 import { Popover } from '../Popover'
-import { useThemeComponent } from '../../theme/themeComponents'
+import styles from './InputSelect.calm.module.css'
 
-export type { ListboxOption as InputSelectOption }
-
-export interface InputSelectProps {
-  value: string | null
-  onChange: (id: string) => void
-  options: ListboxOption[]
-  variant?: 'field' | 'chip'
-  placeholder?: string
-  size?: 'sm' | 'md'
-  disabled?: boolean
-  showInTag?: boolean
-  'aria-label'?: string
-  defaultOpen?: boolean
-}
-
-function InputSelectBase({
+export function InputSelectCalm({
   value,
   onChange,
   options,
   variant = 'field',
-  placeholder = '—',
+  placeholder = 'Input',
   size = 'md',
   disabled,
   showInTag,
@@ -46,12 +33,10 @@ function InputSelectBase({
     setActiveId(value)
     setOpen(true)
   }
-
   function closeMenu() {
     setOpen(false)
     triggerRef.current?.focus()
   }
-
   function handleSelect(id: string) {
     onChange(id)
     closeMenu()
@@ -72,11 +57,8 @@ function InputSelectBase({
       setActiveId(idx < options.length - 1 ? (options[idx + 1]?.id ?? null) : null)
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      if (idx === -1) {
-        setActiveId(options[options.length - 1]?.id ?? null)
-      } else {
-        setActiveId(options[Math.max(idx - 1, 0)]?.id ?? null)
-      }
+      if (idx === -1) setActiveId(options[options.length - 1]?.id ?? null)
+      else setActiveId(options[Math.max(idx - 1, 0)]?.id ?? null)
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       if (activeId) handleSelect(activeId)
@@ -85,8 +67,6 @@ function InputSelectBase({
       closeMenu()
     }
   }
-
-  const triggerClass = variant === 'chip' ? styles.chip : styles.field
 
   return (
     <div
@@ -98,7 +78,7 @@ function InputSelectBase({
     >
       <button
         ref={triggerRef}
-        className={triggerClass}
+        className={variant === 'chip' ? styles.chip : styles.field}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
@@ -114,7 +94,7 @@ function InputSelectBase({
         onKeyDown={handleKeyDown}
       >
         {variant === 'field' && showInTag && (
-          <span className={styles.inTag} aria-hidden="true">IN</span>
+          <span className={styles.inTag} aria-hidden="true">in</span>
         )}
         <span className={styles.displayLabel} data-muted={!selectedOption || undefined}>
           {selectedOption ? (
@@ -146,10 +126,4 @@ function InputSelectBase({
       )}
     </div>
   )
-}
-
-// Theme-aware resolver: the active theme's variant, or the base.
-export function InputSelect(props: InputSelectProps) {
-  const Impl = useThemeComponent('InputSelect', InputSelectBase)
-  return <Impl {...props} />
 }
