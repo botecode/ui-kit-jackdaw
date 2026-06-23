@@ -38,6 +38,9 @@ const PEAKS   = makePeaks(500)
 const PEAKS_A = makePeaks(250, 0)
 const PEAKS_B = makePeaks(250, 5)
 
+/** Nominal clip length (seconds) the playground maps fades against. */
+const PLAYGROUND_LEN = 4
+
 // ─── Layout helper ────────────────────────────────────────────────────────────
 
 function ClipBox({
@@ -145,6 +148,38 @@ function StatesDemo() {
           <Clip peaks={PEAKS} color="var(--track-color-5)" rate={1.5} selected />
         </ClipBox>
       </State>
+
+      <State label="fade-in">
+        <ClipBox width={300}>
+          <Clip peaks={PEAKS} color="var(--track-color-3)" lengthSec={4} fadeIn={1.4} fadeHandles />
+        </ClipBox>
+      </State>
+
+      <State label="fade-out">
+        <ClipBox width={300}>
+          <Clip peaks={PEAKS} color="var(--track-color-2)" lengthSec={4} fadeOut={1.4} fadeHandles />
+        </ClipBox>
+      </State>
+
+      <State label="fade in + out">
+        <ClipBox width={380}>
+          <Clip peaks={PEAKS} color="var(--track-color-1)" lengthSec={4} fadeIn={1} fadeOut={1.6}
+            label="Vocal" showLabel fadeHandles />
+        </ClipBox>
+      </State>
+
+      <State label="fades — handles at corners (no fade yet)">
+        <ClipBox width={300}>
+          <Clip peaks={PEAKS} color="var(--track-color-4)" lengthSec={4} fadeHandles />
+        </ClipBox>
+      </State>
+
+      <State label="fade — selected">
+        <ClipBox width={300}>
+          <Clip peaks={PEAKS} color="var(--track-color-5)" lengthSec={4} fadeIn={1.2} fadeOut={1.2}
+            selected fadeHandles />
+        </ClipBox>
+      </State>
     </StatesGrid>
   )
 }
@@ -180,6 +215,8 @@ function PlaygroundDemo() {
   const [waveformColor, setWaveformColor] = useState<ClipProps['waveformColor']>('ink')
   const [colorKey,     setColorKey]     = useState('var(--track-color-3)')
   const [rate,         setRate]         = useState(1)
+  const [fadeIn,       setFadeIn]       = useState(0)
+  const [fadeOut,      setFadeOut]      = useState(0)
 
   const peaks = useMemo(() => makePeaks(500), [])
 
@@ -225,6 +262,10 @@ function PlaygroundDemo() {
             label="Electric Guitar"
             muted={muted}
             rate={rate}
+            lengthSec={PLAYGROUND_LEN}
+            fadeIn={fadeIn}
+            fadeOut={fadeOut}
+            fadeHandles
           />
         </div>
 
@@ -252,6 +293,20 @@ function PlaygroundDemo() {
               <div style={{ marginTop: 'var(--space-1)' }}>
                 <Fader value={rate} onChange={v => setRate(Math.round(v * 100) / 100)}
                   min={0.25} max={4} orientation="horizontal" aria-label="Stretch rate" />
+              </div>
+            </label>
+            <label style={labelStyle}>
+              fade in: {fadeIn.toFixed(2)}s
+              <div style={{ marginTop: 'var(--space-1)' }}>
+                <Fader value={fadeIn} onChange={v => setFadeIn(Math.round(v * 100) / 100)}
+                  min={0} max={PLAYGROUND_LEN} orientation="horizontal" aria-label="Fade in" />
+              </div>
+            </label>
+            <label style={labelStyle}>
+              fade out: {fadeOut.toFixed(2)}s
+              <div style={{ marginTop: 'var(--space-1)' }}>
+                <Fader value={fadeOut} onChange={v => setFadeOut(Math.round(v * 100) / 100)}
+                  min={0} max={PLAYGROUND_LEN} orientation="horizontal" aria-label="Fade out" />
               </div>
             </label>
           </div>
@@ -289,6 +344,8 @@ function PlaygroundDemo() {
           Drag width → 80 px (narrow), 40 px (sliver), 400 px+ (line waveform at ultra-wide zoom).
           Toggle waveformColor to compare ink vs track. Push rate off 1.00× to reveal the
           stretch hatch + rate chip (the edge-drag gesture that sets it lives in TrackLane).
+          Push fade in / out off 0 to taper the clip into the canvas — the corner knobs are
+          the drag affordance (the drag gesture itself lives in TrackLane).
         </p>
       </div>
     </Playground>

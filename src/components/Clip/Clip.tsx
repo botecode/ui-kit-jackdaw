@@ -127,11 +127,50 @@ export interface ClipProps {
    * rate lives in TrackLane (Alt + drag an edge); Clip only renders the state.
    */
   rate?: number
+  /** Fade-in duration in seconds, measured from the clip's left edge. 0/undefined = none. */
+  fadeIn?: number
+  /** Fade-out duration in seconds, ending at the clip's right edge. 0/undefined = none. */
+  fadeOut?: number
+  /**
+   * The clip's on-timeline length in seconds. Fades are painted as a fraction of this
+   * (`fadeIn / lengthSec`), so the triangular overlay scales correctly inside the clip's
+   * pixel width at any zoom. Without it, fades cannot be placed and render nothing — the
+   * Clip stays width-agnostic exactly like the waveform (drawn in a normalized viewBox).
+   */
+  lengthSec?: number
+  /**
+   * Paint the draggable fade-handle knobs at the top corners (offset inward by the
+   * current fade). The gesture that *sets* a fade lives in TrackLane (drag a top corner);
+   * Clip only renders the knobs as the affordance. Default false — a standalone Clip is
+   * purely presentational and shows no handles unless asked.
+   */
+  fadeHandles?: boolean
   'aria-label'?: string
 }
 
 /** Below this delta from 1.0 a clip is treated as un-stretched (no indicator). */
 const STRETCH_EPSILON = 0.01
+
+/** Below this fraction of the clip a fade is treated as absent (no overlay/handle offset). */
+const FADE_EPSILON = 0.0005
+
+/**
+ * Resolve fade-in/out seconds into clip-width fractions in [0, 1]. Fades can't overlap:
+ * if together they'd exceed the clip, both scale down proportionally so they just meet.
+ * Returns zeros when the length is unknown (can't place a fraction).
+ */
+function fadeFractions(
+  fadeIn: number,
+  fadeOut: number,
+  lengthSec: number | undefined,
+): { fIn: number; fOut: number } {
+  if (lengthSec == null || lengthSec <= 0) return { fIn: 0, fOut: 0 }
+  let fIn  = Math.min(1, Math.max(0, fadeIn  / lengthSec))
+  let fOut = Math.min(1, Math.max(0, fadeOut / lengthSec))
+  const sum = fIn + fOut
+  if (sum > 1) { fIn /= sum; fOut /= sum }
+  return { fIn, fOut }
+}
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -147,6 +186,10 @@ export function Clip({
   splitRight     = false,
   muted          = false,
   rate           = 1,
+  fadeIn         = 0,
+  fadeOut        = 0,
+  lengthSec,
+  fadeHandles    = false,
   'aria-label': ariaLabel = 'Clip',
 }: ClipProps) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -226,6 +269,16 @@ export function Clip({
   const isStretched   = Math.abs(rate - 1) > STRETCH_EPSILON
   const showRateChip  = isStretched && zoom !== 'sliver'
 
+  // ── Fades ──────────────────────────────────────────────────────────────────
+  // Fade-in/out are painted as triangular wedges that erase the clip body back to the
+  // arrangement canvas (the waveform tapers to silence) plus a hairline fade curve. The
+  // gesture that sets a fade lives in TrackLane; Clip only renders the state + the knob
+  // affordance. Geometry is fraction-of-width in the normalized viewBox, so it scales
+  // through every zoom exactly like the waveform.
+  const { fIn, fOut } = fadeFractions(fadeIn, fadeOut, lengthSec)
+  const hasFadeIn  = fIn  > FADE_EPSILON
+  const hasFadeOut = fOut > FADE_EPSILON
+
   const classNames = [
     styles.root,
     isRecording && styles.recording,
@@ -243,6 +296,8 @@ export function Clip({
       data-split-right={splitRight || undefined}
       data-state={state}
       data-stretched={isStretched || undefined}
+      data-fade-in={hasFadeIn  || undefined}
+      data-fade-out={hasFadeOut || undefined}
       data-testid="clip-root"
       style={{ '--clip-color': clipColor } as React.CSSProperties}
       aria-label={ariaLabel}
@@ -286,6 +341,60 @@ export function Clip({
       {/* ── Stretch hatch — faint diagonal weave over the body when stretched ── */}
       {isStretched && (
         <span className={styles.stretchHatch} aria-hidden="true" />
+      )}
+
+      {/* ── Fade overlay — triangular wedges + hairline fade curves ──────────── */}
+      {(hasFadeIn || hasFadeOut) && (
+        <svg
+          className={styles.fadeOverlay}
+          viewBox="0 0 1000 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          data-testid="clip-fade"
+        >
+          {hasFadeIn && (
+            <>
+              <polygon
+                className={styles.fadeScrim}
+                points={`0,0 ${(fIn * 1000).toFixed(1)},0 0,100`}
+              />
+              <line
+                className={styles.fadeCurve}
+                x1="0" y1="100" x2={(fIn * 1000).toFixed(1)} y2="0"
+              />
+            </>
+          )}
+          {hasFadeOut && (
+            <>
+              <polygon
+                className={styles.fadeScrim}
+                points={`${((1 - fOut) * 1000).toFixed(1)},0 1000,0 1000,100`}
+              />
+              <line
+                className={styles.fadeCurve}
+                x1={((1 - fOut) * 1000).toFixed(1)} y1="0" x2="1000" y2="100"
+              />
+            </>
+          )}
+        </svg>
+      )}
+
+      {/* ── Fade-handle knobs — top-corner affordance (drag lives in TrackLane) ─ */}
+      {fadeHandles && (
+        <>
+          <span
+            className={styles.fadeKnob}
+            data-fade-knob="in"
+            style={{ left: `${fIn * 100}%` }}
+            aria-hidden="true"
+          />
+          <span
+            className={styles.fadeKnob}
+            data-fade-knob="out"
+            style={{ left: `${(1 - fOut) * 100}%` }}
+            aria-hidden="true"
+          />
+        </>
       )}
 
       {/* ── Label ─────────────────────────────────────────────────────────── */}

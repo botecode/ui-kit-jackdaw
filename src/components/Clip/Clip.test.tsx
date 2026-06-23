@@ -125,6 +125,80 @@ describe('Clip time-stretch indicator', () => {
   })
 })
 
+// ─── Fades (in / out) ─────────────────────────────────────────────────────────
+
+describe('Clip fades', () => {
+  beforeEach(() => mockMatchMedia(false))
+
+  it('no fade props → no fade overlay, no data-fade-* attrs', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).not.toHaveAttribute('data-fade-in')
+    expect(root).not.toHaveAttribute('data-fade-out')
+    expect(container.querySelector('[data-testid="clip-fade"]')).toBeNull()
+  })
+
+  it('fadeIn > 0 (with lengthSec) → data-fade-in + fade overlay', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} fadeIn={1} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).toHaveAttribute('data-fade-in')
+    expect(root).not.toHaveAttribute('data-fade-out')
+    expect(container.querySelector('[data-testid="clip-fade"]')).not.toBeNull()
+  })
+
+  it('fadeOut > 0 (with lengthSec) → data-fade-out', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} fadeOut={1} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).toHaveAttribute('data-fade-out')
+    expect(root).not.toHaveAttribute('data-fade-in')
+  })
+
+  it('both fades → both attrs and two scrim polygons', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} fadeIn={1} fadeOut={1} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).toHaveAttribute('data-fade-in')
+    expect(root).toHaveAttribute('data-fade-out')
+    expect(container.querySelectorAll('[data-testid="clip-fade"] polygon')).toHaveLength(2)
+  })
+
+  it('fadeIn without lengthSec → cannot place a fraction, renders nothing', () => {
+    const { container } = render(<Clip peaks={PEAKS} fadeIn={1} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).not.toHaveAttribute('data-fade-in')
+    expect(container.querySelector('[data-testid="clip-fade"]')).toBeNull()
+  })
+
+  it('lengthSec = 0 → no fade (degenerate length)', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={0} fadeIn={1} />)
+    expect(container.querySelector('[data-testid="clip-fade"]')).toBeNull()
+  })
+
+  it('overlapping fades (fadeIn + fadeOut > length) still render both, scaled to meet', () => {
+    // 3 + 3 = 6 > length 4 → both scale to fractions summing to 1 (they just meet).
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} fadeIn={3} fadeOut={3} />)
+    const root = container.querySelector('[data-testid="clip-root"]') as HTMLElement
+    expect(root).toHaveAttribute('data-fade-in')
+    expect(root).toHaveAttribute('data-fade-out')
+    expect(container.querySelectorAll('[data-testid="clip-fade"] polygon')).toHaveLength(2)
+  })
+
+  it('fadeHandles=false (default) → no knobs', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} fadeIn={1} />)
+    expect(container.querySelector('[data-fade-knob]')).toBeNull()
+  })
+
+  it('fadeHandles=true → renders an in and an out knob', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} fadeHandles />)
+    expect(container.querySelector('[data-fade-knob="in"]')).not.toBeNull()
+    expect(container.querySelector('[data-fade-knob="out"]')).not.toBeNull()
+  })
+
+  it('fade overlay svg is aria-hidden', () => {
+    const { container } = render(<Clip peaks={PEAKS} lengthSec={4} fadeIn={1} />)
+    expect(container.querySelector('[data-testid="clip-fade"]')?.getAttribute('aria-hidden')).toBe('true')
+  })
+})
+
 // ─── Props → attributes ───────────────────────────────────────────────────────
 
 describe('Clip props', () => {
