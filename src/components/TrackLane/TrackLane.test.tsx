@@ -360,6 +360,97 @@ describe('TrackLane clip selection', () => {
   })
 })
 
+// ─── Context menu ─────────────────────────────────────────────────────────────
+
+describe('TrackLane context menu', () => {
+  it('right-click on a clip calls onClipContextMenu with the event and clip id', () => {
+    const onClipContextMenu = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipContextMenu })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.contextMenu(slot, { clientX: 120, clientY: 40 })
+    expect(onClipContextMenu).toHaveBeenCalledTimes(1)
+    const [event, clipId] = onClipContextMenu.mock.calls[0]
+    expect(clipId).toBe('a')
+    expect(event.clientX).toBe(120)
+    expect(event.clientY).toBe(40)
+  })
+
+  it('right-click on a clip does NOT call onLaneContextMenu', () => {
+    const onLaneContextMenu = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onLaneContextMenu })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.contextMenu(slot, { clientX: 120, clientY: 40 })
+    expect(onLaneContextMenu).not.toHaveBeenCalled()
+  })
+
+  it('right-click on a clip trim handle still resolves to the clip (handle is part of the clip)', () => {
+    const onClipContextMenu = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipContextMenu })
+    const trimStart = container.querySelector('[data-clip-id="a"] [data-trim="start"]') as HTMLElement
+    fireEvent.contextMenu(trimStart, { clientX: 10, clientY: 20 })
+    expect(onClipContextMenu).toHaveBeenCalledWith(expect.anything(), 'a')
+  })
+
+  it('right-click on empty lane calls onLaneContextMenu with the event and track id', () => {
+    const onLaneContextMenu = vi.fn()
+    const { getByTestId } = lane({ trackId: 't9', onLaneContextMenu })
+    const root = getByTestId('track-lane')
+    fireEvent.contextMenu(root, { clientX: 200, clientY: 30, target: root })
+    expect(onLaneContextMenu).toHaveBeenCalledTimes(1)
+    const [event, trackId] = onLaneContextMenu.mock.calls[0]
+    expect(trackId).toBe('t9')
+    expect(event.clientX).toBe(200)
+    expect(event.clientY).toBe(30)
+  })
+
+  it('right-click on empty lane does NOT call onClipContextMenu', () => {
+    const onClipContextMenu = vi.fn()
+    const { getByTestId } = lane({ clips: [CLIP_A], onClipContextMenu })
+    const root = getByTestId('track-lane')
+    fireEvent.contextMenu(root, { clientX: 200, clientY: 30, target: root })
+    expect(onClipContextMenu).not.toHaveBeenCalled()
+  })
+
+  it('prevents the native menu when a clip handler is provided', () => {
+    const onClipContextMenu = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onClipContextMenu })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    const prevented = !fireEvent.contextMenu(slot, { clientX: 1, clientY: 1 })
+    expect(prevented).toBe(true)
+  })
+
+  it('prevents the native menu when a lane handler is provided', () => {
+    const onLaneContextMenu = vi.fn()
+    const { getByTestId } = lane({ onLaneContextMenu })
+    const root = getByTestId('track-lane')
+    const prevented = !fireEvent.contextMenu(root, { clientX: 1, clientY: 1, target: root })
+    expect(prevented).toBe(true)
+  })
+
+  it('does NOT prevent the native menu when no handler is provided for that region', () => {
+    // Clip region with only a lane handler wired → native menu left intact on the clip.
+    const onLaneContextMenu = vi.fn()
+    const { container } = lane({ clips: [CLIP_A], onLaneContextMenu })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    const prevented = !fireEvent.contextMenu(slot, { clientX: 1, clientY: 1 })
+    expect(prevented).toBe(false)
+    expect(onLaneContextMenu).not.toHaveBeenCalled()
+  })
+
+  it('does not call context-menu handlers when disabled', () => {
+    const onClipContextMenu = vi.fn()
+    const onLaneContextMenu = vi.fn()
+    const { getByTestId, container } = lane({
+      clips: [CLIP_A], onClipContextMenu, onLaneContextMenu, disabled: true,
+    })
+    const slot = container.querySelector('[data-clip-id="a"]') as HTMLElement
+    fireEvent.contextMenu(slot, { clientX: 10, clientY: 10 })
+    fireEvent.contextMenu(getByTestId('track-lane'), { clientX: 10, clientY: 10, target: getByTestId('track-lane') })
+    expect(onClipContextMenu).not.toHaveBeenCalled()
+    expect(onLaneContextMenu).not.toHaveBeenCalled()
+  })
+})
+
 // ─── Trim handle presence ─────────────────────────────────────────────────────
 
 describe('TrackLane trim handles', () => {

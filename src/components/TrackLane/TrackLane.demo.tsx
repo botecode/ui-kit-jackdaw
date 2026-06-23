@@ -7,6 +7,8 @@ import { Playground } from '../../gallery/ui/Playground'
 import { Fader } from '../Fader'
 import { Toggle } from '../Toggle'
 import { TimelineRuler, secondsToX } from '../TimelineRuler'
+import { ContextMenu } from '../ContextMenu'
+import type { MenuEntry } from '../ContextMenu'
 import { TrackLane } from './TrackLane'
 import type { ClipInfo, ClipMoveIntent } from './TrackLane'
 import type { Division } from '../TimelineGrid'
@@ -241,6 +243,14 @@ function PlaygroundDemo() {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
+  // Consumer-owned context menu — the kit only surfaces the gesture (event + ids);
+  // here the demo plays the consumer, opening the shared ContextMenu in point mode
+  // from the surfaced event's clientX/clientY.
+  const [menu, setMenu] = useState<{ open: boolean; x: number; y: number; items: MenuEntry[] }>({
+    open: false, x: 0, y: 0, items: [],
+  })
+  const closeMenu = useCallback(() => setMenu(m => ({ ...m, open: false })), [])
+
   const [log, setLog] = useState<string>('—')
 
   const totalWidth = secondsToX(16, pxPerBeat, bpm)
@@ -275,6 +285,40 @@ function PlaygroundDemo() {
   const handleCursor = useCallback((seconds: number) => {
     setLog(`set-cursor → ${seconds.toFixed(2)}s`)
   }, [])
+
+  const handleClipContextMenu = useCallback((e: React.MouseEvent, clipId: string) => {
+    setLog(`clip.context-menu → ${clipId} @ (${e.clientX}, ${e.clientY})`)
+    setSelectedIds(new Set([clipId]))
+    setMenu({
+      open: true,
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { id: 'cut',    label: 'Cut',        shortcut: '⌘X', onSelect: closeMenu },
+        { id: 'copy',   label: 'Copy',       shortcut: '⌘C', onSelect: closeMenu },
+        { id: 'split',  label: 'Split at playhead', shortcut: 'S', onSelect: closeMenu },
+        { id: 'sep1',   separator: true },
+        { id: 'rename', label: 'Rename…',    onSelect: closeMenu },
+        { id: 'delete', label: 'Delete clip', shortcut: '⌫', danger: true,
+          onSelect: () => { handleDelete(clipId); closeMenu() } },
+      ],
+    })
+  }, [closeMenu, handleDelete])
+
+  const handleLaneContextMenu = useCallback((e: React.MouseEvent, trackId: string) => {
+    setLog(`lane.context-menu → ${trackId} @ (${e.clientX}, ${e.clientY})`)
+    setMenu({
+      open: true,
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { id: 'paste',     label: 'Paste',          shortcut: '⌘V', onSelect: closeMenu },
+        { id: 'insert',    label: 'Insert silence', onSelect: closeMenu },
+        { id: 'sep1',      separator: true },
+        { id: 'select-all', label: 'Select all on track', onSelect: closeMenu },
+      ],
+    })
+  }, [closeMenu])
 
   const ALL_DIVISIONS: Division[] = ['1/1', '1/2', '1/4', '1/8', '1/16']
 
@@ -322,10 +366,22 @@ function PlaygroundDemo() {
                 onClipDelete={handleDelete}
                 onClipSelect={handleSelect}
                 onClipShiftSelect={handleShiftSelect}
+                onClipContextMenu={handleClipContextMenu}
+                onLaneContextMenu={handleLaneContextMenu}
                 onSetCursor={handleCursor}
               />
             </div>
           </div>
+
+          {/* Consumer-owned menu, anchored at the surfaced pointer (point mode). */}
+          <ContextMenu
+            open={menu.open}
+            x={menu.x}
+            y={menu.y}
+            items={menu.items}
+            onClose={closeMenu}
+            aria-label="Clip / lane actions"
+          />
 
           {/* Intent log */}
           <div style={{
@@ -416,7 +472,7 @@ function PlaygroundDemo() {
             color:      'var(--text-dim)',
             marginTop:  'var(--space-2)',
           }}>
-            click selects · Shift+click multi-selects · drag clips · Delete removes · click lane sets cursor
+            click selects · Shift+click multi-selects · drag clips · Delete removes · click lane sets cursor · right-click a clip or empty lane for the menu
           </div>
         </div>
       </div>

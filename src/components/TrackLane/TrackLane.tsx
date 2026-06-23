@@ -59,6 +59,19 @@ export interface TrackLaneProps {
   onClipSelect?: (clipId: string) => void
   /** Shift+click (or Shift+Enter) on a clip — toggles it in the multi-clip selection. */
   onClipShiftSelect?: (clipId: string) => void
+  /**
+   * Right-click (contextmenu) on a clip. The kit only surfaces the gesture — the
+   * consumer owns the menu UI (compose the shared `Popover` in point mode from
+   * `event.clientX` / `event.clientY`). The kit calls `event.preventDefault()` so the
+   * native browser menu is suppressed only when this handler is wired.
+   */
+  onClipContextMenu?: (event: React.MouseEvent<HTMLDivElement>, clipId: string) => void
+  /**
+   * Right-click (contextmenu) on empty lane space. Surfaces the event + this lane's
+   * `trackId` so the consumer can open a track-level menu (e.g. paste, insert).
+   * `preventDefault` is called only when this handler is provided.
+   */
+  onLaneContextMenu?: (event: React.MouseEvent<HTMLDivElement>, trackId: string) => void
   /** Called when the user clicks empty lane space; seconds are snapped to division. */
   onSetCursor?: (seconds: number) => void
 }
@@ -195,6 +208,8 @@ export function TrackLane({
   onClipDelete,
   onClipSelect,
   onClipShiftSelect,
+  onClipContextMenu,
+  onLaneContextMenu,
   onSetCursor,
 }: TrackLaneProps) {
   const laneRef      = useRef<HTMLDivElement>(null)
@@ -327,6 +342,30 @@ export function TrackLane({
     onSetCursor?.(xToSeconds(snapXToDivision(x, divisionPx), pxPerBeat, bpm))
   }
 
+  // ── Lane context menu ──────────────────────────────────────────────────────
+  // Right-click routes by hit-target: a clip (incl. its trim handles, which live
+  // inside [data-clip-id]) → onClipContextMenu; otherwise the empty lane →
+  // onLaneContextMenu. The kit only surfaces event + ids; the consumer owns the
+  // menu UI. preventDefault is called ONLY when the matching handler is wired, so
+  // the native menu is suppressed exactly where we hand off a custom one.
+
+  function handleLaneContextMenu(e: React.MouseEvent<HTMLDivElement>) {
+    if (disabled) return
+
+    const clipEl = (e.target as HTMLElement).closest('[data-clip-id]') as HTMLElement | null
+
+    if (clipEl) {
+      if (!onClipContextMenu) return
+      e.preventDefault()
+      onClipContextMenu(e, clipEl.dataset.clipId!)
+      return
+    }
+
+    if (!onLaneContextMenu) return
+    e.preventDefault()
+    onLaneContextMenu(e, trackId)
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -343,6 +382,7 @@ export function TrackLane({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onContextMenu={handleLaneContextMenu}
     >
       {/* Beat/bar grid + paper texture (TimelineGrid already composites both). */}
       <div className={styles.gridLayer} aria-hidden="true">
