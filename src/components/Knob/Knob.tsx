@@ -5,6 +5,7 @@
 // `color`, and a `format` callback for the readout.
 import { Fragment, useEffect, useId, useRef, useState } from 'react'
 import { useSpring } from '../../motion/spring'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './Knob.module.css'
 
 // ─── Pure utilities (exported for tests) ───────────────────────────────────
@@ -58,7 +59,7 @@ export interface KnobProps {
   'aria-label'?: string
 }
 
-export function Knob({
+function KnobBase({
   value, min, max, onChange,
   centered = false,
   step,
@@ -267,4 +268,10 @@ export function Knob({
       <span className={styles.readout} data-testid="readout" aria-hidden="true">{fmt(value)}</span>
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function Knob(props: KnobProps) {
+  const Impl = useThemeComponent('Knob', KnobBase)
+  return <Impl {...props} />
 }

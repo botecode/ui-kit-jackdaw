@@ -1,0 +1,70 @@
+/* src/components/InputSelect/InputSelect.calm.module.css */
+/* Calm trigger: a soft underlined/outlined field — quiet, no recess. */
+
+.root { display: inline-flex; min-width: 0; }
+
+.field,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  font-family: var(--font-ui);
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  transition: color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+
+.field {
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 2px var(--space-2);
+}
+
+.chip {
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 1px 2px;
+}
+
+.root[data-size="sm"] .field,
+.root[data-size="sm"] .chip { font-size: var(--text-xs); }
+.root[data-size="md"] .field,
+.root[data-size="md"] .chip { font-size: var(--text-sm); }
+
+.field:hover:not(:disabled),
+.chip:hover:not(:disabled) { color: var(--text); }
+.chip:hover:not(:disabled) { border-bottom-color: var(--border-strong); }
+.root[data-open] .field { border-color: var(--accent); color: var(--text); }
+.root[data-open] .chip  { border-bottom-color: var(--accent); color: var(--text); }
+
+.field:disabled,
+.chip:disabled { opacity: 0.4; pointer-events: none; }
+
+.inTag {
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.displayLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.displayLabel[data-muted] { color: var(--text-dim); }
+
+.deviceName { color: var(--text-dim); margin-left: 3px; }
+
+.caret { color: var(--text-dim); font-size: 0.8em; flex: none; }
+
+.field:focus-visible,
+.chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

@@ -1,0 +1,125 @@
+/* src/components/TransportBar/TransportBar.calm.module.css */
+/* Calm transport: a soft paper bar — no recessed grooves, no LED. */
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-ui);
+}
+
+.leftSpacer  { flex: 1; }
+.rightCluster { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); }
+
+.centerCluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: none;
+}
+
+.transportCluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.clusterDivider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px var(--space-1);
+  background: var(--border);
+}
+
+.clockZone { display: flex; align-items: center; }
+
+/* ── Skip buttons ── */
+.skipBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  transition: color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+}
+.skipBtn[data-size="md"] { width: 30px; height: 30px; }
+.skipBtn[data-size="sm"] { width: 26px; height: 26px; }
+.skipBtn:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
+.skipBtn:disabled { opacity: 0.4; pointer-events: none; }
+.skipBtn:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+
+/* ── Project readouts ── */
+.projectReadouts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.bpmReadout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.bpmLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+}
+.bpmValue,
+.bpmInput {
+  font-family: var(--font-mono);
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 1px 2px;
+  cursor: ns-resize;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.bpmReadout[data-size="md"] .bpmValue,
+.bpmReadout[data-size="md"] .bpmInput { font-size: var(--text-md); }
+.bpmReadout[data-size="sm"] .bpmValue,
+.bpmReadout[data-size="sm"] .bpmInput { font-size: var(--text-base); }
+.bpmValue:hover:not(:disabled) { border-bottom-color: var(--border-strong); }
+.bpmValue:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+.bpmValue:disabled { opacity: 0.4; pointer-events: none; }
+.bpmInput {
+  width: 4ch;
+  cursor: text;
+  border-bottom-color: var(--accent);
+  text-align: center;
+}
+
+/* ── Time signature ── */
+.timeSigReadout { display: inline-flex; align-items: center; }
+.timeSigStack { display: inline-flex; align-items: center; gap: 1px; }
+.timeSigPart,
+.timeSigInput {
+  font-family: var(--font-mono);
+  color: var(--text);
+  background: transparent;
+  border: none;
+  padding: 0 1px;
+  outline: none;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.timeSigReadout[data-size="md"] .timeSigPart,
+.timeSigReadout[data-size="md"] .timeSigInput,
+.timeSigReadout[data-size="md"] .timeSigSlash { font-size: var(--text-md); }
+.timeSigReadout[data-size="sm"] .timeSigPart,
+.timeSigReadout[data-size="sm"] .timeSigInput,
+.timeSigReadout[data-size="sm"] .timeSigSlash { font-size: var(--text-base); }
+.timeSigPart:hover:not(:disabled) { color: var(--accent); }
+.timeSigPart:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+.timeSigPart:disabled { opacity: 0.4; pointer-events: none; }
+.timeSigSlash { color: var(--text-dim); margin: 0 1px; }
+.timeSigInput { width: 2.5ch; cursor: text; text-align: center; }

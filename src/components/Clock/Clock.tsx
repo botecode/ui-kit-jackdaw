@@ -1,4 +1,5 @@
 // src/components/Clock/Clock.tsx
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './Clock.module.css'
 
 // 96 ticks per beat — matches the spec example "19.3.11" (2-digit tick display, max 95)
@@ -64,7 +65,7 @@ export interface ClockProps {
   size?: 'sm' | 'md'
 }
 
-export function Clock({
+function ClockBase({
   seconds,
   bpm,
   numerator,
@@ -105,4 +106,10 @@ export function Clock({
       </div>
     </button>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function Clock(props: ClockProps) {
+  const Impl = useThemeComponent('Clock', ClockBase)
+  return <Impl {...props} />
 }

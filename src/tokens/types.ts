@@ -78,7 +78,7 @@ export type ThemeId =
   | "chroma"
   | "default" | "bowie" | "bubble-gum-pop" | "buckley" | "gil"
   | "golden-hour" | "ink" | "manuscript" | "nocturne" | "pine"
-  | "reaper" | "songwriter" | "techno" | "tropicalia";
+  | "reaper" | "songwriter" | "techno" | "tropicalia" | "calm";
 
 export interface ThemeMeta {
   id: ThemeId;

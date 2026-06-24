@@ -1,5 +1,6 @@
 // src/components/TransportButton/TransportButton.tsx
 import { Play, Pause, Stop } from '@phosphor-icons/react'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './TransportButton.module.css'
 
 export interface TransportButtonProps {
@@ -27,7 +28,7 @@ function resolveIcon(variant: TransportButtonProps['variant'], playing: boolean)
   return Pause
 }
 
-export function TransportButton({
+function TransportButtonBase({
   variant,
   playing = false,
   onClick,
@@ -54,4 +55,10 @@ export function TransportButton({
       <Icon aria-hidden size={ICON_SIZE[size]} />
     </button>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function TransportButton(props: TransportButtonProps) {
+  const Impl = useThemeComponent('TransportButton', TransportButtonBase)
+  return <Impl {...props} />
 }

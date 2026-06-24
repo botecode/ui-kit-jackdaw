@@ -1,0 +1,94 @@
+/* src/components/Fader/Fader.calm.module.css */
+/* Calm: a hairline track, a soft fill up to the handle, a quiet round handle. */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.root[data-orientation="vertical"]   { flex-direction: column; gap: var(--space-1); }
+.root[data-orientation="horizontal"] { flex-direction: row;    gap: var(--space-2); }
+
+/* ── Track ── */
+.track {
+  position: relative;
+  border-radius: 999px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.root[data-orientation="vertical"] .track   { width: 4px; }
+.root[data-orientation="horizontal"] .track { height: 4px; }
+
+.root[data-orientation="vertical"][data-size="sm"] .track { height: 56px; }
+.root[data-orientation="vertical"][data-size="md"] .track { height: 80px; }
+.root[data-orientation="vertical"][data-size="lg"] .track { height: 112px; }
+.root[data-orientation="horizontal"][data-size="sm"] .track { width: 80px; }
+.root[data-orientation="horizontal"][data-size="md"] .track { width: 120px; }
+.root[data-orientation="horizontal"][data-size="lg"] .track { width: 168px; }
+
+/* ── Fill (accent, gently transparent) ── */
+.fill {
+  position: absolute;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fader-accent, var(--accent)) 60%, transparent);
+  transition: none;
+}
+
+.root[data-orientation="vertical"] .fill {
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--pos) * 100%);
+}
+.root[data-orientation="horizontal"] .fill {
+  top: 0; bottom: 0; left: 0;
+  width: calc(var(--pos) * 100%);
+}
+
+/* ── Handle ── */
+.cap {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--fader-accent, var(--accent));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+
+.root[data-size="sm"] .cap { width: 12px; height: 12px; }
+.root[data-size="md"] .cap { width: 14px; height: 14px; }
+.root[data-size="lg"] .cap { width: 18px; height: 18px; }
+
+.root[data-orientation="vertical"] .cap {
+  left: 50%;
+  bottom: calc(var(--pos) * 100%);
+  transform: translate(-50%, 50%);
+}
+.root[data-orientation="horizontal"] .cap {
+  top: 50%;
+  left: calc(var(--pos) * 100%);
+  transform: translate(-50%, -50%);
+}
+
+.root[data-dragging] .cap { border-color: color-mix(in srgb, var(--fader-accent, var(--accent)) 70%, var(--text)); }
+
+/* ── Readout ── */
+.readout {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  text-align: center;
+  min-width: 3ch;
+}
+
+/* ── Focus / disabled ── */
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.disabled { pointer-events: none; opacity: 0.4; }

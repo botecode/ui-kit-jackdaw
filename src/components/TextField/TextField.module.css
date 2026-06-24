@@ -147,3 +147,28 @@
 .root[data-size="sm"] .errorText {
   font-size: var(--text-xs);
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Calm: a light field with a hairline edge and a gentle focus ring — not a dark
+   recessed well. */
+
+:global([data-theme="calm"]) .field {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+:global([data-theme="calm"]) .field:has(:focus-visible) {
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+:global([data-theme="calm"]) .root[data-error] .field {
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+:global([data-theme="calm"]) .root[data-error] .field:has(:focus-visible) {
+  box-shadow:
+    inset 0 0 0 1px var(--danger),
+    0 0 0 2px color-mix(in srgb, var(--danger) 28%, transparent);
+}

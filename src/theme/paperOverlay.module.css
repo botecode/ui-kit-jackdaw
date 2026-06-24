@@ -1,0 +1,18 @@
+/* src/theme/paperOverlay.module.css
+ *
+ * Aware-theme helper for LIGHT overlays. The kit's overlay surfaces (listbox,
+ * Panel tone="stage", ContextMenu) paint themselves with the dark --stage /
+ * --stage-text "well" tokens — the Chroma signature. Calm wants paper, not a
+ * dark drawer.
+ *
+ * Rather than fork every overlay component, a Calm overlay wraps its portaled
+ * body in `.paper`, which re-declares the stage tokens as light paper for that
+ * subtree only. CSS custom properties cascade, so the listbox/panel inside
+ * resolve these values instead of the theme root's dark ones — no component
+ * changes, no duplicated markup.
+ */
+.paper {
+  --stage:      var(--surface);
+  --stage-2:    var(--surface-2);
+  --stage-text: var(--text);
+}

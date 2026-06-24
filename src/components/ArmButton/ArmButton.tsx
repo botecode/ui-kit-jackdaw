@@ -1,4 +1,5 @@
 // src/components/ArmButton/ArmButton.tsx
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './ArmButton.module.css'
 
 export interface ArmButtonProps {
@@ -16,7 +17,8 @@ export interface ArmButtonProps {
   autoFocus?: boolean
 }
 
-export function ArmButton({
+// Shared base implementation (used by every theme that doesn't override ArmButton).
+function ArmButtonBase({
   armed,
   onToggle,
   recording,
@@ -38,4 +40,11 @@ export function ArmButton({
       onClick={onToggle}
     />
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base. Keeps the public
+// name + contract stable so consumers never change.
+export function ArmButton(props: ArmButtonProps) {
+  const Impl = useThemeComponent('ArmButton', ArmButtonBase)
+  return <Impl {...props} />
 }

@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './ContextMenu.module.css'
+import paper from '../../theme/paperOverlay.module.css'
 import { Popover } from '../Popover'
 import { usePortalTarget } from '../../theme/ThemeProvider'
 
@@ -33,7 +34,17 @@ export interface ContextMenuProps {
   x:             number
   y:             number
   onClose:       () => void
+  /**
+   * Menu surface. 'stage' (default) is the dark recessed well — the Chroma
+   * signature. 'paper' remaps the stage tokens to light for aware themes that
+   * want a paper menu (e.g. Calm).
+   */
+  surface?:      'stage' | 'paper'
   'aria-label'?: string
+}
+
+function menuClass(surface: 'stage' | 'paper'): string {
+  return surface === 'paper' ? `${styles.menu} ${paper.paper}` : styles.menu
 }
 
 export function isSeparator(e: MenuEntry): e is MenuSeparator {
@@ -151,6 +162,7 @@ interface SubmenuProps {
   parentItem:     HTMLLIElement
   autoFocus:      boolean
   ariaLabel:      string
+  surface:        'stage' | 'paper'
   onCloseSubmenu: () => void   // dismiss just the flyout, return focus to parent
   onCloseAll:     () => void   // a leaf was chosen — tear the whole menu down
   onPointerEnter: () => void   // cancel a pending hover-close
@@ -158,7 +170,7 @@ interface SubmenuProps {
 }
 
 function Submenu({
-  items, parentItem, autoFocus, ariaLabel,
+  items, parentItem, autoFocus, ariaLabel, surface,
   onCloseSubmenu, onCloseAll, onPointerEnter, onPointerLeave,
 }: SubmenuProps) {
   const ulRef       = useRef<HTMLUListElement>(null)
@@ -257,7 +269,7 @@ function Submenu({
     <ul
       role="menu"
       aria-label={ariaLabel}
-      className={styles.menu}
+      className={menuClass(surface)}
       ref={ulRef}
       style={style}
       onKeyDown={handleKeyDown}
@@ -299,6 +311,7 @@ export function ContextMenu({
   x,
   y,
   onClose,
+  surface = 'stage',
   'aria-label': ariaLabel = 'Context menu',
 }: ContextMenuProps) {
   const containerRef   = useRef<HTMLDivElement>(null)
@@ -452,7 +465,7 @@ export function ContextMenu({
           <ul
             role="menu"
             aria-label={ariaLabel}
-            className={styles.menu}
+            className={menuClass(surface)}
             ref={menuRef}
             onKeyDown={handleKeyDown}
           >
@@ -495,6 +508,7 @@ export function ContextMenu({
               parentItem={itemRefs.current[sub.id]!}
               autoFocus={sub.autoFocus}
               ariaLabel={`${subParent.label} submenu`}
+              surface={surface}
               onCloseSubmenu={() => {
                 closeSubmenuNow()
                 itemRefs.current[sub.id]?.focus()

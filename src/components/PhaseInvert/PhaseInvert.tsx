@@ -1,3 +1,4 @@
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './PhaseInvert.module.css'
 
 export interface PhaseInvertProps {
@@ -32,7 +33,7 @@ function PhaseGlyph({ size }: { size: number }) {
   )
 }
 
-export function PhaseInvert({
+function PhaseInvertBase({
   inverted,
   onToggle,
   size = 'md',
@@ -55,4 +56,10 @@ export function PhaseInvert({
       <PhaseGlyph size={ICON_SIZE[size]} />
     </button>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function PhaseInvert(props: PhaseInvertProps) {
+  const Impl = useThemeComponent('PhaseInvert', PhaseInvertBase)
+  return <Impl {...props} />
 }

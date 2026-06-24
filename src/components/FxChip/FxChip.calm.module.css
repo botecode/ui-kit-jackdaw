@@ -1,0 +1,47 @@
+/* src/components/FxChip/FxChip.calm.module.css */
+/* Calm FX trigger: a quiet pill with a soft state dot — no lit console chip. */
+
+.root { display: inline-flex; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-ui);
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  outline: none;
+  transition: color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+
+.root[data-size="sm"] .chip { height: 18px; padding: 0 var(--space-2); font-size: var(--text-xs); }
+.root[data-size="md"] .chip { height: 22px; padding: 0 var(--space-2); font-size: var(--text-sm); }
+
+.chip:hover:not(:disabled) { color: var(--text); border-color: color-mix(in srgb, var(--text-muted) 50%, var(--border-strong)); }
+.chip:disabled { opacity: 0.4; pointer-events: none; }
+
+.root[data-open] .chip { border-color: var(--accent); color: var(--text); }
+
+.label { line-height: 1; }
+
+/* ── State dot ── */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  flex: none;
+  transition: background var(--dur-base) var(--ease-out);
+}
+.root[data-state="active"]   .dot { background: var(--accent); }
+.root[data-state="partial"]  .dot { background: var(--meter-hot); }
+.root[data-state="bypassed"] .dot { background: var(--text-dim); }
+.root[data-state="empty"]    .dot { display: none; }
+
+.chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}

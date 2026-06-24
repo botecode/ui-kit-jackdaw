@@ -7,6 +7,7 @@ import { RecordMode } from '../RecordMode'
 import type { RecordModeState, RecordModeValue } from '../RecordMode'
 import { RepeatToggle } from '../RepeatToggle'
 import { Clock } from '../Clock'
+import { useThemeComponent } from '../../theme/themeComponents'
 
 // ── Go-to-start / go-to-end ───────────────────────────────────────────────────
 
@@ -365,7 +366,7 @@ function resolveClockState(playing: boolean, recording: boolean): 'stopped' | 'p
   return 'stopped'
 }
 
-export function TransportBar({
+function TransportBarBase({
   playing,
   recording,
   seconds,
@@ -480,4 +481,10 @@ export function TransportBar({
       </div>
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant (e.g. the Calm bar), or base.
+export function TransportBar(props: TransportBarProps) {
+  const Impl = useThemeComponent('TransportBar', TransportBarBase)
+  return <Impl {...props} />
 }

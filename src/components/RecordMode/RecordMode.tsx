@@ -4,6 +4,7 @@ import { Record, ArrowsClockwise, CaretDown } from '@phosphor-icons/react'
 import styles from './RecordMode.module.css'
 import { ContextMenu } from '../ContextMenu'
 import type { MenuEntry } from '../ContextMenu'
+import { useThemeComponent } from '../../theme/themeComponents'
 
 export type RecordModeState = 'idle' | 'armed' | 'recording'
 export type RecordModeValue = 'normal' | 'loop-punch'
@@ -33,7 +34,7 @@ function resolveLabel(
   return base + suffix
 }
 
-export function RecordMode({
+function RecordModeBase({
   state,
   mode,
   onToggleRecord,
@@ -131,4 +132,10 @@ export function RecordMode({
       )}
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function RecordMode(props: RecordModeProps) {
+  const Impl = useThemeComponent('RecordMode', RecordModeBase)
+  return <Impl {...props} />
 }

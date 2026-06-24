@@ -115,3 +115,36 @@
   box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.3);
   pointer-events: none;
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Paint-only override (the rAF/park logic is shared). Calm wants a thin, quiet
+   line and a flat handle — no LED bloom, no machined grooves. */
+
+:global([data-theme="calm"]) .root {
+  --ph-line: var(--accent);
+  --ph-cap:  var(--accent);
+}
+
+:global([data-theme="calm"]) .root[data-recording] {
+  --ph-line: var(--danger);
+  --ph-cap:  var(--danger);
+}
+
+:global([data-theme="calm"]) .line {
+  width: 1px;
+  box-shadow: none;
+}
+
+:global([data-theme="calm"]) .handle {
+  width: 12px;
+  height: 16px;
+  background: var(--ph-cap);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+:global([data-theme="calm"]) .handle::before { background: none; }
+
+:global([data-theme="calm"]) .handle::after {
+  background: color-mix(in srgb, var(--accent-contrast) 80%, transparent);
+  box-shadow: none;
+}

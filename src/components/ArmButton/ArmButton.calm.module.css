@@ -1,0 +1,76 @@
+/* src/components/ArmButton/ArmButton.calm.module.css */
+/* Calm: no recessed well, no glow. A hairline ring; armed = a soft filled dot. */
+
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: border-color var(--dur-slow) var(--ease-out);
+}
+
+.root[data-size="md"] { width: 26px; height: 26px; }
+.root[data-size="sm"] { width: 20px; height: 20px; }
+
+/* ── Dot (::before) — soft, no inset shadow ── */
+.root::before {
+  content: '';
+  display: block;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  transition:
+    background var(--dur-slow) var(--ease-out),
+    border-color var(--dur-slow) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.root[data-size="md"]::before { width: 12px; height: 12px; }
+.root[data-size="sm"]::before { width: 9px;  height: 9px;  }
+
+/* ── Armed: ring + dot adopt the muted record hue, gently filled ── */
+.root[data-armed] {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border-strong));
+}
+
+.root[data-armed]::before {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+/* ── Recording: a slow, soft breath (not a pulse) ── */
+.root[data-armed][data-recording]::before {
+  animation: calm-arm-breath 3.2s ease-in-out infinite;
+}
+
+@keyframes calm-arm-breath {
+  0%, 100% { transform: scale(1);    opacity: 1;    }
+  50%      { transform: scale(1.12); opacity: 0.82; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-armed][data-recording]::before { animation: none; }
+}
+
+/* ── Hover / focus / disabled ── */
+.root:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--text-muted) 50%, var(--border-strong));
+}
+
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.root:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}

@@ -1,0 +1,60 @@
+/* src/components/Clock/Clock.calm.module.css */
+/* Calm: a soft paper readout, hairline border, no deep inset well. */
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+
+.root[data-size="md"] { padding: var(--space-1) var(--space-3); min-width: 116px; }
+.root[data-size="sm"] { padding: 2px var(--space-2);            min-width: 96px; }
+
+.root:hover { border-color: var(--border-strong); }
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* ── Status row ── */
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.stateLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+  transition: color var(--dur-base) var(--ease-out);
+}
+.root[data-state="playing"]   .stateLabel { color: var(--accent-green); }
+.root[data-state="recording"] .stateLabel { color: var(--danger); }
+
+.modeTag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+/* ── Position digits ── */
+.position {
+  font-family: var(--font-mono);
+  color: var(--text);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.root[data-size="md"] .position { font-size: var(--text-lg); }
+.root[data-size="sm"] .position { font-size: var(--text-md); }

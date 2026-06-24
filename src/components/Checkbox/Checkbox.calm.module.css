@@ -1,0 +1,79 @@
+/* src/components/Checkbox/Checkbox.calm.module.css */
+/* Calm: soft rounded box; checked = accent fill + gentle check. */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  color: var(--text);
+}
+.root[data-disabled] { opacity: 0.4; pointer-events: none; }
+
+.input {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.box {
+  position: relative;
+  flex: none;
+  border-radius: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  transition:
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+.root[data-size="md"] .box { width: 18px; height: 18px; }
+.root[data-size="sm"] .box { width: 14px; height: 14px; }
+
+.root:hover .box { border-color: color-mix(in srgb, var(--text-muted) 50%, var(--border-strong)); }
+
+/* Checked: accent fill + check tick (drawn with a rotated border). */
+.input:checked ~ .box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.input:checked ~ .box::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 28%;
+  height: 56%;
+  border: solid var(--accent-contrast);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* Indeterminate: dash (overrides the check). */
+.input:indeterminate ~ .box,
+.box[data-indeterminate] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.input:indeterminate ~ .box::after,
+.box[data-indeterminate]::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56%;
+  height: 0;
+  border: none;
+  border-top: 2px solid var(--accent-contrast);
+  transform: translate(-50%, -50%);
+}
+
+.input:focus-visible ~ .box {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.label { font-size: var(--text-sm); }
+.root[data-size="sm"] .label { font-size: var(--text-xs); }

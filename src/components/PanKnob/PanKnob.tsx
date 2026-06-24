@@ -1,6 +1,7 @@
 // src/components/PanKnob/PanKnob.tsx
 import { Fragment, useEffect, useId, useRef, useState } from 'react'
 import { useSpring } from '../../motion/spring'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './PanKnob.module.css'
 
 // ─── Pure utilities (exported for tests) ───────────────────────────────────
@@ -55,7 +56,7 @@ export interface PanKnobProps {
   'aria-label'?: string
 }
 
-export function PanKnob({
+function PanKnobBase({
   pan,
   onChange,
   size = 'md',
@@ -330,4 +331,10 @@ export function PanKnob({
       </span>
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function PanKnob(props: PanKnobProps) {
+  const Impl = useThemeComponent('PanKnob', PanKnobBase)
+  return <Impl {...props} />
 }

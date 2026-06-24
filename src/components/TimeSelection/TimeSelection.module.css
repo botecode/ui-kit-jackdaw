@@ -170,3 +170,22 @@
   .band       { transition: none; }
   .bracket    { transition: none; }
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Paint-only override (drag logic is shared). Matte brackets, no LED bloom; the
+   shaded band already reads soft from the accent tint. */
+
+:global([data-theme="calm"]) .bracket {
+  box-shadow: none;
+}
+
+:global([data-theme="calm"]) .handle:hover .bracket,
+:global([data-theme="calm"]) .handle[data-dragging] .bracket {
+  box-shadow: none;
+}
+
+:global([data-theme="calm"]) .handle:focus-visible .bracket {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px color-mix(in srgb, var(--accent) 70%, transparent);
+}

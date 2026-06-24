@@ -4,6 +4,7 @@ import { ChartLine, CaretDown } from '@phosphor-icons/react'
 import styles from './AutomationButton.module.css'
 import { ContextMenu } from '../ContextMenu'
 import type { MenuEntry } from '../ContextMenu'
+import { useThemeComponent } from '../../theme/themeComponents'
 
 export type AutomationMode = 'read' | 'write'
 
@@ -30,7 +31,7 @@ const DEFAULT_LABELS: Record<'track' | 'master', string> = {
   master: 'Master automation',
 }
 
-export function AutomationButton({
+function AutomationButtonBase({
   engaged,
   onToggle,
   size = 'md',
@@ -131,4 +132,10 @@ export function AutomationButton({
       )}
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function AutomationButton(props: AutomationButtonProps) {
+  const Impl = useThemeComponent('AutomationButton', AutomationButtonBase)
+  return <Impl {...props} />
 }

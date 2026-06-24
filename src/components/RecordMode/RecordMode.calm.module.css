@@ -1,0 +1,103 @@
+/* src/components/RecordMode/RecordMode.calm.module.css */
+/* Calm record: soft button; armed = muted terracotta fill, recording breathes. */
+
+.root {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+}
+
+/* ── Record button ── */
+.recordBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.root[data-size="md"] .recordBtn { width: 34px; height: 34px; }
+.root[data-size="sm"] .recordBtn { width: 28px; height: 28px; }
+
+.recordBtn:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border-strong));
+}
+
+/* Armed: muted terracotta fill */
+.recordBtn[data-state="armed"] {
+  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border-strong));
+  color: var(--danger);
+}
+
+/* Recording: filled + slow breath */
+.recordBtn[data-state="recording"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--accent-contrast);
+  animation: calm-rec-breath 3.2s ease-in-out infinite;
+}
+
+@keyframes calm-rec-breath {
+  0%, 100% { opacity: 1;    }
+  50%      { opacity: 0.82; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recordBtn[data-state="recording"] { animation: none; }
+}
+
+.recordBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--danger) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.recordBtn:disabled { opacity: 0.4; pointer-events: none; }
+
+/* ── Loop-punch badge ── */
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-muted);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+/* ── Caret ── */
+.caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  outline: none;
+  border-radius: 4px;
+  transition: color var(--dur-base) var(--ease-out);
+}
+.caret:hover:not(:disabled) { color: var(--text); }
+.caret:disabled { opacity: 0.4; pointer-events: none; }
+.caret:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}

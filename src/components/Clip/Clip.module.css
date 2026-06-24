@@ -286,3 +286,28 @@
 .root[data-zoom='narrow'] .waveformPath {
   opacity: 0.65;
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Paint-only override (waveform LOD + recording rAF are shared). Drop the LED
+   bloom and the hardcoded dark seam shadows so clips read as soft paper. */
+
+:global([data-theme="calm"]) .recording {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+:global([data-theme="calm"]) .recordingBadge { color: var(--danger); }
+
+:global([data-theme="calm"]) .captureHead {
+  stroke: var(--danger);
+  filter: none;
+}
+
+:global([data-theme="calm"]) .selected {
+  filter: none;
+}
+
+:global([data-theme="calm"]) .root[data-split-left]::before,
+:global([data-theme="calm"]) .root[data-split-right]::after {
+  box-shadow: none;
+  background: color-mix(in srgb, var(--text) 30%, var(--clip-color, var(--accent)));
+}

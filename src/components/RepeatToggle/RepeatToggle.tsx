@@ -1,4 +1,5 @@
 import { Repeat } from '@phosphor-icons/react'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './RepeatToggle.module.css'
 
 export interface RepeatToggleProps {
@@ -11,7 +12,7 @@ export interface RepeatToggleProps {
 
 const ICON_SIZE: Record<'sm' | 'md', number> = { sm: 16, md: 20 }
 
-export function RepeatToggle({
+function RepeatToggleBase({
   repeating,
   onToggle,
   size = 'md',
@@ -32,4 +33,10 @@ export function RepeatToggle({
       <Repeat aria-hidden size={ICON_SIZE[size]} />
     </button>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function RepeatToggle(props: RepeatToggleProps) {
+  const Impl = useThemeComponent('RepeatToggle', RepeatToggleBase)
+  return <Impl {...props} />
 }

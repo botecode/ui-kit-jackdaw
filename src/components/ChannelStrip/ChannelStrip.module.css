@@ -189,3 +189,13 @@
   background: var(--channel-color, var(--accent));
   box-shadow: 0 0 10px color-mix(in srgb, var(--channel-color, var(--accent)) 70%, transparent);
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Paint-only: the strip is already token-driven (soft paper). Just drop the LED
+   bloom on the colour spine so nothing glows. */
+
+:global([data-theme="calm"]) .root[data-selected] .keyline,
+:global([data-theme="calm"]) .root[data-soloed] .keyline,
+:global([data-theme="calm"]) .root[data-kind="folder"][data-selected] .keyline {
+  box-shadow: none;
+}

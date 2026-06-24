@@ -1,0 +1,63 @@
+/* src/components/PanKnob/PanKnob.calm.module.css */
+/* Calm pan: a soft disc, a quiet arc, one pointer notch. No knurl, no LED. */
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.knob {
+  display: block;
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+}
+
+.knob[data-size="md"] { width: 40px; height: 40px; }
+.knob[data-size="sm"] { width: 30px; height: 30px; }
+
+.knob:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+/* ── Arcs ── */
+.rangeArc {
+  fill: none;
+  stroke: var(--border-strong);
+  opacity: 0.5;
+  stroke-linecap: round;
+}
+.valueArc {
+  fill: none;
+  stroke: var(--pan-accent, var(--accent));
+  stroke-linecap: round;
+}
+.centerTick {
+  stroke: var(--text-dim);
+  stroke-linecap: round;
+}
+
+/* ── Disc + pointer ── */
+.cap {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+.pointer { stroke: var(--pan-accent, var(--accent)); }
+
+.knobBody { transition: transform var(--dur-base) var(--ease-out); }
+.root[data-dragging] .knobBody { transition: none; }
+
+/* ── Readout ── */
+.readout {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.disabled { opacity: 0.4; pointer-events: none; }

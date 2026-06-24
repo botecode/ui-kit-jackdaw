@@ -241,3 +241,23 @@
     transition: color var(--dur-fast) var(--ease-out);
   }
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Paint-only. Paper-remap the recessed name well to soft paper, and drop the LED
+   bloom on the colour spine + the R/M/S state dots so nothing glows. */
+
+:global([data-theme="calm"]) .root {
+  --stage:      var(--surface-2);
+  --stage-2:    var(--surface);
+  --stage-text: var(--text);
+}
+
+:global([data-theme="calm"]) .root[data-selected] .keyline,
+:global([data-theme="calm"]) .root[data-soloed] .keyline,
+:global([data-theme="calm"]) .root[data-minimized][data-selected] .keyline {
+  box-shadow: none;
+}
+
+:global([data-theme="calm"]) .stateDot[data-active] {
+  text-shadow: none;
+}

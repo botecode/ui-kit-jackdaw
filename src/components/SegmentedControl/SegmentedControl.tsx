@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useThemeComponent } from '../../theme/themeComponents'
 import styles from './SegmentedControl.module.css'
 
 export interface SegmentedControlOption {
@@ -17,7 +18,7 @@ export interface SegmentedControlProps {
   autoFocus?: boolean
 }
 
-export function SegmentedControl({
+function SegmentedControlBase({
   options,
   value,
   onChange,
@@ -79,4 +80,10 @@ export function SegmentedControl({
       })}
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function SegmentedControl(props: SegmentedControlProps) {
+  const Impl = useThemeComponent('SegmentedControl', SegmentedControlBase)
+  return <Impl {...props} />
 }

@@ -1,0 +1,67 @@
+/* src/components/AutomationButton/AutomationButton.calm.module.css */
+/* Calm: soft automation toggle; engaged = gentle violet fill (automation hue). */
+
+.root {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+.root[data-size="md"] .toggleBtn { width: 34px; height: 34px; }
+.root[data-size="sm"] .toggleBtn { width: 28px; height: 28px; }
+/* Standalone (no caret) toggle uses the same sizing via its own data-size */
+.toggleBtn[data-size="md"] { width: 34px; height: 34px; }
+.toggleBtn[data-size="sm"] { width: 28px; height: 28px; }
+
+.toggleBtn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text-muted) 50%, var(--border-strong));
+}
+
+.toggleBtn[data-engaged] {
+  background: color-mix(in srgb, var(--led-purple) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--led-purple) 55%, var(--border-strong));
+  color: color-mix(in srgb, var(--led-purple) 70%, var(--text));
+}
+
+.toggleBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--led-purple) 55%, transparent);
+  outline-offset: 2px;
+}
+.toggleBtn:disabled { opacity: 0.4; pointer-events: none; }
+
+.caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  outline: none;
+  border-radius: 4px;
+  transition: color var(--dur-base) var(--ease-out);
+}
+.caret:hover:not(:disabled) { color: var(--text); }
+.caret:disabled { opacity: 0.4; pointer-events: none; }
+.caret:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}

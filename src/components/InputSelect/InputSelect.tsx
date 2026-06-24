@@ -4,6 +4,7 @@ import styles from './InputSelect.module.css'
 import { ListboxPopover } from './ListboxPopover'
 import type { ListboxOption } from './ListboxPopover'
 import { Popover } from '../Popover'
+import { useThemeComponent } from '../../theme/themeComponents'
 
 export type { ListboxOption as InputSelectOption }
 
@@ -20,7 +21,7 @@ export interface InputSelectProps {
   defaultOpen?: boolean
 }
 
-export function InputSelect({
+function InputSelectBase({
   value,
   onChange,
   options,
@@ -145,4 +146,10 @@ export function InputSelect({
       )}
     </div>
   )
+}
+
+// Theme-aware resolver: the active theme's variant, or the base.
+export function InputSelect(props: InputSelectProps) {
+  const Impl = useThemeComponent('InputSelect', InputSelectBase)
+  return <Impl {...props} />
 }

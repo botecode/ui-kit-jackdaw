@@ -81,3 +81,16 @@
   display: flex;
   align-items: stretch;
 }
+
+/* ─── Calm theme skin ─────────────────────────────────────────────────────────
+   Calm wants the mixer to read as paper, not a dark console well. Lighten the
+   surface so the (already-calm) channel strips sit on a soft page. */
+
+:global([data-theme="calm"]) .root {
+  background: var(--arrange-bg);
+  background-image: none;
+}
+
+:global([data-theme="calm"]) .masterAnchor {
+  background: color-mix(in srgb, var(--arrange-bg) 92%, var(--text));
+}
