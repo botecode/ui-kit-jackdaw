@@ -1,0 +1,153 @@
+/* src/components/Button/Button.module.css */
+
+/* ─── Root ────────────────────────────────────────────────────────────────────── */
+/*
+  The base feel — hover/press/disabled — is lifted verbatim from TransportButton
+  so a row of mixed kit buttons reads as one instrument:
+    hover    → filter: brightness(1.08)
+    press    → translateY(1px) + a deeper inset
+    disabled → opacity 0.4 + pointer-events: none
+  Per-variant surfaces (recessed well / well-less ghost / accent-lit primary)
+  override only background, shadow and color below.
+*/
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: var(--font-ui);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+
+  /* Slow decay — incandescent off (matches the kit's recessed-off timing). */
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow       var(--dur-led-off) var(--ease-out),
+    color            var(--dur-led-off) var(--ease-out);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Optical: the glyph rides a hair tighter to the label than raw text would. */
+  margin-left: -1px;
+}
+
+.label {
+  display: inline-block;
+}
+
+/* ─── Sizes ───────────────────────────────────────────────────────────────────── */
+
+.root[data-size="md"] {
+  height: 36px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+}
+.root[data-size="sm"] {
+  height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* Icon-only collapses to a square well like TransportButton (36/28). */
+.root[data-icon-only][data-size="md"] { width: 36px; padding: 0; }
+.root[data-icon-only][data-size="sm"] { width: 28px; padding: 0; }
+
+/* ─── Variant: default (recessed well) ────────────────────────────────────────── */
+
+.root[data-variant="default"] {
+  background-color: var(--stage);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--border);
+  color: var(--stage-text);
+}
+
+.root[data-variant="default"]:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+/* ─── Variant: ghost (well-less, quiet) ───────────────────────────────────────── */
+/*
+  No recessed milling — sits flat on whatever surface hosts it (dense bars,
+  inline undo/redo). Hover floats a faint stage tint so it still feels tactile.
+*/
+.root[data-variant="ghost"] {
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+}
+
+.root[data-variant="ghost"]:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--stage) 35%, transparent);
+  color: var(--text);
+  filter: none; /* tint carries the hover; brightness would do nothing on transparent */
+}
+
+.root[data-variant="ghost"]:active:not(:disabled) {
+  transform: translateY(1px);
+  background-color: color-mix(in srgb, var(--stage) 55%, transparent);
+}
+
+/* ─── Variant: primary (accent-lit CTA) ───────────────────────────────────────── */
+/*
+  The lit call-to-action. Generic lit → the accent (KIT-LEAD §6), with the same
+  LED bloom grammar as a lit control: a soft accent glow, fast attack on press.
+*/
+.root[data-variant="primary"] {
+  background-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px color-mix(in srgb, var(--accent) 60%, var(--border)),
+    0 0 10px 1px color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--accent-contrast);
+}
+
+.root[data-variant="primary"]:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px color-mix(in srgb, var(--accent) 60%, var(--border)),
+    0 0 10px 1px color-mix(in srgb, var(--accent) 28%, transparent);
+  /* Fast attack on the bloom shift — incandescent on. */
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    color            var(--dur-led-on) var(--ease-out);
+}
+
+/* ─── Hover (shared — TransportButton treatment) ──────────────────────────────── */
+/* Ghost overrides this above; default + primary use the brightness lift. */
+
+.root:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* ─── Disabled (shared — TransportButton treatment) ───────────────────────────── */
+
+.root:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Focus ring (:focus-visible only) ────────────────────────────────────────── */
+/* Accent ring — the kit-wide interactive identity for a generic control. */
+
+.root:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}

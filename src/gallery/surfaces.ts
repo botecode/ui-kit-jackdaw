@@ -64,6 +64,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   // directory name for these two:
   'Brand mark': ALL, // BrandMark/
   'Share (Take)': ALL, // Share/
+  Button: ALL,
   Checkbox: ALL,
   ColorSwatch: ALL,
   ContextMenu: ALL,
