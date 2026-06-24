@@ -69,6 +69,20 @@ const LYRIC_IDEA: Idea = {
 
 const MIXED_IDEAS = [IDEA_1, VOICE_IDEA, LYRIC_IDEA]
 
+const GROUP_IDEA: Idea = {
+  id: 'group-1',
+  name: 'Verse Stack',
+  bpm: 110,
+  source: 'Night Shift / Stems',
+  labels: ['stems', 'verse'],
+  scale: 'A minor',
+  clips: [
+    { id: 'c-1', name: 'Guitar', peaks: PEAKS, durationSec: 12 },
+    { id: 'c-2', name: 'Bass',   peaks: PEAKS, durationSec: 12 },
+    { id: 'c-3', name: 'Keys',   peaks: PEAKS, durationSec: 12 },
+  ],
+}
+
 const APP_SYNC_URL = 'https://jackdaw.app/get'
 
 const NOOP = {
@@ -641,5 +655,117 @@ describe('IdeasLibrary — QR empty state', () => {
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'something' } })
     expect(screen.getByTestId('empty-search')).toBeInTheDocument()
     expect(screen.queryByTestId('qr-empty-voice')).not.toBeInTheDocument()
+  })
+})
+
+// ─── Multi-clip group card ──────────────────────────────────────────────────────
+
+describe('IdeasLibrary — multi-clip group card', () => {
+  it('renders a group card for an idea with clips', () => {
+    renderLibrary([GROUP_IDEA])
+    expect(screen.getByTestId('group-card')).toBeInTheDocument()
+  })
+
+  it('renders the group name and group-level metadata', () => {
+    renderLibrary([GROUP_IDEA])
+    expect(screen.getByText('Verse Stack')).toBeInTheDocument()
+    expect(screen.getByLabelText('110 BPM')).toBeInTheDocument()
+    // scale appears on the card and as a header filter chip
+    expect(screen.getAllByText('A minor').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Night Shift / Stems')).toBeInTheDocument()
+  })
+
+  it('renders one chip per clip with the clip name', () => {
+    renderLibrary([GROUP_IDEA])
+    expect(screen.getAllByTestId('clip-chip').length).toBe(3)
+    expect(screen.getByText('Guitar')).toBeInTheDocument()
+    expect(screen.getByText('Bass')).toBeInTheDocument()
+    expect(screen.getByText('Keys')).toBeInTheDocument()
+  })
+
+  it('has a "Play all" control labelled with the idea name', () => {
+    renderLibrary([GROUP_IDEA])
+    expect(screen.getByRole('button', { name: 'Play all clips in Verse Stack' })).toBeInTheDocument()
+  })
+
+  it('clicking "Play all" calls onPlay with the idea id', () => {
+    const onPlay = vi.fn()
+    renderLibrary([GROUP_IDEA], { onPlay })
+    fireEvent.click(screen.getByRole('button', { name: 'Play all clips in Verse Stack' }))
+    expect(onPlay).toHaveBeenCalledWith('group-1')
+  })
+
+  it('"Play all" relabels to "Stop all" while playing', () => {
+    renderLibrary([GROUP_IDEA])
+    fireEvent.click(screen.getByRole('button', { name: 'Play all clips in Verse Stack' }))
+    expect(screen.getByRole('button', { name: 'Stop all clips in Verse Stack' })).toBeInTheDocument()
+  })
+
+  it('each clip chip has its own play button labelled with the clip name', () => {
+    renderLibrary([GROUP_IDEA])
+    expect(screen.getByRole('button', { name: 'Play Guitar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Play Bass' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Play Keys' })).toBeInTheDocument()
+  })
+
+  it('clicking a clip play calls onPlayClip with idea id + clip id', () => {
+    const onPlayClip = vi.fn()
+    renderLibrary([GROUP_IDEA], { onPlayClip })
+    fireEvent.click(screen.getByRole('button', { name: 'Play Bass' }))
+    expect(onPlayClip).toHaveBeenCalledWith('group-1', 'c-2')
+  })
+
+  it('a playing clip relabels its button to "Stop {clip}"', () => {
+    renderLibrary([GROUP_IDEA])
+    fireEvent.click(screen.getByRole('button', { name: 'Play Bass' }))
+    expect(screen.getByRole('button', { name: 'Stop Bass' })).toBeInTheDocument()
+  })
+
+  it('each clip chip has its own drag grip labelled with the clip name', () => {
+    renderLibrary([GROUP_IDEA])
+    expect(screen.getByRole('button', { name: 'Drag Guitar to project' })).toBeInTheDocument()
+    expect(screen.getAllByTestId('clip-drag-handle').length).toBe(3)
+  })
+
+  it('dragging a clip grip calls onDragClipToProject with idea id + clip id', () => {
+    const onDragClipToProject = vi.fn()
+    renderLibrary([GROUP_IDEA], { onDragClipToProject })
+    fireEvent.dragStart(screen.getByRole('button', { name: 'Drag Keys to project' }))
+    expect(onDragClipToProject).toHaveBeenCalledWith('group-1', 'c-3')
+  })
+
+  it('the whole-idea drag handle still drags the whole idea', () => {
+    const onDragToProject = vi.fn()
+    renderLibrary([GROUP_IDEA], { onDragToProject })
+    fireEvent.dragStart(screen.getByRole('button', { name: 'Drag Verse Stack to project' }))
+    expect(onDragToProject).toHaveBeenCalledWith('group-1')
+  })
+
+  it('only one thing plays at a time — a clip play stops "Play all"', () => {
+    renderLibrary([GROUP_IDEA])
+    fireEvent.click(screen.getByRole('button', { name: 'Play all clips in Verse Stack' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Play Bass' }))
+    expect(screen.getByRole('button', { name: 'Play all clips in Verse Stack' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Stop Bass' })).toBeInTheDocument()
+  })
+
+  it('the group delete button fires onDelete with the idea id', () => {
+    const onDelete = vi.fn()
+    renderLibrary([GROUP_IDEA], { onDelete })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Verse Stack' }))
+    expect(onDelete).toHaveBeenCalledWith('group-1')
+  })
+
+  it('group cards are filtered by their group-level metadata', () => {
+    renderLibrary([GROUP_IDEA, IDEA_1])
+    fireEvent.click(screen.getByRole('radio', { name: '80–130' })) // 110 in band, 72 out
+    expect(screen.getByText('Verse Stack')).toBeInTheDocument()
+    expect(screen.queryByText('Dusty Rhodes Intro')).not.toBeInTheDocument()
+  })
+
+  it('an idea with an empty clips array renders as a single-clip card (back-compat)', () => {
+    renderLibrary([{ ...IDEA_1, clips: [] }])
+    expect(screen.queryByTestId('group-card')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Play Dusty Rhodes Intro' })).toBeInTheDocument()
   })
 })

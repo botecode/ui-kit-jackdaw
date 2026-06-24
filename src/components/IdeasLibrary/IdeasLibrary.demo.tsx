@@ -103,6 +103,37 @@ const MANY_IDEAS: Idea[] = [
   },
 ]
 
+// A multi-clip idea — an ordered stem stack saved together. Renders as a group card.
+const GROUP_IDEA: Idea = {
+  id: 'group-1',
+  name: 'Verse Stack',
+  bpm: 110,
+  source: 'Night Shift / Stems',
+  labels: ['stems', 'verse'],
+  scale: 'A minor',
+  clips: [
+    { id: 'g1-guitar', name: 'Guitar',  peaks: PK_A, durationSec: 12 },
+    { id: 'g1-bass',   name: 'Bass',    peaks: PK_B, durationSec: 12 },
+    { id: 'g1-keys',   name: 'Keys',    peaks: PK_C, durationSec: 12 },
+    { id: 'g1-perc',   name: 'Perc',    peaks: PK_D, durationSec: 12 },
+  ],
+}
+
+const GROUP_IDEA_2: Idea = {
+  id: 'group-2',
+  name: 'Chorus Layers',
+  bpm: 128,
+  source: 'Sunday Drive / Stems',
+  labels: ['stems', 'chorus'],
+  scale: 'G major',
+  clips: [
+    { id: 'g2-lead', name: 'Lead Synth', peaks: PK_E, durationSec: 8 },
+    { id: 'g2-pad',  name: 'Pad',        peaks: PK_F, durationSec: 8 },
+  ],
+}
+
+const GROUP_IDEAS: Idea[] = [GROUP_IDEA, GROUP_IDEA_2]
+
 const VOICE_IDEAS: Idea[] = [
   { id: 'v-1', name: 'Morning Hook', kind: 'voice', origin: 'app', durationSec: 37, peaks: PK_A },
   { id: 'v-2', name: 'Bridge Idea', kind: 'voice', origin: 'app', durationSec: 92, peaks: PK_B },
@@ -135,6 +166,7 @@ const LONG_LYRIC_IDEA: Idea = {
 
 const MIXED_IDEAS: Idea[] = [
   ...FEW_IDEAS,
+  ...GROUP_IDEAS,
   ...VOICE_IDEAS,
   ...LYRIC_IDEAS,
 ]
@@ -353,6 +385,33 @@ function LongLyricCard() {
   )
 }
 
+function MultiClipCard() {
+  const [last, setLast] = useState<string | null>(null)
+  return (
+    <State label="multi-clip — group card (Play all + per-clip chips)">
+      <div style={PANEL}>
+        <IdeasLibrary
+          ideas={GROUP_IDEAS}
+          {...NOOP}
+          appSyncUrl={APP_SYNC_URL}
+          onPlayClip={(ideaId, clipId) => setLast(`▶ clip ${clipId} of ${ideaId}`)}
+          onDragClipToProject={(ideaId, clipId) => setLast(`↖ drag clip ${clipId} of ${ideaId}`)}
+        />
+      </div>
+      {last && (
+        <span style={{
+          marginTop: 4,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--text-xs)',
+          color: 'var(--led-green-core)',
+        }}>
+          {last}
+        </span>
+      )}
+    </State>
+  )
+}
+
 function MixedFromAppCard() {
   return (
     <State label="mixed — all kinds with app tags">
@@ -381,6 +440,7 @@ function StatesDemo() {
       <LyricsWithItemsCard />
       <LyricsEmptyQrCard />
       <LongLyricCard />
+      <MultiClipCard />
       <MixedFromAppCard />
     </StatesGrid>
   )
@@ -424,6 +484,16 @@ function PlaygroundDemo() {
               const idea = allIdeas.find(i => i.id === id)
               setLastAction(`↖ Drag: ${idea?.name ?? id}`)
             }}
+            onPlayClip={(ideaId, clipId) => {
+              const idea = allIdeas.find(i => i.id === ideaId)
+              const clip = idea?.clips?.find(c => c.id === clipId)
+              setLastAction(`▶ Clip: ${clip?.name ?? clipId} (${idea?.name ?? ideaId})`)
+            }}
+            onDragClipToProject={(ideaId, clipId) => {
+              const idea = allIdeas.find(i => i.id === ideaId)
+              const clip = idea?.clips?.find(c => c.id === clipId)
+              setLastAction(`↖ Clip: ${clip?.name ?? clipId} (${idea?.name ?? ideaId})`)
+            }}
             onLabel={(id, labels) => {
               setLastAction(`🏷 Label ${id}: ${labels.join(', ')}`)
             }}
@@ -441,7 +511,7 @@ function PlaygroundDemo() {
             checked={useMany}
             onChange={handleUseManyChange}
             size="sm"
-            label="mixed ideas (clips + voice + lyrics)"
+            label="mixed ideas (clips + groups + voice + lyrics)"
           />
 
           {deleted.size > 0 && (

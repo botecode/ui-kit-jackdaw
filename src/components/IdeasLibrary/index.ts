@@ -1,2 +1,2 @@
 export { IdeasLibrary } from './IdeasLibrary'
-export type { Idea, IdeaKind, IdeaOrigin, IdeasLibraryProps } from './IdeasLibrary'
+export type { Idea, IdeaClip, IdeaKind, IdeaOrigin, IdeasLibraryProps } from './IdeasLibrary'
