@@ -253,6 +253,7 @@
 
 .clipSlot[data-fading] {
   z-index: 10;
+  cursor: ew-resize;
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 28%, transparent));
 }
 
