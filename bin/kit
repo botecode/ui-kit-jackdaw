@@ -124,6 +124,14 @@ ship() {
   git -C "$R" worktree remove --force "$wt" 2>/dev/null || true
   git -C "$R" branch -D "$br" 2>/dev/null || true
 
+  # Rebuild the library so consumers see the new component immediately: the DAW imports
+  # @jackdaw/kit → dist/, and dist/ is gitignored, so this refreshes the local artifact the
+  # file: link points at. Doubles as a final build check on main (vite lib + lib tsconfig).
+  echo "▶ build:lib (refresh dist/ for the DAW)"
+  ( cd "$R" && npm run build:lib ) \
+    && echo "  · dist/ rebuilt — the DAW's @jackdaw/kit link now sees $name" \
+    || echo "  · ⚠ build:lib failed on main — fix it, then run 'npm run build:lib' manually."
+
   echo "✓ $name is on main — live in the gallery (run 'kit gallery' if it isn't open)."
 }
 
