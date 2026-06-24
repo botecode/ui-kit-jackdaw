@@ -113,6 +113,12 @@ export interface ArrangementProps {
   }) => void
   onClipTrimStart?:   (trackId: string, intent: ClipTrimIntent) => void
   onClipTrimEnd?:     (trackId: string, intent: ClipTrimIntent) => void
+  /**
+   * Drag-to-set clip fades — bubbled from the lane with its `trackId`. `fadeIn` / `fadeOut`
+   * are the clip's full fade state in seconds (the un-dragged side unchanged). The composite
+   * adds no resolution of its own; it just tags the originating lane.
+   */
+  onClipSetFades?:    (trackId: string, clipId: string, fadeIn?: number, fadeOut?: number) => void
   onClipDelete?:      (trackId: string, clipId: string) => void
   /**
    * Fires whenever the cross-lane clip selection changes, with the full new
@@ -188,6 +194,7 @@ export function Arrangement({
   onClipDragOver,
   onClipTrimStart,
   onClipTrimEnd,
+  onClipSetFades,
   onClipDelete,
   onSelectClips,
 }: ArrangementProps) {
@@ -512,6 +519,9 @@ export function Arrangement({
                         : undefined}
                       onClipTrimEnd={onClipTrimEnd
                         ? intent => onClipTrimEnd!(track.id, intent)
+                        : undefined}
+                      onClipSetFades={onClipSetFades
+                        ? (clipId, fadeIn, fadeOut) => onClipSetFades!(track.id, clipId, fadeIn, fadeOut)
                         : undefined}
                       onClipDelete={onClipDelete
                         ? clipId => onClipDelete!(track.id, clipId)

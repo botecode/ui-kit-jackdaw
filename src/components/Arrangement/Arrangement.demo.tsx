@@ -90,8 +90,8 @@ const VOCAL_TRACK: ArrangementTrack = {
   volumeDb: -3, pan: 0.05, inputId: 'in-4', plugins: [], chainEnabled: true,
   meterLevel: 0.72, clipping: false,
   clips: [
-    { clipId: 'v1', start: bar(2), length: bar(5) - bar(2), peaks: W_VOCAL, color: 'var(--chroma-red)', label: 'Verse 1' },
-    { clipId: 'v2', start: bar(7), length: bar(2) - bar(1), peaks: W_VOCAL, color: 'var(--chroma-red)', label: 'Chorus' },
+    { clipId: 'v1', start: bar(2), length: bar(5) - bar(2), peaks: W_VOCAL, color: 'var(--chroma-red)', label: 'Verse 1', fadeIn: 0.6 },
+    { clipId: 'v2', start: bar(7), length: bar(2) - bar(1), peaks: W_VOCAL, color: 'var(--chroma-red)', label: 'Chorus', fadeOut: 0.8 },
   ],
 }
 
@@ -100,7 +100,7 @@ const SYNTH_TRACK: ArrangementTrack = {
   type: 'instrument', armed: false, muted: false, soloed: false,
   volumeDb: -12, pan: -0.2, inputId: null, plugins: [], chainEnabled: true,
   clips: [
-    { clipId: 's1', start: bar(4), length: bar(5) - bar(1), peaks: W_SYNTH, color: 'var(--chroma-teal)' },
+    { clipId: 's1', start: bar(4), length: bar(5) - bar(1), peaks: W_SYNTH, color: 'var(--chroma-teal)', fadeIn: 1.2, fadeOut: 1.2 },
   ],
 }
 
@@ -500,6 +500,16 @@ function PlaygroundDemo() {
     setDragOver(null)
   }, [])
 
+  // clip:set-fades — write the bubbled fade state (seconds) onto the clip in its lane.
+  const handleClipSetFades = useCallback(
+    (trackId: string, clipId: string, fadeIn?: number, fadeOut?: number) => {
+      setArrTracks(prev => prev.map(t => t.id === trackId
+        ? { ...t, clips: t.clips.map(c => c.clipId === clipId ? { ...c, fadeIn, fadeOut } : c) }
+        : t))
+    },
+    [],
+  )
+
   const tracks = arrTracks
 
   return (
@@ -590,6 +600,7 @@ function PlaygroundDemo() {
           onAddPlugin={() => {}}
           onOpenPlugin={() => {}}
           onClipMove={handleClipMove}
+          onClipSetFades={handleClipSetFades}
           onClipDragOver={info => setDragOver(
             info.targetTrackId == null
               ? null

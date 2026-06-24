@@ -407,6 +407,40 @@ describe('Arrangement — cross-track clip drag', () => {
   })
 })
 
+// ─── Clip fades (bubbled through the composite) ─────────────────────────────────
+// The lane owns the fade gesture; the Arrangement only tags it with the originating
+// trackId. Geometry: pxPerBeat=48, bpm=120 → 96 px/s; the fixture clip spans 0–2s.
+
+describe('Arrangement — clip fades', () => {
+  function fadeHandle(container: HTMLElement, clipId: string, side: 'in' | 'out'): HTMLElement {
+    return container.querySelector(`[data-clip-id="${clipId}"] [data-fade="${side}"]`) as HTMLElement
+  }
+
+  it('bubbles onClipSetFades with the originating trackId, clip id, and fade seconds', () => {
+    const onClipSetFades = vi.fn()
+    const { container, getAllByTestId } = arrangement({ tracks: [TRACK_A, TRACK_B], onClipSetFades })
+    const [lane] = getAllByTestId('track-lane')
+    fireEvent.pointerDown(fadeHandle(container, 't1-c1', 'in'), { clientX: 0 })
+    fireEvent.pointerMove(lane, { clientX: 48 })   // 48px = 0.5s
+    fireEvent.pointerUp(lane,   { clientX: 48 })
+    expect(onClipSetFades).toHaveBeenCalledTimes(1)
+    const [trackId, clipId, fadeIn, fadeOut] = onClipSetFades.mock.calls[0]
+    expect(trackId).toBe('t1')
+    expect(clipId).toBe('t1-c1')
+    expect(fadeIn).toBeCloseTo(0.5, 2)
+    expect(fadeOut).toBeCloseTo(0, 2)
+  })
+
+  it('renders a clip fade overlay for a clip that carries a fade', () => {
+    const TRACK_FADED: ArrangementTrack = {
+      ...makeTrack('t1', 'Guitar', 'var(--chroma-blue)'),
+      clips: [{ clipId: 't1-c1', start: 0, length: 2, peaks: PEAKS, color: 'var(--chroma-blue)', fadeIn: 0.5 }],
+    }
+    const { container } = arrangement({ tracks: [TRACK_FADED] })
+    expect(container.querySelector('[data-clip-id="t1-c1"] [data-testid="clip-fade"]')).toBeInTheDocument()
+  })
+})
+
 // ─── Detail panel slot ────────────────────────────────────────────────────────
 
 describe('Arrangement — detailPanel slot', () => {
