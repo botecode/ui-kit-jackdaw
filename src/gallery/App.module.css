@@ -6,9 +6,9 @@
   overflow: hidden;
 }
 
-/* ThemeProvider divs are the grid items. If height/overflow don't flow through,
-   add display: contents to the ThemeProvider wrapper div. */
+/* ThemeProvider divs are the grid items. The wrapper now carries height:100%
+   intrinsically (it's layout-transparent for full-height consumers), so we only
+   clip overflow here. */
 .layout > div {
-  height: 100%;
   overflow: hidden;
 }
