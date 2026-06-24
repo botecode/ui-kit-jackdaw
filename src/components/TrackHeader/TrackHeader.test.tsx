@@ -401,3 +401,24 @@ describe('TrackHeader — minimized (compact row)', () => {
     expect(screen.queryByRole('meter')).not.toBeInTheDocument()
   })
 })
+
+// ── uniform fader cap ─────────────────────────────────────────────────────────
+// Regression guard: the per-track color identifies the track on the card border
+// and the pan-knob accent, but it must NOT bleed into the fader cap — caps stay
+// uniform (var(--accent)) on every track. The composite must not forward `color`
+// to <Fader>. (KIT-LEAD §5: a silent fallback can reintroduce the exact bug.)
+
+describe('TrackHeader — uniform fader cap (track color stays off the fader)', () => {
+  it('fader cap keeps the kit default accent; the track color is not forwarded to <Fader>', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    const cap = screen.getByTestId('fader-cap')
+    expect(cap.style.getPropertyValue('--fader-accent')).toBe('var(--accent)')
+    expect(cap.style.getPropertyValue('--fader-accent')).not.toBe(BASE_TRACK.color)
+  })
+
+  it('the track color still identifies the track via the pan-knob accent', () => {
+    render(<TrackHeader {...BASE_PROPS} />)
+    const knobRoot = screen.getByRole('slider', { name: 'Pan' }).parentElement as HTMLElement
+    expect(knobRoot.style.getPropertyValue('--pan-accent')).toBe(BASE_TRACK.color)
+  })
+})

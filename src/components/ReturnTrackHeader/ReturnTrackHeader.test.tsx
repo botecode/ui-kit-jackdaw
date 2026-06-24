@@ -344,3 +344,23 @@ describe('ReturnTrackHeader — minimized (compact row)', () => {
     expect(screen.queryByRole('meter')).not.toBeInTheDocument()
   })
 })
+
+// ── uniform fader cap ─────────────────────────────────────────────────────────
+// Regression guard: the return color identifies the track on the keyline and the
+// pan-knob accent, but it must NOT bleed into the return fader cap — caps stay
+// uniform (var(--accent)). The composite must not forward `color` to <Fader>.
+
+describe('ReturnTrackHeader — uniform fader cap (return color stays off the fader)', () => {
+  it('return fader cap keeps the kit default accent; the color is not forwarded to <Fader>', () => {
+    render(<ReturnTrackHeader {...BASE_PROPS} />)
+    const cap = screen.getByTestId('fader-cap')
+    expect(cap.style.getPropertyValue('--fader-accent')).toBe('var(--accent)')
+    expect(cap.style.getPropertyValue('--fader-accent')).not.toBe(BASE_RETURN.color)
+  })
+
+  it('the return color still identifies the track via the pan-knob accent', () => {
+    render(<ReturnTrackHeader {...BASE_PROPS} />)
+    const knobRoot = screen.getByRole('slider', { name: 'Pan' }).parentElement as HTMLElement
+    expect(knobRoot.style.getPropertyValue('--pan-accent')).toBe(BASE_RETURN.color)
+  })
+})

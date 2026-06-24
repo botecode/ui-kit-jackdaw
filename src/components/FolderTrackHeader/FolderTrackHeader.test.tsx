@@ -362,3 +362,23 @@ describe('FolderTrackHeader — minimized (compact row)', () => {
     expect(screen.getByRole('group', { name: 'Drums Bus' })).not.toHaveAttribute('data-minimized')
   })
 })
+
+// ── uniform fader cap ─────────────────────────────────────────────────────────
+// Regression guard: the group color identifies the folder on the keyline and the
+// pan-knob accent, but it must NOT bleed into the group fader cap — caps stay
+// uniform (var(--accent)). The composite must not forward `color` to <Fader>.
+
+describe('FolderTrackHeader — uniform fader cap (group color stays off the fader)', () => {
+  it('group fader cap keeps the kit default accent; the color is not forwarded to <Fader>', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    const cap = screen.getByTestId('fader-cap')
+    expect(cap.style.getPropertyValue('--fader-accent')).toBe('var(--accent)')
+    expect(cap.style.getPropertyValue('--fader-accent')).not.toBe(BASE_FOLDER.color)
+  })
+
+  it('the group color still identifies the folder via the pan-knob accent', () => {
+    render(<FolderTrackHeader {...BASE_PROPS} />)
+    const knobRoot = screen.getByRole('slider', { name: 'Pan' }).parentElement as HTMLElement
+    expect(knobRoot.style.getPropertyValue('--pan-accent')).toBe(BASE_FOLDER.color)
+  })
+})
