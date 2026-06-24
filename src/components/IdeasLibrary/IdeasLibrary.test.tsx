@@ -439,6 +439,16 @@ describe('IdeasLibrary — drag to project', () => {
     fireEvent.dragStart(handle)
     expect(onDragToProject).toHaveBeenCalledWith('idea-1')
   })
+
+  it('keyboard (Enter) on the handle fires onDragToProject without latching the dragging state', () => {
+    const onDragToProject = vi.fn()
+    renderLibrary(IDEAS, { onDragToProject })
+    const handle = screen.getAllByTestId('drag-handle')[0]
+    fireEvent.keyDown(handle, { key: 'Enter' })
+    expect(onDragToProject).toHaveBeenCalledWith('idea-1')
+    // No real dragend event arrives for the keyboard path — the card must not stay dimmed.
+    expect(screen.getByText('Dusty Rhodes Intro').closest('article')).not.toHaveAttribute('data-dragging')
+  })
 })
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
@@ -739,6 +749,15 @@ describe('IdeasLibrary — multi-clip group card', () => {
     renderLibrary([GROUP_IDEA], { onDragToProject })
     fireEvent.dragStart(screen.getByRole('button', { name: 'Drag Verse Stack to project' }))
     expect(onDragToProject).toHaveBeenCalledWith('group-1')
+  })
+
+  it('keyboard (Enter) on a clip grip fires onDragClipToProject without latching the chip', () => {
+    const onDragClipToProject = vi.fn()
+    renderLibrary([GROUP_IDEA], { onDragClipToProject })
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Drag Guitar to project' }), { key: 'Enter' })
+    expect(onDragClipToProject).toHaveBeenCalledWith('group-1', 'c-1')
+    const chip = screen.getByText('Guitar').closest('[data-testid="clip-chip"]')!
+    expect(chip).not.toHaveAttribute('data-dragging')
   })
 
   it('only one thing plays at a time — a clip play stops "Play all"', () => {

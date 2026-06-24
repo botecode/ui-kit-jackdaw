@@ -312,9 +312,11 @@ function IdeaCard({
   function handleDragKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      // Keyboard alternative to dragging: fire the callback directly
+      // Keyboard alternative to dragging: fire the callback directly, then clear the
+      // transient drag state (no real dragend event arrives for the keyboard path).
       const syntheticDrag = { dataTransfer: { setData: () => {}, effectAllowed: 'copy' } } as unknown as React.DragEvent
       onDragStart(syntheticDrag)
+      onDragEnd()
     }
   }
 
@@ -433,12 +435,18 @@ function GroupCard({
   const playingAll   = isTarget(playing, idea.id, null)
   const draggingAll  = isTarget(dragging, idea.id, null)
 
-  function handleDragKeyDown(e: React.KeyboardEvent<HTMLDivElement>, fire: (e: React.DragEvent) => void) {
+  function handleDragKeyDown(
+    e: React.KeyboardEvent<HTMLDivElement>,
+    fire: (e: React.DragEvent) => void,
+    end: () => void,
+  ) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      // Keyboard alternative to dragging: fire the callback directly
+      // Keyboard alternative to dragging: fire the callback directly, then clear the
+      // transient drag state (no real dragend event arrives for the keyboard path).
       const syntheticDrag = { dataTransfer: { setData: () => {}, effectAllowed: 'copy' } } as unknown as React.DragEvent
       fire(syntheticDrag)
+      end()
     }
   }
 
@@ -460,7 +468,7 @@ function GroupCard({
           aria-label={`Drag ${idea.name} to project`}
           role="button"
           tabIndex={0}
-          onKeyDown={e => handleDragKeyDown(e, onDragAllStart)}
+          onKeyDown={e => handleDragKeyDown(e, onDragAllStart, onDragAllEnd)}
           data-testid="drag-handle"
         >
           <DotsSixVertical size={14} weight="bold" aria-hidden="true" />
@@ -548,7 +556,7 @@ function GroupCard({
                   aria-label={`Drag ${clip.name} to project`}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={e => handleDragKeyDown(e, ev => onDragClipStart(ev, clip.id))}
+                  onKeyDown={e => handleDragKeyDown(e, ev => onDragClipStart(ev, clip.id), onDragClipEnd)}
                   data-testid="clip-drag-handle"
                 >
                   <DotsSixVertical size={12} weight="bold" aria-hidden="true" />

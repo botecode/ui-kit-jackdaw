@@ -450,7 +450,6 @@ function StatesDemo() {
 
 function PlaygroundDemo() {
   const [useMany,    setUseMany]    = useState(false)
-  const [ideas,      setIdeas]      = useState(FEW_IDEAS)
   const [lastAction, setLastAction] = useState<string | null>(null)
 
   const allIdeas = useMany ? MIXED_IDEAS : FEW_IDEAS
@@ -463,9 +462,6 @@ function PlaygroundDemo() {
     setUseMany(next)
     setDeleted(new Set())
   }
-
-  void ideas // suppresses unused warning — ideas is managed via allIdeas
-  void setIdeas
 
   return (
     <Playground>
