@@ -93,7 +93,15 @@ ship() {
   # Anti-vacuum guards: a headless agent that stopped to ask leaves zero commits; one that only
   # planned leaves no component. Don't let a vacuous run sail through a green full-suite gate.
   if ! git -C "$wt" rev-list -n1 "main..HEAD" 2>/dev/null | grep -q .; then
-    echo "✗ no new commits on $br — the agent built nothing (it likely stopped to ask). See $wt/.agent.log." >&2; return 1
+    # No new commits → either the card's work is ALREADY on main (re-running it forever is pointless —
+    # it should be Done), or a headless agent stopped to ask. Don't bounce it back to Next and loop:
+    # signal "already satisfied" (rc 2) so the caller marks it Done. If the agent actually blocked,
+    # the log says so and you can re-open the card. (Mirrors the DAW feature.sh built-not-landed skip.)
+    echo "• no new commits on $br — '$name' looks already on main; marking Done instead of re-queuing." >&2
+    echo "  (if the agent actually stopped to ask, see $wt/.agent.log and re-open the card.)" >&2
+    git -C "$R" worktree remove --force "$wt" 2>/dev/null || true
+    git -C "$R" branch -D "$br" 2>/dev/null || true
+    return 2
   fi
   if [ -n "$feedback" ]; then
     git -C "$wt" diff --name-only "main..HEAD" -- src/components/ 2>/dev/null | grep -q . \
@@ -151,6 +159,17 @@ ship_card() {
   fi
 }
 
+# Run a card through ship_card and translate the result into a Build Board status:
+#   rc 0 → Done · rc 2 → Done (work already on main, nothing to rebuild) · other → back to Next + fail.
+ship_and_status() {
+  local name="$1"; ship_card "$name"; local rc=$?
+  case "$rc" in
+    0) jdstatus "$name" "Done" ;;
+    2) jdstatus "$name" "Done"; echo "✓ '$name' already on main — marked Done (no rebuild needed)." ;;
+    *) jdstatus "$name" "Next"; return 1 ;;
+  esac
+}
+
 cmd="${1:-}"; [ $# -gt 0 ] && shift || true
 case "$cmd" in
   next)
@@ -158,12 +177,12 @@ case "$cmd" in
     [ -n "$name" ] || { echo "No kit card in Next." >&2; exit 1; }
     echo "▶ next kit card → $name"
     jdstatus "$name" "In Progress"
-    ship_card "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
+    ship_and_status "$name" || exit 1 ;;
 
   launch|build|ship)
     name="${1:-}"; [ -n "$name" ] || { echo "usage: kit launch <name>" >&2; exit 1; }
     jdstatus "$name" "In Progress"
-    ship_card "$name" && jdstatus "$name" "Done" || { jdstatus "$name" "Next"; exit 1; } ;;
+    ship_and_status "$name" || exit 1 ;;
 
   fix)
     name="${1:-}"; note="${2:-}"
