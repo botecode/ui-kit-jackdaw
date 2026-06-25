@@ -272,26 +272,35 @@
     box-shadow var(--dur-base) var(--ease-out);
 }
 
+/* Hover lifts WITHIN the light --surface family with a warm accent wash — never a
+   --stage mix. --stage is the near-black meter well (#0A0A08 on chroma); mixing it
+   under the row dragged the cream bg toward black while the name/path stayed on the
+   dark --text ink → dark-on-dark. A faint accent tint of --surface stays a contrasting
+   pair with --text in every theme. */
 .projectCard:hover {
-  background: color-mix(in srgb, var(--stage) 60%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
   border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
 }
 
+/* Selected = a tokened accent highlight (warm tint + accent ring), NOT a dark fill.
+   The previous var(--stage) fill rendered near-black under dark --text on light
+   themes. An accent tint of --surface keeps text/bg a readable pair both ways. */
 .projectCard[data-selected] {
-  background: var(--stage);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
   border-color: var(--accent);
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.28),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 0 1px var(--accent);
 }
 
-/* Playing state: green LED border + glow — fast attack, slow decay via base transition */
+/* Playing state: green LED border + glow — fast attack, slow decay via base
+   transition. The bloom tints the light --surface (was --stage → dark-on-dark on
+   light themes), so the green reads as a lit row, not a black well. */
 .projectCard[data-playing] {
-  background: color-mix(in srgb, var(--led-green) 8%, var(--stage));
+  background: color-mix(in srgb, var(--led-green) 10%, var(--surface));
   border-color: var(--led-green);
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 0 1px var(--led-green),
     0 0 10px 2px color-mix(in srgb, var(--led-green) 22%, transparent);
   transition:
@@ -463,8 +472,11 @@
   transition: background var(--dur-base) var(--ease-out);
 }
 
+/* Same trap as the project rows: var(--stage) here painted a near-black bar under
+   dark --text on light themes. A warm accent wash of --surface keeps the recent
+   names/paths readable while still reading as a hovered row. */
 .recentItem:hover {
-  background: var(--stage);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
 }
 
 .recentItem:focus-visible {

@@ -455,3 +455,68 @@ describe('ProjectPicker — action card surface', () => {
     expect(base).not.toMatch(/inset[^;]*rgba\(0,\s*0,\s*0,\s*0\.(4[5-9]|[5-9]\d?)\)/)
   })
 })
+
+// ── Light-theme project-row contrast regression ────────────────────────────────
+// The "ALL MY PROJECTS" rows (and the Recent list) must keep readable text in every
+// theme. On a light (chroma) theme --stage is #0A0A08 (near-black) while --text is
+// #222820 (dark espresso): a row whose bg is var(--stage) under var(--text) is
+// dark-on-dark and illegible. Every row state — rest, hover, selected, playing — and
+// the Recent hover must draw bg from the --surface family (or an accent/LED tint OF
+// the surface), and text from --text/--text-muted/--text-dim. The --stage meter well
+// must never fill a content row. (jsdom doesn't apply CSS-module rules, so we assert
+// the authored stylesheet — the source of the regression — plus confirm the rendered
+// rows carry the rules.)
+
+/** Body of the first rule whose full selector matches `selectorRe` (regex source). */
+function ruleBodyRe(css: string, selectorRe: string): string {
+  const m = css.match(new RegExp(`${selectorRe}\\s*\\{([^}]*)\\}`))
+  return m ? m[1] : ''
+}
+
+describe('ProjectPicker — project-row contrast', () => {
+  it('the rendered project rows carry the .projectCard rule', () => {
+    render(<ProjectPicker {...BASE} />)
+    for (const opt of screen.getAllByRole('option')) {
+      expect(opt.className).toContain(styles.projectCard)
+    }
+  })
+
+  it('.projectCard base bg uses the --surface family, never the --stage well', () => {
+    const base = ruleBody(CARD_CSS, 'projectCard')
+    expect(base).toMatch(/background:\s*var\(--surface(-2)?\)/)
+    expect(base).not.toContain('var(--stage)')
+  })
+
+  it('row text (name) is drawn from --text — not a stage-text token', () => {
+    const name = ruleBody(CARD_CSS, 'projectName')
+    expect(name).toMatch(/color:\s*var\(--text\)/)
+  })
+
+  it('row path/date use the muted/dim text tokens', () => {
+    expect(ruleBody(CARD_CSS, 'projectPath')).toMatch(/color:\s*var\(--text-(muted|dim)\)/)
+    expect(ruleBody(CARD_CSS, 'projectDate')).toMatch(/color:\s*var\(--text-(muted|dim)\)/)
+  })
+
+  it('NO .projectCard state (hover/selected/playing) fills with the --stage well', () => {
+    // The dark meter-well token must not leak into any row state — that is the bug.
+    expect(CARD_CSS).not.toMatch(/\.projectCard[^}]*var\(--stage\)/)
+  })
+
+  it('.projectCard[data-selected] is a tokened accent highlight, not a dark fill', () => {
+    const sel = ruleBodyRe(CARD_CSS, '\\.projectCard\\[data-selected\\]')
+    expect(sel).not.toBe('')
+    expect(sel).not.toContain('var(--stage)')
+    expect(sel).toContain('var(--accent)')
+    // bg, if set, must be a surface or an accent tint of it
+    expect(sel).toMatch(/background:\s*(var\(--surface(-2)?\)|color-mix\([^;]*var\(--surface)/)
+  })
+
+  it('.projectCard:hover lifts within the --surface family, not into --stage', () => {
+    const hover = ruleBodyRe(CARD_CSS, '\\.projectCard:hover')
+    expect(hover).not.toContain('var(--stage)')
+  })
+
+  it('.recentItem:hover does not fill with the --stage well', () => {
+    expect(CARD_CSS).not.toMatch(/\.recentItem[^}]*var\(--stage\)/)
+  })
+})
