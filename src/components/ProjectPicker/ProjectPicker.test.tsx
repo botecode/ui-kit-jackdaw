@@ -1,8 +1,16 @@
 // src/components/ProjectPicker/ProjectPicker.test.tsx
+import { readFileSync } from 'node:fs'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import { ProjectPicker } from './ProjectPicker'
 import type { ProjectRecord } from './ProjectPicker'
+import styles from './ProjectPicker.module.css'
+
+// Authored stylesheet text. Vitest stubs CSS (css:false) so ?raw/?inline imports
+// come back empty and jsdom never applies the module rules — so we read the source
+// directly (path is cwd-relative; vitest runs from the package root) and assert the
+// authored tokens. This locks the --stage→--surface regression at its source.
+const CARD_CSS = readFileSync('src/components/ProjectPicker/ProjectPicker.module.css', 'utf8')
 
 const PROJECTS: ProjectRecord[] = [
   { id: 'p1', name: 'Song Nice',  path: '~/Music/song-nice',  lastOpened: '2026-06-20T10:00:00Z' },
@@ -404,5 +412,46 @@ describe('ProjectPicker — state reset', () => {
 
     const options = screen.getAllByRole('option')
     expect(options[0]).toHaveAttribute('tabindex', '0')
+  })
+})
+
+// ── Light-theme surface regression ────────────────────────────────────────────
+// Locks the fix: the "New" / "New from code" action cards must sit on the light
+// --surface family, NOT the near-black --stage meter well. On a light (chroma)
+// theme, --stage is #0A0A08 — using it made the action cards read as dark blocks
+// on a cream dialog. jsdom doesn't apply CSS-module rules to the DOM, so we assert
+// against the authored stylesheet (the source of the regression) plus confirm the
+// rendered cards actually carry the .actionCard rule.
+
+/** Body of the first matching CSS rule block (`.name { ... }`), or '' if absent. */
+function ruleBody(css: string, selector: string): string {
+  const m = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`))
+  return m ? m[1] : ''
+}
+
+describe('ProjectPicker — action card surface', () => {
+  it('the rendered action cards carry the .actionCard rule', () => {
+    render(<ProjectPicker {...BASE} />)
+    expect(screen.getByRole('button', { name: /^new$/i }).className)
+      .toContain(styles.actionCard)
+    expect(screen.getByRole('button', { name: /new from code/i }).className)
+      .toContain(styles.actionCard)
+  })
+
+  it('.actionCard backgrounds use the --surface family, never the --stage well', () => {
+    const base = ruleBody(CARD_CSS, 'actionCard')
+    expect(base).toMatch(/background:\s*var\(--surface(-2)?\)/)
+    expect(base).not.toContain('var(--stage)')
+  })
+
+  it('no .actionCard rule (base/hover/active) falls back to the --stage well', () => {
+    // The dark meter-well token must not leak back into any action-card state.
+    expect(CARD_CSS).not.toMatch(/\.actionCard[^}]*var\(--stage\)/)
+  })
+
+  it('.actionCard drops the heavy dark inset shadow of the meter well', () => {
+    // The old well used inset shadows at rgba(0,0,0,0.45)+; the light pad must not.
+    const base = ruleBody(CARD_CSS, 'actionCard')
+    expect(base).not.toMatch(/inset[^;]*rgba\(0,\s*0,\s*0,\s*0\.(4[5-9]|[5-9]\d?)\)/)
   })
 })

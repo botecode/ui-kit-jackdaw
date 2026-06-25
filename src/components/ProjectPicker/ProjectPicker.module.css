@@ -94,37 +94,47 @@
   line-height: 1;
 }
 
-/* Tactile hardware-pad action card */
+/* Tactile raised action pad.
+   Sits on the light --surface family — NOT the near-black --stage meter well.
+   --stage/--meter-track-bg are deliberately kept dark for meter wells, so a
+   button using them reads as a dark block on a cream dialog. --surface-2 is the
+   "recessed light" token: one step distinct from the dialog --surface, with a
+   hairline border + soft top-highlight, so it reads as a quiet raised pad in
+   every theme. Press inverts to a light inset — recessed-off feel, no dark well. */
 .actionCard {
   width: 100%;
   display: flex;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  background: var(--stage);
-  border: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
-    0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   text-align: left;
-  transition: box-shadow var(--dur-base) var(--ease-out);
+  transition:
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
 }
 
 .actionCard:hover {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.3),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.15),
-    0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 0 1px var(--accent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.14),
+    0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .actionCard:active {
+  background: var(--surface-2);
   box-shadow:
-    inset 0 3px 6px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+    inset 0 2px 4px rgba(0, 0, 0, 0.14),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
   transition-duration: var(--dur-fast);
 }
 
@@ -133,6 +143,8 @@
   outline-offset: 2px;
 }
 
+/* Icon tile lifts a half-step above the pad (--surface over the --surface-2 pad)
+   with a soft top-highlight — a raised chip, not a dark recessed socket. */
 .actionIcon {
   width: 32px;
   height: 32px;
@@ -144,8 +156,8 @@
   flex-shrink: 0;
   color: var(--accent);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 1px 3px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .actionText {
