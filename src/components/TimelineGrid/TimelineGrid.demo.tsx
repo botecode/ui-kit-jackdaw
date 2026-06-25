@@ -84,6 +84,63 @@ function RulerAndGrid({
   )
 }
 
+// ─── Paper ledger — lane rules on + a translucent clip showing paper through ──
+
+function LedgerLane({
+  theme,
+  laneHeight = 48,
+  lanes = 3,
+}: {
+  theme: 'chroma' | 'default'
+  laneHeight?: number
+  lanes?: number
+}) {
+  const bpm = 120, numerator = 4, pxPerBeat = 48
+  const height = laneHeight * lanes
+  const toX = (s: number) => secondsToX(s, pxPerBeat, bpm)
+  const beat = 60 / bpm
+
+  return (
+    <ThemeProvider theme={theme}>
+      <GridWrap height={height + 24} width={360}>
+        <TimelineRuler
+          bpm={bpm}
+          numerator={numerator}
+          denominator={4}
+          pxPerBeat={pxPerBeat}
+          durationSeconds={8}
+        />
+        <div style={{ position: 'relative', height, flexShrink: 0 }}>
+          <TimelineGrid
+            division="1/8"
+            pxPerBeat={pxPerBeat}
+            bpm={bpm}
+            numerator={numerator}
+            denominator={4}
+            showLaneRules
+            laneHeight={laneHeight}
+          />
+          {/* Translucent clip — paper grain + ink ruling must show through the body */}
+          <div
+            aria-label="demo clip"
+            style={{
+              position:     'absolute',
+              left:         toX(beat * numerator),        // bar 2
+              top:          laneHeight + 4,               // sit inside lane 2
+              width:        toX(beat * 3) - toX(0),       // 3 beats wide
+              height:       laneHeight - 8,
+              background:   'color-mix(in srgb, var(--accent) 16%, transparent)',
+              border:       '1px solid color-mix(in srgb, var(--accent) 50%, transparent)',
+              borderRadius: 'var(--radius)',
+              pointerEvents:'none',
+            }}
+          />
+        </div>
+      </GridWrap>
+    </ThemeProvider>
+  )
+}
+
 // ─── States grid ─────────────────────────────────────────────────────────────
 
 function StatesDemo() {
@@ -175,6 +232,19 @@ function StatesDemo() {
           </div>
         </div>
       </State>
+
+      <State label="Paper ledger — lane rules + translucent clip (Chroma vs dark)">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)' }}>chroma — ledger ink, both axes printed</span>
+            <LedgerLane theme="chroma" />
+          </div>
+          <div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)' }}>default (dark) — lane rules use --border, no paper</span>
+            <LedgerLane theme="default" />
+          </div>
+        </div>
+      </State>
     </StatesGrid>
   )
 }
@@ -217,8 +287,9 @@ function PlaygroundDemo() {
   const [pxPerBeat,  setPxPerBeat]  = useState(48)
   const [bpm,        setBpm]        = useState(120)
   const [numerator,  setNumerator]  = useState(4)
-  const [lineWeight, setLineWeight] = useState(1)
-  const [showRuler,  setShowRuler]  = useState(true)
+  const [lineWeight,    setLineWeight]    = useState(1)
+  const [showRuler,     setShowRuler]     = useState(true)
+  const [showLaneRules, setShowLaneRules] = useState(false)
 
   const DURATION   = 8
   const totalWidth = secondsToX(DURATION, pxPerBeat, bpm)
@@ -272,6 +343,8 @@ function PlaygroundDemo() {
               numerator={numerator}
               denominator={4}
               lineWeight={lineWeight}
+              showLaneRules={showLaneRules}
+              laneHeight={50}
             />
 
             {/* Fake clip — proves coordinate alignment with ruler */}
@@ -370,6 +443,13 @@ function PlaygroundDemo() {
             checked={showRuler}
             onChange={setShowRuler}
             label="show ruler"
+            size="sm"
+          />
+
+          <Toggle
+            checked={showLaneRules}
+            onChange={setShowLaneRules}
+            label="lane rules (ledger rows)"
             size="sm"
           />
 

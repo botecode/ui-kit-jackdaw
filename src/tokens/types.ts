@@ -72,6 +72,16 @@ export interface ThemeTokens {
   // ── Texture (background-image value; set to `none` to disable) ──
   "--texture-paper": string;
   "--texture-stage": string;
+
+  // ── Timeline grid ink (optional) ──
+  // Explicit ruling colors for the live musical grid. When unset, TimelineGrid /
+  // TimelineRuler fall back to --border-strong / --border. Paper themes (Chroma)
+  // set these so the grid reads as printed ledger ink with bar > beat > sub > lane
+  // hierarchy over the cream surface; dark themes omit them and keep the fallbacks.
+  "--grid-line-bar"?: string;
+  "--grid-line-beat"?: string;
+  "--grid-line-sub"?: string;
+  "--grid-line-lane"?: string;
 }
 
 export type ThemeId =

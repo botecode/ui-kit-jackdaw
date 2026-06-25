@@ -20,6 +20,19 @@ export interface TimelineGridProps {
    * @default 1
    */
   lineWeight?: number
+  /**
+   * Paint faint horizontal lane rules (ledger rows) so both axes are printed.
+   * Off by default — existing callers and dark themes are unaffected.
+   * @default false
+   */
+  showLaneRules?: boolean
+  /**
+   * Height of one lane row in px — the period of the horizontal rule.
+   * Match the track lane height so rules align with the rows above them.
+   * Only applied when {@link showLaneRules} is on.
+   * @default 48
+   */
+  laneHeight?: number
 }
 
 /**
@@ -34,6 +47,8 @@ export function TimelineGrid({
   numerator,
   denominator,
   lineWeight = 1,
+  showLaneRules = false,
+  laneHeight = 48,
 }: TimelineGridProps) {
   const divPx = divisionToPx(division, pxPerBeat, numerator, denominator)
 
@@ -42,12 +57,16 @@ export function TimelineGrid({
       className={styles.root}
       data-testid="timeline-grid"
       data-division={division}
+      data-lane-rules={showLaneRules ? '' : undefined}
       aria-hidden="true"
       style={{
         '--beat-px':          `${pxPerBeat}px`,
         '--bar-beats':        String(numerator),
         '--grid-div-px':      `${divPx}px`,
         '--grid-line-weight': String(lineWeight),
+        // --lane-px is the horizontal-rule period; only set when lane rules are on
+        // so the default DOM carries no lane var and dark themes stay untouched.
+        ...(showLaneRules ? { '--lane-px': `${laneHeight}px` } : {}),
       } as React.CSSProperties}
     />
   )

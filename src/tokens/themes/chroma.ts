@@ -98,4 +98,14 @@ export const chromaTheme: ThemeTokens = {
   // ── Texture ──────────────────────────────────────────────────────────────────
   "--texture-paper": TEXTURE_PAPER,
   "--texture-stage": TEXTURE_STAGE,
+
+  // ── Timeline grid ink — printed ledger ruling over the cream paper ───────────
+  // Espresso ink (#222820) at descending alpha so the live grid reads as ruled
+  // ledger paper with clear hierarchy: bars are the heavy bar-line, beats lighter,
+  // sub the faintest tick, lane rules a hair under the beat. Tuned to sit legibly
+  // over --arrange-bg (#F8F3E8) + the multiply paper grain without going inky.
+  "--grid-line-bar":  "rgba(34,40,32,0.46)",   // heavy printed bar rule
+  "--grid-line-beat": "rgba(34,40,32,0.24)",   // lighter beat rule
+  "--grid-line-sub":  "rgba(34,40,32,0.11)",   // faintest subdivision tick
+  "--grid-line-lane": "rgba(34,40,32,0.16)",   // horizontal ledger row
 }

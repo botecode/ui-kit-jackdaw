@@ -138,3 +138,50 @@ describe('TimelineGrid rendering', () => {
     expect(getByTestId('timeline-grid').style.getPropertyValue('--grid-line-weight')).toBe('3')
   })
 })
+
+// ─── Lane rules (horizontal ledger rows) ──────────────────────────────────────
+
+describe('TimelineGrid lane rules', () => {
+  it('default: no data-lane-rules attribute', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} />)
+    expect(getByTestId('timeline-grid')).not.toHaveAttribute('data-lane-rules')
+  })
+
+  it('default: does not set the --lane-px horizontal-rule var', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--lane-px')).toBe('')
+  })
+
+  it('showLaneRules sets the data-lane-rules attribute', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} showLaneRules />)
+    expect(getByTestId('timeline-grid')).toHaveAttribute('data-lane-rules')
+  })
+
+  it('showLaneRules sets --lane-px to the default laneHeight (48px)', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} showLaneRules />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--lane-px')).toBe('48px')
+  })
+
+  it('showLaneRules sets --lane-px from the laneHeight prop', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} showLaneRules laneHeight={72} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--lane-px')).toBe('72px')
+  })
+
+  it('laneHeight is ignored when showLaneRules is off (no --lane-px)', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} laneHeight={72} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--lane-px')).toBe('')
+    expect(getByTestId('timeline-grid')).not.toHaveAttribute('data-lane-rules')
+  })
+
+  it('updates --lane-px when laneHeight changes', () => {
+    const { getByTestId, rerender } = render(<TimelineGrid {...BASE} showLaneRules laneHeight={48} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--lane-px')).toBe('48px')
+    rerender(<TimelineGrid {...BASE} showLaneRules laneHeight={64} />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--lane-px')).toBe('64px')
+  })
+
+  it('--beat-px behavior is unchanged when lane rules are on', () => {
+    const { getByTestId } = render(<TimelineGrid {...BASE} pxPerBeat={48} showLaneRules />)
+    expect(getByTestId('timeline-grid').style.getPropertyValue('--beat-px')).toBe('48px')
+  })
+})

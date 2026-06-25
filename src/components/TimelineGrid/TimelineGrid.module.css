@@ -75,3 +75,56 @@
   /* texture sits at the bottom; multiply blends grain onto background-color */
   background-blend-mode: normal, normal, normal, multiply;
 }
+
+/* ─── Horizontal lane rules (optional ledger rows) ───────────────────────────────
+
+  When data-lane-rules is set, insert a faint horizontal rule above the texture so
+  BOTH axes are printed ink. Same construction as TimelineRuler's lane-rule gradient
+  (a 1px line at the bottom edge of each --lane-px row), keyed off --lane-px so it
+  reflows with the lane height. The lane layer goes just BEFORE --texture-paper, and
+  background-size / background-blend-mode are extended to match — keeping texture as
+  the final (multiply) layer. Color resolves from --grid-line-lane, falling back to
+  the beat ink, then the generic border.
+*/
+.root[data-lane-rules] {
+  --_lane-line: var(--grid-line-lane, var(--_beat-line));
+
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--_bar-line)  0px,
+      var(--_bar-line)  calc(var(--_bar-w) / 2),
+      transparent       calc(var(--_bar-w) / 2),
+      transparent       calc(var(--beat-px) * var(--bar-beats) - var(--_bar-w) / 2),
+      var(--_bar-line)  calc(var(--beat-px) * var(--bar-beats) - var(--_bar-w) / 2),
+      var(--_bar-line)  calc(var(--beat-px) * var(--bar-beats))
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--_beat-line) 0px,
+      var(--_beat-line) calc(var(--_beat-w) / 2),
+      transparent       calc(var(--_beat-w) / 2),
+      transparent       calc(var(--beat-px) - var(--_beat-w) / 2),
+      var(--_beat-line) calc(var(--beat-px) - var(--_beat-w) / 2),
+      var(--_beat-line) var(--beat-px)
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--_sub-line)  0px,
+      var(--_sub-line)  calc(var(--_sub-w) / 2),
+      transparent       calc(var(--_sub-w) / 2),
+      transparent       calc(var(--grid-div-px) - var(--_sub-w) / 2),
+      var(--_sub-line)  calc(var(--grid-div-px) - var(--_sub-w) / 2),
+      var(--_sub-line)  var(--grid-div-px)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent       0px,
+      transparent       calc(var(--lane-px, 48px) - 1px),
+      var(--_lane-line) calc(var(--lane-px, 48px) - 1px),
+      var(--_lane-line) var(--lane-px, 48px)
+    ),
+    var(--texture-paper);
+  background-size: auto, auto, auto, auto, 200px 200px;
+  background-blend-mode: normal, normal, normal, normal, multiply;
+}
