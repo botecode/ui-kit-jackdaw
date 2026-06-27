@@ -14,12 +14,13 @@ import { reaperTheme } from './reaper'
 import { songwriterTheme } from './songwriter'
 import { technoTheme } from './techno'
 import { tropicaliaTheme } from './tropicalia'
+import { portastudioTheme } from './portastudio'
 
 export {
   chromaTheme,
   defaultTheme, bowieTheme, bubbleGumPopTheme, buckleyTheme, gilTheme,
   goldenHourTheme, inkTheme, manuscriptTheme, nocturneTheme, pineTheme,
-  reaperTheme, songwriterTheme, technoTheme, tropicaliaTheme,
+  reaperTheme, songwriterTheme, technoTheme, tropicaliaTheme, portastudioTheme,
 }
 
 export const THEMES: ThemeMeta[] = [
@@ -38,4 +39,7 @@ export const THEMES: ThemeMeta[] = [
   { id: 'songwriter',     name: 'Songwriter',     tokens: songwriterTheme },
   { id: 'techno',         name: 'Techno',         tokens: technoTheme },
   { id: 'tropicalia',     name: 'Tropicália',     tokens: tropicaliaTheme },
+  // Portastudio — warm-graphite 4-track deck. Appended last so existing
+  // theme-ordering assumptions (e.g. LookAndFeelPanel) stay stable.
+  { id: 'portastudio',    name: 'Portastudio',    tokens: portastudioTheme },
 ]
