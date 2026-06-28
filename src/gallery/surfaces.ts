@@ -99,6 +99,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   CollectionView: ['app', 'daw'],
   CommentsPanel: ['app', 'daw'],
   ExportDialog: ['app', 'daw'],
+  FlyHighButton: ['app', 'daw'], // Home's catch-ideas (High mode) hero — in-product, not the marketing site
   IdeasLibrary: ['app', 'daw'],
   ImportFirst: ['app', 'daw'],
   LyricCRUD: ['app', 'daw'],
