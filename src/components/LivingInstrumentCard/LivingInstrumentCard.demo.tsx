@@ -5,7 +5,6 @@ import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
 import { Playground } from '../../gallery/ui/Playground'
 import { Toggle } from '../Toggle'
-import { Fader, dbScale } from '../Fader'
 import type { FxPlugin } from '../FxChip'
 import { LivingInstrumentCard } from './LivingInstrumentCard'
 import type { LivingInstrumentCardProps } from './LivingInstrumentCard'
@@ -122,45 +121,14 @@ function PlaygroundDemo() {
           onSolo={e => { e.stopPropagation(); setSoloed(v => !v) }}
           onSelect={() => setSelected(true)}
         />
-
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)' }}>VOL</span>
-            <Fader
-              orientation="vertical"
-              scale={dbScale()}
-              min={-60}
-              max={6}
-              value={volume}
-              onChange={setVolume}
-              detent={{ value: 0, strength: 1 }}
-              resetValue={0}
-              size="md"
-              aria-label="Playground volume"
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)' }}>PAN</span>
-            <Fader
-              orientation="vertical"
-              min={-1}
-              max={1}
-              value={pan}
-              onChange={setPan}
-              detent={{ value: 0, strength: 1 }}
-              resetValue={0}
-              size="md"
-              format={v => (v === 0 ? 'C' : v < 0 ? `L${Math.round(-v * 100)}` : `R${Math.round(v * 100)}`)}
-              aria-label="Playground pan"
-            />
-          </div>
-        </div>
       </div>
       <p style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', maxWidth: 520, lineHeight: 1.5 }}>
-        The card body IS the meter and the fader. Drag it vertically to set the level — or use the VOL
-        fader. When playing, the strips breathe around that resting height. A stereo track shows two
-        strips (L / R), each breathing on its own channel, behind a single set-point line — one level for
-        the whole channel. Pan leans the meter block to the favoured side and narrows it.
+        The card body IS the meter and the fader. The strips show only the live signal (dark at rest,
+        lit when playing). The thin line across them is the set level — drag the body up/down (or focus
+        the line and use the arrow keys) to move it. A stereo track shows two strips (L / R), each
+        breathing on its own channel, behind that single set-point line. Pan is the strip at the bottom:
+        drag it left/right. Pan is channel balance — it dims the OPPOSITE strip (pan left attenuates the
+        right, pan right the left); the strips never move.
       </p>
     </div>
   )
@@ -240,12 +208,16 @@ export default function LivingInstrumentCardDemo() {
           <LivingInstrumentCard {...BASE} trackId="t6" name="Snare" soloed color="#e4c84a" />
         </State>
 
-        <State label="panned left (−0.7)">
-          <PlayingCard {...BASE} trackId="t7" name="Pad L" pan={-0.7} color="#7eb8d4" volumeDb={-6} />
+        <State label="pan center — both strips full">
+          <PlayingCard {...BASE} trackId="t7c" name="Pad C" pan={0} channels="stereo" color="#7eb8d4" volumeDb={-6} />
         </State>
 
-        <State label="panned right (+0.7)">
-          <PlayingCard {...BASE} trackId="t8" name="Pad R" pan={0.7} color="#7eb8d4" volumeDb={-6} />
+        <State label="pan left (−0.7) — right strip dimmed">
+          <PlayingCard {...BASE} trackId="t7" name="Pad L" pan={-0.7} channels="stereo" color="#7eb8d4" volumeDb={-6} />
+        </State>
+
+        <State label="pan right (+0.7) — left strip dimmed">
+          <PlayingCard {...BASE} trackId="t8" name="Pad R" pan={0.7} channels="stereo" color="#7eb8d4" volumeDb={-6} />
         </State>
 
         <State label="low volume (−24 dB)">

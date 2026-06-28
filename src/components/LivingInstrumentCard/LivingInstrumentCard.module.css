@@ -96,7 +96,7 @@
   padding: 0 var(--space-2) var(--space-1);
 }
 
-/* ── The living body (meter = fader, fused) ──────────────────────────────── */
+/* ── The living body (meter + the set-point line, fused) ─────────────────── */
 
 .body {
   position: relative;
@@ -105,14 +105,10 @@
   margin: 0 var(--space-2);
   cursor: ns-resize;
   outline: none;
+  touch-action: none;
 }
 
 .body[data-readonly] { cursor: default; }
-
-.body:focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
-  border-radius: calc(var(--radius) - 2px);
-}
 
 /* The recessed dark well — the stage the LEDs sit in */
 .well {
@@ -128,22 +124,9 @@
 .root[data-size="sm"] .well { height: 120px; }
 .root[data-size="md"] .well { height: 168px; }
 
-/* The meter block — leans with pan via scaleX (only the favoured side is drawn).
-   transform (not width) so the lean is composited, never a layout reflow. Holds
-   the channel strips + the single set-point line; the block leans as a whole. */
-.fill {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform: scaleX(var(--fill-scale, 1));
-  transition: transform var(--dur-fast) var(--ease-out);
-}
-
-.fill[data-lean="left"]   { transform-origin: left center; }
-.fill[data-lean="right"]  { transform-origin: right center; }
-.fill[data-lean="center"] { transform-origin: center center; }
-
-/* The strips row: one strip (mono) or two side-by-side (stereo, L | R). */
+/* The strips row: one strip (mono) or two side-by-side (stereo, L | R). The
+   strips stay FIXED side-by-side — pan never moves them; it only attenuates a
+   channel's lit height (handled in JS). */
 .strips {
   display: flex;
   gap: 2px;
@@ -153,7 +136,7 @@
 }
 
 /* A single LED strip — segment 0 at the bottom; each strip breathes on its own
-   channel signal but shares the fader fill / set level with its sibling. */
+   channel signal. The body shows ONLY the signal (no fader fill). */
 .strip {
   display: flex;
   flex: 1;
@@ -162,27 +145,43 @@
   gap: 2px;
 }
 
-/* The single set-point line — the set level (the fader) drawn once across the
-   full meter width. Sits in front of both strips; the bloom breathes behind it. */
+/* ── The set-point line — the fader (a vertical slider) ──────────────────── */
+/* Drawn once across the full meter width (both strips). Pointer drag happens on
+   the meter body; this element carries the slider role + keyboard + focus ring.
+   A thin band so the focus ring is legible; the visible line sits inside it. */
 .setpoint {
   position: absolute;
   left: 3px;
   right: 3px;
-  height: 2px;
-  border-radius: 1px;
+  height: 10px;
   bottom: calc(3px + var(--setpoint-pos, 0) * (100% - 6px));
   transform: translateY(50%);
-  background: color-mix(in srgb, var(--stage-text) 55%, transparent);
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  pointer-events: none; /* drags go to the body; focus is via tab / body grab */
   z-index: 1;
+  outline: none;
+  border-radius: 2px;
+  transition: bottom var(--dur-fast) var(--ease-out);
+}
+
+.setpoint:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* The visible line — quiet at rest (this is the set level, not signal). */
+.setpointBar {
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--stage-text) 55%, transparent);
   transition:
-    bottom var(--dur-fast) var(--ease-out),
     background var(--dur-led-off) var(--ease-out),
     box-shadow var(--dur-led-off) var(--ease-out);
 }
 
-/* Armed / "now" card → the scarce accent: the set-point line lights amber. */
-.fill[data-active] .setpoint {
+/* Armed / "now" card → the scarce accent: the line lights amber. */
+.setpoint[data-active] .setpointBar {
   background: var(--led-orange);
   box-shadow:
     0 0 5px color-mix(in srgb, var(--led-orange) 45%, transparent),
@@ -195,27 +194,11 @@
   flex: 1;
   min-height: 0;
   border-radius: 1px;
-  /* recessed / off: a faint groove */
+  /* recessed / off: a faint groove (dark at rest) */
   background: color-mix(in srgb, var(--stage-text) 7%, transparent);
   transition:
     background var(--dur-led-off) var(--ease-out),
     box-shadow var(--dur-led-off) var(--ease-out);
-}
-
-/* Fader fill — ink/charcoal at rest (quiet: this is the set level, not signal) */
-.segment[data-zone="fader"] {
-  background: color-mix(in srgb, var(--stage-text) 26%, var(--stage));
-  transition:
-    background var(--dur-led-on) var(--ease-out),
-    box-shadow var(--dur-led-on) var(--ease-out);
-}
-
-/* Armed / "now" card → the scarce accent: the fill lights amber */
-.fill[data-active] .segment[data-zone="fader"] {
-  background: var(--led-orange);
-  box-shadow:
-    0 0 4px color-mix(in srgb, var(--led-orange) 45%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--led-orange-core) 60%, transparent);
 }
 
 /* Signal bloom — the breath. Uses the Meter LED ramp: hot/clip near the top. */
@@ -241,7 +224,69 @@
 
 .body[data-active] .readout { color: var(--text-muted); }
 
-/* ── Controls: pan · arm · mute/solo ─────────────────────────────────────── */
+/* ── Pan: a horizontal balance zone (drag left/right) ────────────────────── */
+
+.pan {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 18px;
+  margin: var(--space-1) var(--space-2) 0;
+  cursor: ew-resize;
+  outline: none;
+  touch-action: none;
+}
+
+.pan[data-readonly] { cursor: default; }
+
+.pan:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: calc(var(--radius) - 2px);
+}
+
+/* The recessed groove the handle rides in. */
+.panTrack {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--stage);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, black 25%, transparent);
+}
+
+/* Center detent tick — "C". */
+.panTrack::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--stage-text) 22%, transparent);
+}
+
+/* The balance handle — the track colour, slides left↔right. */
+.panHandle {
+  position: absolute;
+  top: 50%;
+  left: clamp(0%, var(--pan-pos, 0.5) * 100%, 100%);
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  transform: translate(-50%, -50%);
+  background: var(--card-color, var(--accent));
+  box-shadow:
+    0 1px 2px color-mix(in srgb, black 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent);
+  transition:
+    left var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+.pan[data-panning] .panHandle { transition: box-shadow var(--dur-led-off) var(--ease-out); }
+
+/* ── Controls: arm · mute/solo ───────────────────────────────────────────── */
 
 .controls {
   display: flex;
@@ -253,17 +298,6 @@
 
 .root[data-master] .controls { justify-content: center; }
 
-.pan {
-  display: flex;
-  align-items: center;
-}
-
-.buttons {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
 /* Muted: dim the body + pan, keep the buttons readable */
 .root[data-muted] .body,
 .root[data-muted] .pan {
@@ -274,9 +308,9 @@
   .segment {
     transition: none;
   }
-  /* lean + set-point still snap to position, just without the animated tween */
-  .fill,
-  .setpoint {
+  /* set-point + pan handle still snap to position, just without the tween */
+  .setpoint,
+  .panHandle {
     transition: none;
   }
 }

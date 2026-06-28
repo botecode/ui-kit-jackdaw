@@ -1,6 +1,6 @@
 // src/components/LivingInstrumentCard/LivingInstrumentCard.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { LivingInstrumentCard } from './LivingInstrumentCard'
 import type { LivingInstrumentCardProps } from './LivingInstrumentCard'
 
@@ -24,11 +24,20 @@ const BASE: LivingInstrumentCardProps = {
 
 beforeEach(() => vi.clearAllMocks())
 
-// Give the body a measurable height so drag math has travel in jsdom.
+// Give the body a measurable height so vertical drag math has travel in jsdom.
 function mockBodyHeight(el: HTMLElement, height = 200) {
   el.getBoundingClientRect = () =>
     ({ height, width: 160, top: 0, left: 0, right: 160, bottom: height, x: 0, y: 0, toJSON: () => {} }) as DOMRect
 }
+
+// Give the pan zone a measurable width so horizontal drag math has travel.
+function mockPanWidth(el: HTMLElement, width = 120) {
+  el.getBoundingClientRect = () =>
+    ({ width, height: 16, top: 0, left: 0, right: width, bottom: 16, x: 0, y: 0, toJSON: () => {} }) as DOMRect
+}
+
+const lastArg = (fn: ReturnType<typeof vi.fn>) => fn.mock.calls[fn.mock.calls.length - 1][0]
+const stripLit = (el: HTMLElement) => Number(el.getAttribute('data-lit'))
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
@@ -43,13 +52,18 @@ describe('LivingInstrumentCard — rendering', () => {
     expect(screen.getByTitle('Guitar')).toBeInTheDocument()
   })
 
-  it('exposes the body as a vertical slider over volumeDb', () => {
+  it('exposes the volume line as a vertical slider over volumeDb', () => {
     render(<LivingInstrumentCard {...BASE} volumeDb={-6} />)
-    const body = screen.getByRole('slider', { name: /guitar level/i })
-    expect(body).toHaveAttribute('aria-orientation', 'vertical')
-    expect(body).toHaveAttribute('aria-valuemin', '-60')
-    expect(body).toHaveAttribute('aria-valuemax', '6')
-    expect(body).toHaveAttribute('aria-valuenow', '-6')
+    const line = screen.getByRole('slider', { name: /guitar level/i })
+    expect(line).toHaveAttribute('aria-orientation', 'vertical')
+    expect(line).toHaveAttribute('aria-valuemin', '-60')
+    expect(line).toHaveAttribute('aria-valuemax', '6')
+    expect(line).toHaveAttribute('aria-valuenow', '-6')
+  })
+
+  it('the volume line IS the set-point line (one element, one role)', () => {
+    render(<LivingInstrumentCard {...BASE} />)
+    expect(screen.getByRole('slider', { name: /guitar level/i })).toBe(screen.getByTestId('card-setpoint'))
   })
 
   it('renders the dB readout', () => {
@@ -70,9 +84,36 @@ describe('LivingInstrumentCard — rendering', () => {
   })
 })
 
-// ── The body is the fader (drag + keyboard) ─────────────────────────────────────
+// ── No volume fill: the body is the meter, not a fill ───────────────────────────
 
-describe('LivingInstrumentCard — body is the fader', () => {
+describe('LivingInstrumentCard — no volume fill (body = meter only)', () => {
+  it('never paints a fader-fill zone over the meter', () => {
+    const { container } = render(<LivingInstrumentCard {...BASE} volumeDb={0} meterL={-6} meterR={-8} />)
+    expect(container.querySelectorAll('[data-zone="fader"]').length).toBe(0)
+  })
+
+  it('shows the signal as lit meter segments when playing', () => {
+    const { container } = render(<LivingInstrumentCard {...BASE} channels="mono" meterL={0} />)
+    expect(container.querySelectorAll('[data-zone="bloom"]').length).toBeGreaterThan(0)
+  })
+
+  it('keeps the strips dark at rest (no signal)', () => {
+    const { container } = render(<LivingInstrumentCard {...BASE} channels="mono" />)
+    expect(container.querySelectorAll('[data-zone="bloom"]').length).toBe(0)
+  })
+
+  it('the set-point line tracks volumeDb (higher level → higher line)', () => {
+    const { rerender } = render(<LivingInstrumentCard {...BASE} volumeDb={-40} />)
+    const low = Number(screen.getByTestId('card-setpoint').style.getPropertyValue('--setpoint-pos'))
+    rerender(<LivingInstrumentCard {...BASE} volumeDb={0} />)
+    const high = Number(screen.getByTestId('card-setpoint').style.getPropertyValue('--setpoint-pos'))
+    expect(high).toBeGreaterThan(low)
+  })
+})
+
+// ── The volume line is the fader — VERTICAL drag + keyboard ──────────────────────
+
+describe('LivingInstrumentCard — volume = vertical drag on the body', () => {
   it('dragging the body up raises volumeDb', () => {
     const onVolumeChange = vi.fn()
     render(<LivingInstrumentCard {...BASE} volumeDb={0} onVolumeChange={onVolumeChange} />)
@@ -82,7 +123,7 @@ describe('LivingInstrumentCard — body is the fader', () => {
     fireEvent.pointerMove(body, { clientY: 40 }) // dragged up 110px
     fireEvent.pointerUp(body)
     expect(onVolumeChange).toHaveBeenCalled()
-    expect(onVolumeChange.mock.calls[onVolumeChange.mock.calls.length - 1][0]).toBeGreaterThan(0)
+    expect(lastArg(onVolumeChange)).toBeGreaterThan(0)
   })
 
   it('dragging the body down lowers volumeDb', () => {
@@ -93,7 +134,18 @@ describe('LivingInstrumentCard — body is the fader', () => {
     fireEvent.pointerDown(body, { clientY: 40, pointerId: 1 })
     fireEvent.pointerMove(body, { clientY: 150 }) // dragged down 110px
     fireEvent.pointerUp(body)
-    expect(onVolumeChange.mock.calls[onVolumeChange.mock.calls.length - 1][0]).toBeLessThan(0)
+    expect(lastArg(onVolumeChange)).toBeLessThan(0)
+  })
+
+  it('a purely HORIZONTAL drag on the body does not change the level', () => {
+    const onVolumeChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} volumeDb={-6} onVolumeChange={onVolumeChange} />)
+    const body = screen.getByTestId('card-body')
+    mockBodyHeight(body)
+    fireEvent.pointerDown(body, { clientX: 40, clientY: 100, pointerId: 1 })
+    fireEvent.pointerMove(body, { clientX: 150, clientY: 100 }) // only X changes
+    fireEvent.pointerUp(body)
+    if (onVolumeChange.mock.calls.length) expect(lastArg(onVolumeChange)).toBeCloseTo(-6, 1)
   })
 
   it('sets data-dragging while dragging', () => {
@@ -109,24 +161,24 @@ describe('LivingInstrumentCard — body is the fader', () => {
   it('ArrowUp nudges volumeDb up by 1 dB', () => {
     const onVolumeChange = vi.fn()
     render(<LivingInstrumentCard {...BASE} volumeDb={-10} onVolumeChange={onVolumeChange} />)
-    fireEvent.keyDown(screen.getByTestId('card-body'), { key: 'ArrowUp' })
+    fireEvent.keyDown(screen.getByRole('slider', { name: /guitar level/i }), { key: 'ArrowUp' })
     expect(onVolumeChange).toHaveBeenCalledWith(-9)
   })
 
   it('ArrowDown nudges volumeDb down by 1 dB', () => {
     const onVolumeChange = vi.fn()
     render(<LivingInstrumentCard {...BASE} volumeDb={-10} onVolumeChange={onVolumeChange} />)
-    fireEvent.keyDown(screen.getByTestId('card-body'), { key: 'ArrowDown' })
+    fireEvent.keyDown(screen.getByRole('slider', { name: /guitar level/i }), { key: 'ArrowDown' })
     expect(onVolumeChange).toHaveBeenCalledWith(-11)
   })
 
   it('End jumps to the ceiling, Home to the floor', () => {
     const onVolumeChange = vi.fn()
     render(<LivingInstrumentCard {...BASE} onVolumeChange={onVolumeChange} />)
-    const body = screen.getByTestId('card-body')
-    fireEvent.keyDown(body, { key: 'End' })
+    const line = screen.getByRole('slider', { name: /guitar level/i })
+    fireEvent.keyDown(line, { key: 'End' })
     expect(onVolumeChange).toHaveBeenLastCalledWith(6)
-    fireEvent.keyDown(body, { key: 'Home' })
+    fireEvent.keyDown(line, { key: 'Home' })
     expect(onVolumeChange).toHaveBeenLastCalledWith(-60)
   })
 })
@@ -136,9 +188,9 @@ describe('LivingInstrumentCard — body is the fader', () => {
 describe('LivingInstrumentCard — display-only body', () => {
   it('is non-interactive when onVolumeChange is absent', () => {
     render(<LivingInstrumentCard {...BASE} onVolumeChange={undefined} />)
-    const body = screen.getByTestId('card-body')
-    expect(body).toHaveAttribute('tabindex', '-1')
-    expect(body).toHaveAttribute('aria-readonly', 'true')
+    const line = screen.getByTestId('card-setpoint')
+    expect(line).toHaveAttribute('tabindex', '-1')
+    expect(line).toHaveAttribute('aria-readonly', 'true')
   })
 
   it('ignores drag when display-only', () => {
@@ -150,26 +202,100 @@ describe('LivingInstrumentCard — display-only body', () => {
   })
 })
 
-// ── Pan leans the fill (favoured side only) ─────────────────────────────────────
+// ── Pan = HORIZONTAL control on the bottom zone ──────────────────────────────────
 
-describe('LivingInstrumentCard — pan lean', () => {
-  it('centres the fill at pan 0 (full width)', () => {
-    render(<LivingInstrumentCard {...BASE} pan={0} />)
-    const fill = screen.getByTestId('card-fill')
-    expect(fill).toHaveAttribute('data-lean', 'center')
-    expect(fill.style.getPropertyValue('--fill-scale')).toBe('1')
+describe('LivingInstrumentCard — pan = horizontal drag on the bottom zone', () => {
+  it('exposes the pan zone as a horizontal slider', () => {
+    render(<LivingInstrumentCard {...BASE} pan={-0.5} />)
+    const pan = screen.getByRole('slider', { name: /guitar pan/i })
+    expect(pan).toHaveAttribute('aria-orientation', 'horizontal')
+    expect(pan).toHaveAttribute('aria-valuemin', '-1')
+    expect(pan).toHaveAttribute('aria-valuemax', '1')
+    expect(pan).toHaveAttribute('aria-valuenow', '-0.5')
   })
 
-  it('leans the fill right and narrows it when panned right', () => {
-    render(<LivingInstrumentCard {...BASE} pan={0.6} />)
-    const fill = screen.getByTestId('card-fill')
-    expect(fill).toHaveAttribute('data-lean', 'right')
-    expect(Number(fill.style.getPropertyValue('--fill-scale'))).toBeLessThan(1)
+  it('dragging the pan zone right sets a positive pan', () => {
+    const onPanChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0} onPanChange={onPanChange} />)
+    const pan = screen.getByTestId('card-pan')
+    mockPanWidth(pan)
+    fireEvent.pointerDown(pan, { clientX: 60, pointerId: 1 })
+    fireEvent.pointerMove(pan, { clientX: 110 }) // dragged right
+    fireEvent.pointerUp(pan)
+    expect(onPanChange).toHaveBeenCalled()
+    expect(lastArg(onPanChange)).toBeGreaterThan(0)
   })
 
-  it('leans the fill left when panned left', () => {
-    render(<LivingInstrumentCard {...BASE} pan={-0.6} />)
-    expect(screen.getByTestId('card-fill')).toHaveAttribute('data-lean', 'left')
+  it('dragging the pan zone left sets a negative pan', () => {
+    const onPanChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0} onPanChange={onPanChange} />)
+    const pan = screen.getByTestId('card-pan')
+    mockPanWidth(pan)
+    fireEvent.pointerDown(pan, { clientX: 60, pointerId: 1 })
+    fireEvent.pointerMove(pan, { clientX: 10 }) // dragged left
+    fireEvent.pointerUp(pan)
+    expect(lastArg(onPanChange)).toBeLessThan(0)
+  })
+
+  it('ArrowRight nudges pan right, ArrowLeft nudges pan left', () => {
+    const onPanChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0} onPanChange={onPanChange} />)
+    const pan = screen.getByTestId('card-pan')
+    fireEvent.keyDown(pan, { key: 'ArrowRight' })
+    expect(lastArg(onPanChange)).toBeGreaterThan(0)
+    fireEvent.keyDown(pan, { key: 'ArrowLeft' })
+    expect(lastArg(onPanChange)).toBeLessThan(0)
+  })
+
+  it('Home pans hard left, End pans hard right', () => {
+    const onPanChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0} onPanChange={onPanChange} />)
+    const pan = screen.getByTestId('card-pan')
+    fireEvent.keyDown(pan, { key: 'Home' })
+    expect(onPanChange).toHaveBeenLastCalledWith(-1)
+    fireEvent.keyDown(pan, { key: 'End' })
+    expect(onPanChange).toHaveBeenLastCalledWith(1)
+  })
+
+  it('omits the pan zone on the master variant', () => {
+    render(<LivingInstrumentCard {...BASE} isMaster name="Master" />)
+    expect(screen.queryByTestId('card-pan')).toBeNull()
+  })
+})
+
+// ── Pan visualization = channel balance (attenuate the OPPOSITE channel) ─────────
+
+describe('LivingInstrumentCard — pan attenuates the opposite channel', () => {
+  it('center → both strips show their full signal', () => {
+    render(<LivingInstrumentCard {...BASE} channels="stereo" pan={0} meterL={0} meterR={0} />)
+    const [l, r] = screen.getAllByTestId('card-strip')
+    expect(stripLit(l)).toBe(stripLit(r))
+    expect(stripLit(l)).toBeGreaterThan(0)
+  })
+
+  it('pan left by 0.5 floors the RIGHT strip to ~half, left stays full', () => {
+    render(<LivingInstrumentCard {...BASE} channels="stereo" pan={-0.5} meterL={0} meterR={0} />)
+    const [l, r] = screen.getAllByTestId('card-strip')
+    expect(Math.abs(stripLit(r) - stripLit(l) / 2)).toBeLessThanOrEqual(1)
+  })
+
+  it('pan right by 0.5 floors the LEFT strip to ~half, right stays full', () => {
+    render(<LivingInstrumentCard {...BASE} channels="stereo" pan={0.5} meterL={0} meterR={0} />)
+    const [l, r] = screen.getAllByTestId('card-strip')
+    expect(Math.abs(stripLit(l) - stripLit(r) / 2)).toBeLessThanOrEqual(1)
+  })
+
+  it('hard left floors the RIGHT strip, left full', () => {
+    render(<LivingInstrumentCard {...BASE} channels="stereo" pan={-1} meterL={0} meterR={0} />)
+    const [l, r] = screen.getAllByTestId('card-strip')
+    expect(stripLit(r)).toBe(0)
+    expect(stripLit(l)).toBeGreaterThan(0)
+  })
+
+  it('does NOT move/narrow the strips horizontally (no lean / scaleX)', () => {
+    const { container } = render(<LivingInstrumentCard {...BASE} channels="stereo" pan={0.8} meterL={0} meterR={0} />)
+    expect(container.querySelector('[data-lean]')).toBeNull()
+    expect(container.querySelector('[style*="--fill-scale"]')).toBeNull()
   })
 })
 
@@ -211,6 +337,12 @@ describe('LivingInstrumentCard — stereo / mono meter', () => {
     expect(getAllByTestId('card-strip')).toHaveLength(1)
   })
 
+  it('mono pan does not floor the single strip (one channel = no balance)', () => {
+    render(<LivingInstrumentCard {...BASE} channels="mono" pan={-1} meterL={0} />)
+    const [strip] = screen.getAllByTestId('card-strip')
+    expect(stripLit(strip)).toBeGreaterThan(0)
+  })
+
   it('draws a single set-point line spanning both strips in stereo', () => {
     render(<LivingInstrumentCard {...BASE} channels="stereo" volumeDb={-10} />)
     const line = screen.getByTestId('card-setpoint')
@@ -235,7 +367,6 @@ describe('LivingInstrumentCard — armed / active accent', () => {
   it('lights the body with the accent when armed', () => {
     render(<LivingInstrumentCard {...BASE} armed />)
     expect(screen.getByTestId('card-body')).toHaveAttribute('data-active')
-    expect(screen.getByTestId('card-fill')).toHaveAttribute('data-active')
   })
 
   it('lights the body when selected (the "now" card)', () => {
@@ -246,12 +377,6 @@ describe('LivingInstrumentCard — armed / active accent', () => {
   it('does not light the body at rest', () => {
     render(<LivingInstrumentCard {...BASE} />)
     expect(screen.getByTestId('card-body')).not.toHaveAttribute('data-active')
-  })
-
-  it('reflects the set level as lit fader segments', () => {
-    const { container } = render(<LivingInstrumentCard {...BASE} volumeDb={0} />)
-    const fader = container.querySelectorAll('[data-zone="fader"]')
-    expect(fader.length).toBeGreaterThan(0)
   })
 })
 
@@ -342,11 +467,10 @@ describe('LivingInstrumentCard — callbacks', () => {
     expect(onSelect).toHaveBeenCalledTimes(1)
   })
 
-  it('does not select when a control is clicked', () => {
+  it('does not select when the pan zone is used', () => {
     const onSelect = vi.fn()
     render(<LivingInstrumentCard {...BASE} onSelect={onSelect} />)
-    const pan = screen.getByTestId('card-pan')
-    fireEvent.click(within(pan).getByRole('slider'))
+    fireEvent.click(screen.getByTestId('card-pan'))
     expect(onSelect).not.toHaveBeenCalled()
   })
 
