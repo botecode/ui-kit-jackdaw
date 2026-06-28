@@ -96,6 +96,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   // ── In-product chrome / management / collaboration (app + daw) ─────────────
   AnnotationEditor: ['app', 'daw'],
   AppShell: ['app', 'daw'],
+  CollectionView: ['app', 'daw'],
   CommentsPanel: ['app', 'daw'],
   ExportDialog: ['app', 'daw'],
   IdeasLibrary: ['app', 'daw'],
