@@ -81,6 +81,7 @@ function PlaygroundDemo() {
   const [soloed, setSoloed]   = useState(false)
   const [selected, setSelected] = useState(true)
   const [playing, setPlaying] = useState(true)
+  const [stereo, setStereo]   = useState(true)
   const [volume, setVolume]   = useState(-6)
   const [pan, setPan]         = useState(0)
 
@@ -94,6 +95,7 @@ function PlaygroundDemo() {
         <Toggle checked={soloed}   onChange={setSoloed}   label="Soloed"   size="sm" />
         <Toggle checked={selected} onChange={setSelected} label="Now / active" size="sm" />
         <Toggle checked={playing}  onChange={setPlaying}  label="Playing (breathes)" size="sm" />
+        <Toggle checked={stereo}   onChange={setStereo}   label="Stereo (two strips)" size="sm" />
       </div>
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
@@ -109,8 +111,9 @@ function PlaygroundDemo() {
           muted={muted}
           soloed={soloed}
           selected={selected}
+          channels={stereo ? 'stereo' : 'mono'}
           meterL={signal?.l}
-          meterR={signal?.r}
+          meterR={stereo ? signal?.r : undefined}
           onInputChange={noop}
           onVolumeChange={setVolume}
           onPanChange={setPan}
@@ -155,8 +158,9 @@ function PlaygroundDemo() {
       </div>
       <p style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', maxWidth: 520, lineHeight: 1.5 }}>
         The card body IS the meter and the fader. Drag it vertically to set the level — or use the VOL
-        fader. When playing, the fill breathes around that resting height. Pan leans the fill to the
-        favoured side and narrows it; the complement is never drawn.
+        fader. When playing, the strips breathe around that resting height. A stereo track shows two
+        strips (L / R), each breathing on its own channel, behind a single set-point line — one level for
+        the whole channel. Pan leans the meter block to the favoured side and narrows it.
       </p>
     </div>
   )
@@ -166,7 +170,8 @@ function PlaygroundDemo() {
 
 function PlayingCard(props: Omit<LivingInstrumentCardProps, 'meterL' | 'meterR'>) {
   const signal = useFakeSignal(true)
-  return <LivingInstrumentCard {...props} meterL={signal?.l} meterR={signal?.r} />
+  const mono = props.channels === 'mono'
+  return <LivingInstrumentCard {...props} meterL={signal?.l} meterR={mono ? undefined : signal?.r} />
 }
 
 // ── Demo ────────────────────────────────────────────────────────────────────────
@@ -209,6 +214,18 @@ export default function LivingInstrumentCardDemo() {
 
         <State label="playing (breathing)">
           <PlayingCard {...BASE} trackId="t4" name="Drums" color="#e8a87c" volumeDb={-4} />
+        </State>
+
+        <State label="stereo — two strips (L / R)">
+          <PlayingCard {...BASE} trackId="t4s" name="Wide" channels="stereo" color="#7ec8a4" volumeDb={-5} />
+        </State>
+
+        <State label="mono — one strip">
+          <PlayingCard {...BASE} trackId="t4m" name="Mono" channels="mono" color="#7eb8d4" volumeDb={-5} />
+        </State>
+
+        <State label="stereo — at rest (set-point line)">
+          <LivingInstrumentCard {...BASE} trackId="t4sr" name="Stereo" channels="stereo" volumeDb={-10} color="#c4a0e4" />
         </State>
 
         <State label="armed + recording">

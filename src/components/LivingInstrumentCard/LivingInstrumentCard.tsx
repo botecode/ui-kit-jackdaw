@@ -3,13 +3,15 @@
 // The studio-view instrument card. The hero idea: the card body IS the level
 // meter AND the fader, fused into one "living organism".
 //
-//   • Resting fill HEIGHT  = the set level (volumeDb) — the body is the fader.
-//   • When live, the fill  BREATHES around that height, driven by the signal
-//     (meterL/meterR dBFS). Level = where it sits; signal = how it moves. This
-//     is the ONE animation in the app.
-//   • Pan LEANS the fill horizontally — only the favoured side is drawn (centred
-//     = full width; panned = the fill hugs that side and narrows). The
-//     complement is never drawn.
+//   • A single SET-POINT LINE marks the set level (volumeDb) — the body is the
+//     fader. ONE level for the channel, drawn once across the full meter width.
+//   • When live, the meter BREATHES around that line, driven by the signal. A
+//     stereo track shows two strips (L / R), each breathing on its OWN channel
+//     (meterL / meterR dBFS); a mono track shows one. Level = where the line
+//     sits; signal = how the strips move. This is the ONE animation in the app.
+//   • Pan LEANS the meter block horizontally — only the favoured side is drawn
+//     (centred = full width; panned = the block hugs that side and narrows). The
+//     line spans the block, so the lean applies to L + R as a whole.
 //
 // NOT ChannelStrip (the classic vertical strip with a separate Fader + Meter) —
 // a sibling for the studio view. Composes the existing kit primitives.
@@ -42,6 +44,17 @@ const ATTACK_TC = 0.5
 const RELEASE_TC = 0.08
 const BREATH_RATE = 0.0017 // radians/ms ≈ one cycle / 3.7s
 const BREATH_AMPLITUDE = 0.035 // fraction of the body height
+// Offset the right lung so two strips never pulse in perfect lockstep.
+const R_PHASE_OFFSET = 1.7
+
+// One incandescent breath step: gentle autonomous lung scaled by signal, then a
+// fast-attack / slow-release follow toward it. Shared by both channel strips.
+function breathe(cur: number, sig: number, phase: number): number {
+  const lung = Math.sin(phase) * BREATH_AMPLITUDE * (0.4 + 0.6 * sig)
+  const target = clamp(sig + lung, 0, 1)
+  const delta = target - cur
+  return cur + delta * (delta > 0 ? ATTACK_TC : RELEASE_TC)
+}
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 
@@ -82,9 +95,15 @@ export interface LivingInstrumentCardProps {
   onSolo?: (e: React.MouseEvent<HTMLButtonElement>) => void
   anySoloActive?: boolean
 
-  /** Live signal, dBFS. Presence = "playing": the body breathes. */
+  /** Live signal, dBFS. Presence = "playing": the body breathes.
+   *  meterL drives the left strip, meterR the right — each breathes on its own
+   *  channel. The set level (the fader) stays single across both. */
   meterL?: number
   meterR?: number
+  /** Channel layout. Stereo → two breathing strips (L / R); mono → one strip.
+   *  Default infers: stereo if meterR is provided, else mono. Pass explicitly to
+   *  disambiguate a stereo track that isn't currently feeding R (or vice-versa). */
+  channels?: 'mono' | 'stereo'
 
   /** This is the "now"/active card — lights the body with the scarce accent. */
   selected?: boolean
@@ -141,6 +160,7 @@ export function LivingInstrumentCard({
   anySoloActive = false,
   meterL,
   meterR,
+  channels,
   selected = false,
   onSelect,
   isMaster = false,
@@ -160,30 +180,37 @@ export function LivingInstrumentCard({
   const isLive = meterL !== undefined || meterR !== undefined
   const active = (armed || selected) && !disabled // "now"/armed → scarce accent
 
-  // Resting fill = the fader position.
+  // Channel layout: stereo → two strips, mono → one. Default infers from meterR.
+  const stereo = channels ? channels === 'stereo' : meterR !== undefined
+
+  // Resting fill = the fader position — ONE level for the channel, both strips.
   const restingPos = clamp(DB_SCALE.toPosition(volumeDb, DB_MIN, DB_MAX), 0, 1)
   const faderLit = Math.round(restingPos * segCount)
 
-  // Live signal → the breath target (loudest of L/R drives the one fused body).
-  const signalDb = isLive
-    ? Math.max(meterL ?? DB_MIN, meterR ?? DB_MIN)
-    : DB_MIN
-  const signalPos = clamp(DB_SCALE.toPosition(signalDb, DB_MIN, DB_MAX), 0, 1)
+  // Per-channel signal → each strip's breath target. The mono strip rides meterL
+  // (the channel signal); stereo splits L / R so each strip breathes on its own.
+  const signalPosL = clamp(DB_SCALE.toPosition(meterL ?? DB_MIN, DB_MIN, DB_MAX), 0, 1)
+  const signalPosR = clamp(DB_SCALE.toPosition(meterR ?? DB_MIN, DB_MIN, DB_MAX), 0, 1)
 
   // ── Breathing follower (rAF) ───────────────────────────────────────────────
-  // The live signal moves every frame; the loop reads it from a ref so it's set
+  // The live signal moves every frame; the loop reads it from refs so it's set
   // up once when breathing starts (not torn down + rebuilt on each new sample).
-  const bloomRef = useRef(signalPos)
-  const signalPosRef = useRef(signalPos)
+  // Two independent followers (L / R); the second strip is only drawn in stereo.
+  const bloomLRef = useRef(signalPosL)
+  const bloomRRef = useRef(signalPosR)
+  const signalPosLRef = useRef(signalPosL)
+  const signalPosRRef = useRef(signalPosR)
   const phaseRef = useRef(0)
   const lastRef = useRef(0)
   const [, forceRender] = useState(0)
-  useEffect(() => { signalPosRef.current = signalPos })
+  useEffect(() => { signalPosLRef.current = signalPosL })
+  useEffect(() => { signalPosRRef.current = signalPosR })
 
   const breathing = isLive && !reduced && !disabled
   useEffect(() => {
     if (!breathing) {
-      bloomRef.current = signalPosRef.current
+      bloomLRef.current = signalPosLRef.current
+      bloomRRef.current = signalPosRRef.current
       return
     }
     let raf: number
@@ -191,13 +218,8 @@ export function LivingInstrumentCard({
       const dt = lastRef.current ? t - lastRef.current : 16
       lastRef.current = t
       phaseRef.current += dt * BREATH_RATE
-      const sig = signalPosRef.current
-      // Gentle autonomous lung, scaled by how much signal there is.
-      const lung = Math.sin(phaseRef.current) * BREATH_AMPLITUDE * (0.4 + 0.6 * sig)
-      const target = clamp(sig + lung, 0, 1)
-      const cur = bloomRef.current
-      const delta = target - cur
-      bloomRef.current = cur + delta * (delta > 0 ? ATTACK_TC : RELEASE_TC)
+      bloomLRef.current = breathe(bloomLRef.current, signalPosLRef.current, phaseRef.current)
+      bloomRRef.current = breathe(bloomRRef.current, signalPosRRef.current, phaseRef.current + R_PHASE_OFFSET)
       forceRender(n => (n + 1) % 1_000_000)
       raf = requestAnimationFrame(step)
     }
@@ -208,8 +230,10 @@ export function LivingInstrumentCard({
     }
   }, [breathing])
 
-  const bloomPos = breathing ? bloomRef.current : signalPos
-  const bloomLit = isLive ? Math.max(faderLit, Math.round(bloomPos * segCount)) : faderLit
+  const bloomPosL = breathing ? bloomLRef.current : signalPosL
+  const bloomPosR = breathing ? bloomRRef.current : signalPosR
+  const bloomLitL = isLive ? Math.max(faderLit, Math.round(bloomPosL * segCount)) : faderLit
+  const bloomLitR = isLive ? Math.max(faderLit, Math.round(bloomPosR * segCount)) : faderLit
 
   // ── Pan lean ───────────────────────────────────────────────────────────────
   const panMag = isMaster ? 0 : Math.abs(clamp(pan, -1, 1))
@@ -280,6 +304,32 @@ export function LivingInstrumentCard({
   const chainOn = fxChainEnabled ?? fx.some(p => p.enabled)
 
   const readout = volumeDb <= DB_MIN ? '−∞' : `${volumeDb >= 0 ? '+' : ''}${volumeDb.toFixed(1)}`
+
+  // One LED strip: fader fill at/below the set level, breathing bloom above.
+  function renderStrip(channel: 'l' | 'r' | 'mono', bloomLit: number) {
+    return (
+      <div className={styles.strip} data-channel={channel} data-testid="card-strip">
+        {Array.from({ length: segCount }, (_, i) => {
+          const zone = i < faderLit ? 'fader' : i < bloomLit ? 'bloom' : 'off'
+          const entry = ramp.current[i]
+          return (
+            <div
+              key={i}
+              className={styles.segment}
+              data-zone={zone}
+              data-lit={zone !== 'off' || undefined}
+              data-testid={`segment-${channel}-${i}`}
+              style={{
+                '--seg-core': entry.core,
+                '--seg-body': entry.body,
+                '--seg-deep': entry.deep,
+              } as CSSProperties}
+            />
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <div
@@ -376,24 +426,20 @@ export function LivingInstrumentCard({
             data-active={active || undefined}
             style={{ '--fill-scale': fillScale } as CSSProperties}
           >
-            {Array.from({ length: segCount }, (_, i) => {
-              const zone = i < faderLit ? 'fader' : i < bloomLit ? 'bloom' : 'off'
-              const entry = ramp.current[i]
-              return (
-                <div
-                  key={i}
-                  className={styles.segment}
-                  data-zone={zone}
-                  data-lit={zone !== 'off' || undefined}
-                  data-testid={`segment-${i}`}
-                  style={{
-                    '--seg-core': entry.core,
-                    '--seg-body': entry.body,
-                    '--seg-deep': entry.deep,
-                  } as CSSProperties}
-                />
-              )
-            })}
+            <div className={styles.strips} data-channels={stereo ? 'stereo' : 'mono'}>
+              {stereo
+                ? <>{renderStrip('l', bloomLitL)}{renderStrip('r', bloomLitR)}</>
+                : renderStrip('mono', bloomLitL)}
+            </div>
+            {/* The single set-point line — one level for the channel, spanning the
+                full meter width across both strips. The strips breathe behind it. */}
+            <div
+              className={styles.setpoint}
+              data-testid="card-setpoint"
+              data-active={active || undefined}
+              aria-hidden
+              style={{ '--setpoint-pos': restingPos } as CSSProperties}
+            />
           </div>
         </div>
         <span className={styles.readout} aria-hidden>{readout}</span>

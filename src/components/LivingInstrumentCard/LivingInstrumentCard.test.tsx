@@ -173,6 +173,62 @@ describe('LivingInstrumentCard — pan lean', () => {
   })
 })
 
+// ── Stereo / mono strips + the set-point line ───────────────────────────────────
+
+describe('LivingInstrumentCard — stereo / mono meter', () => {
+  it('renders two strips for a stereo track', () => {
+    render(<LivingInstrumentCard {...BASE} channels="stereo" />)
+    expect(screen.getAllByTestId('card-strip')).toHaveLength(2)
+  })
+
+  it('renders one strip for a mono track', () => {
+    render(<LivingInstrumentCard {...BASE} channels="mono" />)
+    expect(screen.getAllByTestId('card-strip')).toHaveLength(1)
+  })
+
+  it('infers stereo when meterR is present', () => {
+    render(<LivingInstrumentCard {...BASE} meterL={-6} meterR={-8} />)
+    expect(screen.getAllByTestId('card-strip')).toHaveLength(2)
+  })
+
+  it('infers mono when only meterL is present', () => {
+    render(<LivingInstrumentCard {...BASE} meterL={-6} />)
+    expect(screen.getAllByTestId('card-strip')).toHaveLength(1)
+  })
+
+  it('infers mono when no signal is present', () => {
+    render(<LivingInstrumentCard {...BASE} />)
+    expect(screen.getAllByTestId('card-strip')).toHaveLength(1)
+  })
+
+  it('channels="stereo" wins even when only meterL is fed', () => {
+    const { getAllByTestId } = render(<LivingInstrumentCard {...BASE} channels="stereo" meterL={-6} />)
+    expect(getAllByTestId('card-strip')).toHaveLength(2)
+  })
+
+  it('channels="mono" wins even when both L and R are fed', () => {
+    const { getAllByTestId } = render(<LivingInstrumentCard {...BASE} channels="mono" meterL={-6} meterR={-8} />)
+    expect(getAllByTestId('card-strip')).toHaveLength(1)
+  })
+
+  it('draws a single set-point line spanning both strips in stereo', () => {
+    render(<LivingInstrumentCard {...BASE} channels="stereo" volumeDb={-10} />)
+    const line = screen.getByTestId('card-setpoint')
+    expect(line).toBeInTheDocument()
+    expect(line.style.getPropertyValue('--setpoint-pos')).not.toBe('')
+  })
+
+  it('draws the set-point line in mono too', () => {
+    render(<LivingInstrumentCard {...BASE} channels="mono" volumeDb={-10} />)
+    expect(screen.getByTestId('card-setpoint')).toBeInTheDocument()
+  })
+
+  it('lights the set-point line with the accent when active', () => {
+    render(<LivingInstrumentCard {...BASE} channels="stereo" armed />)
+    expect(screen.getByTestId('card-setpoint')).toHaveAttribute('data-active')
+  })
+})
+
 // ── Armed shows the accent ──────────────────────────────────────────────────────
 
 describe('LivingInstrumentCard — armed / active accent', () => {

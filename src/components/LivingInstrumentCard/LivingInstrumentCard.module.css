@@ -128,13 +128,11 @@
 .root[data-size="sm"] .well { height: 120px; }
 .root[data-size="md"] .well { height: 168px; }
 
-/* The fill column — leans with pan via scaleX (only the favoured side is drawn).
-   transform (not width) so the lean is composited, never a layout reflow. */
+/* The meter block — leans with pan via scaleX (only the favoured side is drawn).
+   transform (not width) so the lean is composited, never a layout reflow. Holds
+   the channel strips + the single set-point line; the block leans as a whole. */
 .fill {
-  display: flex;
-  flex-direction: column-reverse; /* segment 0 sits at the bottom */
-  gap: 2px;
-  padding: 3px;
+  position: relative;
   width: 100%;
   height: 100%;
   transform: scaleX(var(--fill-scale, 1));
@@ -144,6 +142,52 @@
 .fill[data-lean="left"]   { transform-origin: left center; }
 .fill[data-lean="right"]  { transform-origin: right center; }
 .fill[data-lean="center"] { transform-origin: center center; }
+
+/* The strips row: one strip (mono) or two side-by-side (stereo, L | R). */
+.strips {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+}
+
+/* A single LED strip — segment 0 at the bottom; each strip breathes on its own
+   channel signal but shares the fader fill / set level with its sibling. */
+.strip {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+
+/* The single set-point line — the set level (the fader) drawn once across the
+   full meter width. Sits in front of both strips; the bloom breathes behind it. */
+.setpoint {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  height: 2px;
+  border-radius: 1px;
+  bottom: calc(3px + var(--setpoint-pos, 0) * (100% - 6px));
+  transform: translateY(50%);
+  background: color-mix(in srgb, var(--stage-text) 55%, transparent);
+  pointer-events: none;
+  z-index: 1;
+  transition:
+    bottom var(--dur-fast) var(--ease-out),
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+/* Armed / "now" card → the scarce accent: the set-point line lights amber. */
+.fill[data-active] .setpoint {
+  background: var(--led-orange);
+  box-shadow:
+    0 0 5px color-mix(in srgb, var(--led-orange) 45%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--led-orange-core) 40%, transparent);
+}
 
 /* ── Segments ────────────────────────────────────────────────────────────── */
 
@@ -230,8 +274,9 @@
   .segment {
     transition: none;
   }
-  /* lean still snaps to position, just without the animated tween */
-  .fill {
+  /* lean + set-point still snap to position, just without the animated tween */
+  .fill,
+  .setpoint {
     transition: none;
   }
 }
