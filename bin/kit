@@ -3,6 +3,7 @@
 # kit — the UI-kit build loop. ONE command builds a component and merges it to main, live.
 #
 #   kit next            grab the next "Next" kit card, build it, gate, merge to main.
+#   kit auto            UNATTENDED: build→gate→merge every Next kit card; park failures to Backlog, never halt.
 #   kit launch <name>   build one component, gate (tsc+vitest), merge to main. No PR, no test step.
 #   kit fix <name> "…"  modify an already-shipped component IN PLACE per "…", gate, merge to main.
 #   kit gallery         run the gallery (npm run dev) on main — keep this open; merges hot-reload it.
@@ -178,6 +179,28 @@ case "$cmd" in
     echo "▶ next kit card → $name"
     jdstatus "$name" "In Progress"
     ship_and_status "$name" || exit 1 ;;
+
+  auto)
+    # Unattended: build → gate → merge every Next kit card, one at a time, until the queue is clear.
+    # A card that fails its gate (or whose agent stops to ask) is PARKED to Backlog and the run moves
+    # on — it never halts and never re-picks a failed card; all failures are reported at the end.
+    # Run in YOUR terminal (it merges to kit main). Cards build in board order, so order Next for deps.
+    echo "▶ kit auto: building every Next kit card, one at a time…"
+    built=0; failed=""; prev=""
+    while name="$(python3 "$R/scripts/run-card.py" --print-next 2>/dev/null)" && [ -n "$name" ]; do
+      [ "$name" = "$prev" ] && { echo "⚠ kit auto: '$name' didn't leave Next (status update failed?) — stopping to avoid a loop." >&2; break; }
+      prev="$name"
+      echo ""; echo "════════ kit auto ▶ $name ════════"
+      jdstatus "$name" "In Progress"
+      if ship_and_status "$name"; then
+        built=$((built+1))
+      else
+        echo "⚠ kit auto: '$name' didn't build (gate red, or the agent needs a decision) — parking to Backlog, moving on."
+        jdstatus "$name" "Backlog"; failed="$failed $name"
+      fi
+    done
+    echo ""; echo "✅ kit auto: $built built."
+    [ -n "$failed" ] && echo "⚠ needs your review (parked in Backlog):$failed" >&2 || echo "Next kit queue is clear." ;;
 
   launch|build|ship)
     name="${1:-}"; [ -n "$name" ] || { echo "usage: kit launch <name>" >&2; exit 1; }
