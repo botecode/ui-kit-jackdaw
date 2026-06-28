@@ -145,6 +145,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   RepeatToggle: ['daw'],
   ReturnTrackHeader: ['daw'],
   SendChip: ['daw'],
+  TapeStrip: ['daw'],
   TimelineGrid: ['daw'],
   TimelineRuler: ['daw'],
   TimeSelection: ['daw'],
