@@ -136,6 +136,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   FxChip: ['daw'],
   FxPicker: ['daw'],
   InputLabels: ['daw'],
+  LivingInstrumentCard: ['daw'],
   Mixer: ['daw'],
   PhaseInvert: ['daw'],
   PianoRoll: ['daw'],
