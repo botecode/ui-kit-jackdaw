@@ -1,0 +1,144 @@
+/* src/components/DeviceChassis/DeviceChassis.module.css */
+
+/* ─── Root (the device body) ──────────────────────────────────────────────────
+   A single machined object: warm surface, hairline border + top-highlight, a
+   modest lift off the page. Flat — character comes from the inset tray and the
+   sunk LCD well below, never from gradients or gloss. */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  color: var(--text);
+}
+
+/* ─── Header bay ──────────────────────────────────────────────────────────────
+   [ brand · name ]  …  [ LCD well ]  …  [ transport ] [ trailing ]
+   Lead and controls both flex:1 so the well sits centred between them. */
+
+.bay {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.root[data-size="sm"] .bay {
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* ─── Lead zone — brand + project name ──────────────────────────────────────── */
+
+.lead {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.project {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  /* A hairline keyline divider between the mark and the title */
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--border);
+}
+
+.projectName {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.root[data-size="sm"] .projectName {
+  font-size: var(--text-sm);
+}
+
+/* Unsaved-changes mark — a quiet dot, deliberately NOT the hot accent
+   (reserved for record/Take per the brief). */
+.dirty {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+}
+
+/* ─── Centre zone — the LCD well (stage Panel) ──────────────────────────────── */
+
+.well {
+  flex: 0 0 auto;
+  /* The well hugs the readout; the stage Panel brings its own recessed look. */
+}
+
+.well > * {
+  /* The readout slot (Clock) fills the well snugly. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Right zone — transport + trailing ─────────────────────────────────────── */
+
+.controls {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.transport,
+.trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  align-self: stretch;
+  min-height: 20px;
+  background-color: var(--border);
+}
+
+/* ─── Body — the recessed inner tray the studio sits in ─────────────────────── */
+
+.body {
+  flex: 1;
+  padding: var(--space-4);
+  background-color: var(--bg);
+  /* Sunk one hairline below the bay so the tray reads recessed into the device. */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.root[data-size="sm"] .body {
+  padding: var(--space-3);
+}

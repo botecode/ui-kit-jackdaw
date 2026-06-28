@@ -130,6 +130,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   AutomationLane: ['daw'],
   ChannelStrip: ['daw'],
   Clip: ['daw'],
+  DeviceChassis: ['daw'],
   EditCursor: ['daw'],
   FocusedTrackDetailPanel: ['daw'],
   FolderTrackHeader: ['daw'],
