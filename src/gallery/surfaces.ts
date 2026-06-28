@@ -109,6 +109,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   PairQRCode: ['app', 'daw'], // pairing bridges the phone companion and the desktop DAW
   Preferences: ['app', 'daw'],
   ProjectPicker: ['app', 'daw'],
+  ReferenceList: ['app', 'daw'],
   Shortcuts: ['app', 'daw'],
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],
