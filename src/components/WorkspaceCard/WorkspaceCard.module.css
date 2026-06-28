@@ -1,0 +1,240 @@
+/* src/components/WorkspaceCard/WorkspaceCard.module.css */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────────────
+   A dead-flat sleeve: warm paper body, one hairline keyline, no shadow, no lift. The
+   stacked-sleeve cue for collections is drawn behind the cover (see [data-kind]). */
+.root {
+  position: relative;
+  width: var(--card-w, 220px);
+}
+
+.root[data-size='sm'] {
+  --card-w: 168px;
+}
+
+/* ─── The open control — the whole card is one button ──────────────────────────────── */
+.open {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  flex-direction: column;
+  /* Sits above the stacked-sleeve cue so the card face stays clean. */
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  color: inherit;
+  font: inherit;
+  transition:
+    border-color var(--dur-base) ease,
+    background var(--dur-base) ease;
+}
+
+/* Hover raises the keyline — light catching a raised edge, not a float. */
+.root:not([data-selected]) .open:hover {
+  border-color: color-mix(in srgb, var(--border) 35%, var(--text-dim));
+}
+
+.open:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Selected — the keyline lights to the accent and the body warms a touch. */
+.root[data-selected] .open {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+/* ─── Cover band ────────────────────────────────────────────────────────────────────
+   A solid colour field or art that fills the top — never a floating image. A hairline
+   top-highlight + inset seat reads it as recessed into the paper. */
+.cover {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 8 / 5;
+  background-color: var(--cover-color, var(--stage));
+  background-size: cover;
+  background-position: center;
+  color: var(--stage-text);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.08),
+    inset 0 -1px 0 0 hsl(0 0% 0% / 0.18);
+}
+
+.cover[data-empty] {
+  background-color: var(--stage);
+}
+
+.glyph {
+  width: 38%;
+  height: 38%;
+}
+
+/* ─── Stacked-sleeve cue — collections read as more than one record ─────────────────
+   Two offset hairline plates peek out behind the top-right of the cover. Flat, token
+   borders only; songs get nothing. */
+.root[data-kind='collection']::before,
+.root[data-kind='collection']::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  height: 10px;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+  background: var(--surface);
+  pointer-events: none;
+}
+
+/* Top sleeve — furthest back, peeks highest. */
+.root[data-kind='collection']::before {
+  left: 10px;
+  top: -7px;
+}
+
+/* Middle sleeve — a tint between, tucked just under the cover's top edge. */
+.root[data-kind='collection']::after {
+  left: 5px;
+  top: -3.5px;
+  background: color-mix(in srgb, var(--border) 18%, var(--surface));
+}
+
+/* Give the stack room above the card so the peeking sleeves aren't clipped. */
+.root[data-kind='collection'] {
+  margin-top: 7px;
+}
+
+/* ─── Corner tag — a Badge on a solid plate, legible over any cover ─────────────────── */
+.tag {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: inline-flex;
+  padding: 2px;
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.root[data-size='sm'] .tag {
+  top: var(--space-1);
+  left: var(--space-1);
+}
+
+/* ─── Body — title + subtitle on warm paper ─────────────────────────────────────────── */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+.root[data-size='sm'] .body {
+  padding: var(--space-2) var(--space-3);
+}
+
+.title {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-md);
+  color: var(--text);
+  /* Two-line clamp keeps the grid even; long names ellipse. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.root[data-size='sm'] .title {
+  font-size: var(--text-sm);
+}
+
+.subtitle {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  line-height: var(--leading-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Preview stud — recessed play, wakes on hover / keyboard focus ──────────────────── */
+.preview {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2; /* above the open control (z-index 1) so the stud stays clickable */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  /* Hidden + inert until hover/focus so an invisible stud is never clickable. */
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.9);
+  transition:
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    color var(--dur-base) ease;
+}
+
+.root[data-size='sm'] .preview {
+  width: 24px;
+  height: 24px;
+  top: var(--space-1);
+  right: var(--space-1);
+  font-size: 12px;
+}
+
+.root:hover .preview,
+.preview:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.preview:hover,
+.preview:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.preview:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Reduced motion — decorative reveal/transition snaps; the card stays usable ────── */
+@media (prefers-reduced-motion: reduce) {
+  .open,
+  .preview {
+    transition: none;
+  }
+  .preview {
+    transform: none;
+  }
+}

@@ -116,6 +116,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],
   Versions: ['app', 'daw'],
+  WorkspaceCard: ['app', 'daw'], // Home gallery card for a song / collection — in-product chrome
   WorkspaceSidebar: ['app', 'daw'],
 
   // ── Mobile companion app surfaces (app only) ───────────────────────────────
