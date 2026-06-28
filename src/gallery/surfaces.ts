@@ -114,6 +114,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],
   Versions: ['app', 'daw'],
+  WorkspaceSidebar: ['app', 'daw'],
 
   // ── Mobile companion app surfaces (app only) ───────────────────────────────
   MobileRecordButton: ['app'],
