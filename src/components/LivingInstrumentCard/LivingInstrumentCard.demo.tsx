@@ -123,12 +123,13 @@ function PlaygroundDemo() {
         />
       </div>
       <p style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', maxWidth: 520, lineHeight: 1.5 }}>
-        The card body IS the meter and the fader. The strips show only the live signal (dark at rest,
-        lit when playing). The thin line across them is the set level — drag the body up/down (or focus
-        the line and use the arrow keys) to move it. A stereo track shows two strips (L / R), each
-        breathing on its own channel, behind that single set-point line. Pan is the strip at the bottom:
-        drag it left/right. Pan is channel balance — it dims the OPPOSITE strip (pan left attenuates the
-        right, pan right the left); the strips never move.
+        The card body IS the meter and both controls. The strips show only the live signal (dark at rest,
+        lit when playing). Two crossing set-point lines live in the meter: the HORIZONTAL line is the
+        level — drag the body up/down (↑/↓, or double-click to reset to unity); the VERTICAL orange line
+        is pan — drag it left/right (←/→, double-click to recentre), with "L" / "R" marking its travel. A
+        stereo track shows two strips (L / R), each breathing on its own channel. Pan is channel balance —
+        it dims the OPPOSITE strip (pan left attenuates the right, pan right the left); the strips never
+        move. The readout below reads the level in dB and the pan, e.g. “−6.0 db / 50% right”.
       </p>
     </div>
   )

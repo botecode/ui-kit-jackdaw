@@ -210,6 +210,69 @@
   transition: none; /* driven by rAF — let it move freely */
 }
 
+/* ── The pan set-point line — the balance control (a horizontal slider) ──── */
+/* A VERTICAL mirror of the volume line, drawn down the meter at the pan x. Its
+   own grab target: drag it left↔right. A thin band so the focus ring is legible;
+   the visible line sits inside it. */
+.panline {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: 12px;
+  left: calc(3px + var(--pan-pos, 0.5) * (100% - 6px));
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  cursor: ew-resize;
+  touch-action: none;
+  outline: none;
+  z-index: 2;
+  border-radius: 2px;
+  transition: left var(--dur-fast) var(--ease-out);
+}
+
+.panline[data-readonly] { cursor: default; }
+
+.panline:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* The visible line — quiet at rest (the set balance, not signal). */
+.panlineBar {
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--stage-text) 55%, transparent);
+  transition:
+    background var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+/* Armed / "now" card → the scarce accent: the line lights amber (mirrors volume). */
+.panline[data-active] .panlineBar {
+  background: var(--led-orange);
+  box-shadow:
+    0 0 5px color-mix(in srgb, var(--led-orange) 45%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--led-orange-core) 40%, transparent);
+}
+
+/* ── L / R labels — the ends of the pan line's travel ────────────────────── */
+
+.ear {
+  position: absolute;
+  bottom: 4px;
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--stage-text) 38%, transparent);
+}
+
+.ear[data-ear="l"] { left: 5px; }
+.ear[data-ear="r"] { right: 5px; }
+
 /* ── Readout ─────────────────────────────────────────────────────────────── */
 
 .readout {
@@ -224,68 +287,6 @@
 
 .body[data-active] .readout { color: var(--text-muted); }
 
-/* ── Pan: a horizontal balance zone (drag left/right) ────────────────────── */
-
-.pan {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 18px;
-  margin: var(--space-1) var(--space-2) 0;
-  cursor: ew-resize;
-  outline: none;
-  touch-action: none;
-}
-
-.pan[data-readonly] { cursor: default; }
-
-.pan:focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
-  border-radius: calc(var(--radius) - 2px);
-}
-
-/* The recessed groove the handle rides in. */
-.panTrack {
-  position: relative;
-  width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--stage);
-  box-shadow: inset 0 1px 1px color-mix(in srgb, black 25%, transparent);
-}
-
-/* Center detent tick — "C". */
-.panTrack::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: -3px;
-  bottom: -3px;
-  width: 1px;
-  transform: translateX(-50%);
-  background: color-mix(in srgb, var(--stage-text) 22%, transparent);
-}
-
-/* The balance handle — the track colour, slides left↔right. */
-.panHandle {
-  position: absolute;
-  top: 50%;
-  left: clamp(0%, var(--pan-pos, 0.5) * 100%, 100%);
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  transform: translate(-50%, -50%);
-  background: var(--card-color, var(--accent));
-  box-shadow:
-    0 1px 2px color-mix(in srgb, black 35%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 22%, transparent);
-  transition:
-    left var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-led-off) var(--ease-out);
-}
-
-.pan[data-panning] .panHandle { transition: box-shadow var(--dur-led-off) var(--ease-out); }
-
 /* ── Controls: arm · mute/solo ───────────────────────────────────────────── */
 
 .controls {
@@ -298,9 +299,8 @@
 
 .root[data-master] .controls { justify-content: center; }
 
-/* Muted: dim the body + pan, keep the buttons readable */
-.root[data-muted] .body,
-.root[data-muted] .pan {
+/* Muted: dim the body (carries both set-point lines), keep the buttons readable */
+.root[data-muted] .body {
   opacity: 0.55;
 }
 
@@ -308,9 +308,9 @@
   .segment {
     transition: none;
   }
-  /* set-point + pan handle still snap to position, just without the tween */
+  /* both set-point lines still snap to position, just without the tween */
   .setpoint,
-  .panHandle {
+  .panline {
     transition: none;
   }
 }

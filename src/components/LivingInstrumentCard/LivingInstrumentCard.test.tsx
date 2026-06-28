@@ -30,12 +30,6 @@ function mockBodyHeight(el: HTMLElement, height = 200) {
     ({ height, width: 160, top: 0, left: 0, right: 160, bottom: height, x: 0, y: 0, toJSON: () => {} }) as DOMRect
 }
 
-// Give the pan zone a measurable width so horizontal drag math has travel.
-function mockPanWidth(el: HTMLElement, width = 120) {
-  el.getBoundingClientRect = () =>
-    ({ width, height: 16, top: 0, left: 0, right: width, bottom: 16, x: 0, y: 0, toJSON: () => {} }) as DOMRect
-}
-
 const lastArg = (fn: ReturnType<typeof vi.fn>) => fn.mock.calls[fn.mock.calls.length - 1][0]
 const stripLit = (el: HTMLElement) => Number(el.getAttribute('data-lit'))
 
@@ -66,14 +60,38 @@ describe('LivingInstrumentCard — rendering', () => {
     expect(screen.getByRole('slider', { name: /guitar level/i })).toBe(screen.getByTestId('card-setpoint'))
   })
 
-  it('renders the dB readout', () => {
-    render(<LivingInstrumentCard {...BASE} volumeDb={-12} />)
-    expect(screen.getByText('-12.0')).toBeInTheDocument()
+  it('renders the combined readout with the db unit and pan text', () => {
+    render(<LivingInstrumentCard {...BASE} volumeDb={-12} pan={0} />)
+    expect(screen.getByText('-12.0 db / center')).toBeInTheDocument()
   })
 
-  it('shows −∞ at the floor', () => {
-    render(<LivingInstrumentCard {...BASE} volumeDb={-60} />)
-    expect(screen.getByText('−∞')).toBeInTheDocument()
+  it('reads pan as N% left / N% right with the db unit', () => {
+    const { rerender } = render(<LivingInstrumentCard {...BASE} volumeDb={-24.3} pan={-0.1} />)
+    expect(screen.getByText('-24.3 db / 10% left')).toBeInTheDocument()
+    rerender(<LivingInstrumentCard {...BASE} volumeDb={-6} pan={0.5} />)
+    expect(screen.getByText('-6.0 db / 50% right')).toBeInTheDocument()
+  })
+
+  it('shows −∞ db at the floor', () => {
+    render(<LivingInstrumentCard {...BASE} volumeDb={-60} pan={0} />)
+    expect(screen.getByText('−∞ db / center')).toBeInTheDocument()
+  })
+
+  it('drops the pan half of the readout on the master variant', () => {
+    render(<LivingInstrumentCard {...BASE} isMaster name="Master" volumeDb={0} />)
+    expect(screen.getByText('+0.0 db')).toBeInTheDocument()
+  })
+
+  it('labels the ends of the pan travel with L / R', () => {
+    render(<LivingInstrumentCard {...BASE} />)
+    expect(screen.getByText('L')).toBeInTheDocument()
+    expect(screen.getByText('R')).toBeInTheDocument()
+  })
+
+  it('omits the L / R labels on the master variant (no pan)', () => {
+    render(<LivingInstrumentCard {...BASE} isMaster name="Master" />)
+    expect(screen.queryByText('L')).toBeNull()
+    expect(screen.queryByText('R')).toBeNull()
   })
 
   it('renders input, fx and pan controls for a normal track', () => {
@@ -202,10 +220,15 @@ describe('LivingInstrumentCard — display-only body', () => {
   })
 })
 
-// ── Pan = HORIZONTAL control on the bottom zone ──────────────────────────────────
+// ── Pan = a VERTICAL line set by HORIZONTAL drag (lives in the meter) ─────────────
 
-describe('LivingInstrumentCard — pan = horizontal drag on the bottom zone', () => {
-  it('exposes the pan zone as a horizontal slider', () => {
+describe('LivingInstrumentCard — pan = vertical line, horizontal drag in the meter', () => {
+  it('the pan line lives in the meter body (no separate bottom control)', () => {
+    render(<LivingInstrumentCard {...BASE} />)
+    expect(screen.getByTestId('card-body')).toContainElement(screen.getByTestId('card-pan'))
+  })
+
+  it('exposes the pan line as a horizontal slider', () => {
     render(<LivingInstrumentCard {...BASE} pan={-0.5} />)
     const pan = screen.getByRole('slider', { name: /guitar pan/i })
     expect(pan).toHaveAttribute('aria-orientation', 'horizontal')
@@ -214,11 +237,20 @@ describe('LivingInstrumentCard — pan = horizontal drag on the bottom zone', ()
     expect(pan).toHaveAttribute('aria-valuenow', '-0.5')
   })
 
-  it('dragging the pan zone right sets a positive pan', () => {
+  it('the pan line tracks pan (right → line moves right)', () => {
+    const { rerender } = render(<LivingInstrumentCard {...BASE} pan={-0.8} />)
+    const left = Number(screen.getByTestId('card-pan').style.getPropertyValue('--pan-pos'))
+    rerender(<LivingInstrumentCard {...BASE} pan={0.8} />)
+    const right = Number(screen.getByTestId('card-pan').style.getPropertyValue('--pan-pos'))
+    expect(right).toBeGreaterThan(left)
+  })
+
+  it('dragging the pan line right sets a positive pan', () => {
     const onPanChange = vi.fn()
     render(<LivingInstrumentCard {...BASE} pan={0} onPanChange={onPanChange} />)
+    const body = screen.getByTestId('card-body')
+    mockBodyHeight(body) // measures the meter width (160) for pan travel
     const pan = screen.getByTestId('card-pan')
-    mockPanWidth(pan)
     fireEvent.pointerDown(pan, { clientX: 60, pointerId: 1 })
     fireEvent.pointerMove(pan, { clientX: 110 }) // dragged right
     fireEvent.pointerUp(pan)
@@ -226,15 +258,28 @@ describe('LivingInstrumentCard — pan = horizontal drag on the bottom zone', ()
     expect(lastArg(onPanChange)).toBeGreaterThan(0)
   })
 
-  it('dragging the pan zone left sets a negative pan', () => {
+  it('dragging the pan line left sets a negative pan', () => {
     const onPanChange = vi.fn()
     render(<LivingInstrumentCard {...BASE} pan={0} onPanChange={onPanChange} />)
+    const body = screen.getByTestId('card-body')
+    mockBodyHeight(body)
     const pan = screen.getByTestId('card-pan')
-    mockPanWidth(pan)
     fireEvent.pointerDown(pan, { clientX: 60, pointerId: 1 })
     fireEvent.pointerMove(pan, { clientX: 10 }) // dragged left
     fireEvent.pointerUp(pan)
     expect(lastArg(onPanChange)).toBeLessThan(0)
+  })
+
+  it('a horizontal drag on the pan line does NOT change the level', () => {
+    const onVolumeChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0} onVolumeChange={onVolumeChange} />)
+    const body = screen.getByTestId('card-body')
+    mockBodyHeight(body)
+    const pan = screen.getByTestId('card-pan')
+    fireEvent.pointerDown(pan, { clientX: 60, pointerId: 1 })
+    fireEvent.pointerMove(pan, { clientX: 110 })
+    fireEvent.pointerUp(pan)
+    expect(onVolumeChange).not.toHaveBeenCalled()
   })
 
   it('ArrowRight nudges pan right, ArrowLeft nudges pan left', () => {
@@ -257,9 +302,50 @@ describe('LivingInstrumentCard — pan = horizontal drag on the bottom zone', ()
     expect(onPanChange).toHaveBeenLastCalledWith(1)
   })
 
-  it('omits the pan zone on the master variant', () => {
+  it('omits the pan line on the master variant', () => {
     render(<LivingInstrumentCard {...BASE} isMaster name="Master" />)
     expect(screen.queryByTestId('card-pan')).toBeNull()
+  })
+})
+
+// ── Double-click resets each line (fader / knob convention) ──────────────────────
+
+describe('LivingInstrumentCard — double-click resets', () => {
+  it('double-clicking the volume line resets it to 0 dB (unity) and emits', () => {
+    const onVolumeChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} volumeDb={-24} onVolumeChange={onVolumeChange} />)
+    fireEvent.doubleClick(screen.getByTestId('card-setpoint'))
+    expect(onVolumeChange).toHaveBeenLastCalledWith(0)
+  })
+
+  it('honours a custom resetVolumeDb', () => {
+    const onVolumeChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} volumeDb={0} resetVolumeDb={-6} onVolumeChange={onVolumeChange} />)
+    fireEvent.doubleClick(screen.getByTestId('card-body'))
+    expect(onVolumeChange).toHaveBeenLastCalledWith(-6)
+  })
+
+  it('double-clicking the pan line resets it to center (0) and emits', () => {
+    const onPanChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0.6} onPanChange={onPanChange} />)
+    fireEvent.doubleClick(screen.getByTestId('card-pan'))
+    expect(onPanChange).toHaveBeenLastCalledWith(0)
+  })
+
+  it('honours a custom resetPan', () => {
+    const onPanChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0} resetPan={-0.5} onPanChange={onPanChange} />)
+    fireEvent.doubleClick(screen.getByTestId('card-pan'))
+    expect(onPanChange).toHaveBeenLastCalledWith(-0.5)
+  })
+
+  it('double-clicking the pan line does not reset the volume', () => {
+    const onVolumeChange = vi.fn()
+    const onPanChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} pan={0.6} onPanChange={onPanChange} onVolumeChange={onVolumeChange} />)
+    fireEvent.doubleClick(screen.getByTestId('card-pan'))
+    expect(onPanChange).toHaveBeenCalled()
+    expect(onVolumeChange).not.toHaveBeenCalled()
   })
 })
 

@@ -8,18 +8,23 @@
 //     with the signal. A stereo track shows two strips (L / R), each breathing
 //     on its OWN channel (meterL / meterR dBFS); a mono track shows one. This is
 //     the ONE animation in the app.
-//   • Volume is a horizontal SET-POINT LINE drawn across the meter at the
-//     volumeDb height — the fader. You drag it (or the meter body) VERTICALLY to
-//     set the level; the line carries role="slider" and arrow keys nudge it. It
-//     is NOT a fill: the meter underneath stays visible so you can read the
-//     signal against the set level.
-//   • Pan is a horizontal zone at the BOTTOM of the card, dragged LEFT/RIGHT.
-//     Pan is channel BALANCE, not a squish: the strips stay fixed side-by-side;
-//     panning attenuates the OPPOSITE channel's displayed level (pan left dims
-//     the right strip, pan right dims the left). The strips never move.
+//   • Volume is a HORIZONTAL SET-POINT LINE drawn across the meter at the
+//     volumeDb height — the fader. You drag the meter body VERTICALLY to set the
+//     level; the line carries role="slider", ↑/↓ nudge it, double-click resets
+//     it to unity. It is NOT a fill: the meter underneath stays visible so you
+//     can read the signal against the set level.
+//   • Pan is a VERTICAL SET-POINT LINE drawn down the meter at the pan position
+//     — a mirror of the volume line. You drag it HORIZONTALLY to set the balance
+//     (centre = middle, left → left, right → right); it carries role="slider",
+//     ←/→ nudge it, double-click resets it to centre. "L" / "R" labels mark the
+//     ends of its travel. Pan is channel BALANCE, not a squish: the strips stay
+//     fixed side-by-side; panning attenuates the OPPOSITE channel's displayed
+//     level (pan left dims the right strip, pan right dims the left). The
+//     vertical line is the set-point + control; the strips show the resulting
+//     balance. The strips never move.
 //
-// The drag axes are kept separate so they never fight: VERTICAL drag on the
-// meter body = volume; HORIZONTAL drag on the bottom pan zone = pan.
+// The two lines never fight: each is its own grab target with its own axis —
+// VERTICAL drag (the meter body) = volume; HORIZONTAL drag (the pan line) = pan.
 //
 // NOT ChannelStrip (the classic vertical strip with a separate Fader + Meter) —
 // a sibling for the studio view. Composes the existing kit primitives.
@@ -82,14 +87,18 @@ export interface LivingInstrumentCardProps {
   onFxAdd?: () => void
   onFxOpen?: (id: string) => void
 
-  /** dBFS in [-60, 6] — the set level. Drawn as the set-point line (the fader). */
+  /** dBFS in [-60, 6] — the set level. Drawn as the horizontal set-point line. */
   volumeDb: number
-  /** Drag the body / line / arrow keys → new level. Absent = display-only. */
+  /** Drag the body / ↑↓ keys → new level. Absent = display-only. */
   onVolumeChange?: (db: number) => void
+  /** dB the volume line snaps to on double-click (unity by default). */
+  resetVolumeDb?: number
 
-  /** Pan in [-1, 1]. Omitted on the master variant. */
+  /** Pan in [-1, 1] — drawn as the vertical set-point line. Omitted on master. */
   pan: number
   onPanChange?: (pan: number) => void
+  /** Pan the line snaps to on double-click (centre by default). */
+  resetPan?: number
 
   armed: boolean
   muted: boolean
@@ -153,8 +162,10 @@ export function LivingInstrumentCard({
   onFxOpen,
   volumeDb,
   onVolumeChange,
+  resetVolumeDb = 0,
   pan,
   onPanChange,
+  resetPan = 0,
   armed,
   muted,
   soloed,
@@ -288,16 +299,21 @@ export function LivingInstrumentCard({
     setDragging(false)
   }
 
+  // Double-click the meter body / volume line → snap to unity (fader convention).
+  function handleVolumeDoubleClick() {
+    if (!interactive) return
+    onVolumeRef.current?.(clamp(resetVolumeDb, DB_MIN, DB_MAX))
+  }
+
   function handleVolumeKeyDown(e: React.KeyboardEvent) {
     if (!interactive) return
     const step = e.shiftKey ? 0.25 : 1
     const coarse = 6
     let next: number | null = null
+    // ↑/↓ only — ←/→ belong to the pan line so the two axes never fight.
     switch (e.key) {
-      case 'ArrowUp':
-      case 'ArrowRight': next = volumeRef.current + step; break
-      case 'ArrowDown':
-      case 'ArrowLeft': next = volumeRef.current - step; break
+      case 'ArrowUp': next = volumeRef.current + step; break
+      case 'ArrowDown': next = volumeRef.current - step; break
       case 'PageUp': next = volumeRef.current + coarse; break
       case 'PageDown': next = volumeRef.current - coarse; break
       case 'Home': next = DB_MIN; break
@@ -308,7 +324,7 @@ export function LivingInstrumentCard({
     onVolumeRef.current?.(clamp(next, DB_MIN, DB_MAX))
   }
 
-  // ── Pan drag (the bottom zone, dragged horizontally) ────────────────────────
+  // ── Pan drag (the vertical line, dragged horizontally across the meter) ──────
   const panRef = useRef<HTMLDivElement>(null)
   const [panning, setPanning] = useState(false)
   const panDragRef = useRef({ startX: 0, startPan: 0, travel: 1 })
@@ -319,8 +335,11 @@ export function LivingInstrumentCard({
 
   function handlePanPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (!panInteractive) return
+    e.stopPropagation() // own grab target — don't start a body volume drag
     e.currentTarget.setPointerCapture?.(e.pointerId)
-    const rect = panRef.current!.getBoundingClientRect()
+    panRef.current?.focus()
+    // Travel = the full meter width: the line sweeps the whole body.
+    const rect = bodyRef.current!.getBoundingClientRect()
     panDragRef.current = {
       startX: e.clientX,
       startPan: clamp(panValRef.current, -1, 1),
@@ -331,7 +350,7 @@ export function LivingInstrumentCard({
 
   function handlePanPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!panning) return
-    // Full zone width spans the whole pan range (-1 → +1), so scale by 2.
+    // The full meter width spans the whole pan range (-1 → +1), so scale by 2.
     const delta = (e.clientX - panDragRef.current.startX) / panDragRef.current.travel
     onPanRef.current?.(clamp(panDragRef.current.startPan + delta * 2, -1, 1))
   }
@@ -341,15 +360,21 @@ export function LivingInstrumentCard({
     setPanning(false)
   }
 
+  // Double-click the pan line → snap to centre (knob/fader reset convention).
+  function handlePanDoubleClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!panInteractive) return
+    onPanRef.current?.(clamp(resetPan, -1, 1))
+  }
+
   function handlePanKeyDown(e: React.KeyboardEvent) {
     if (!panInteractive) return
     const step = e.shiftKey ? 0.01 : 0.05
     let next: number | null = null
+    // ←/→ only — ↑/↓ belong to the volume line so the two axes never fight.
     switch (e.key) {
-      case 'ArrowRight':
-      case 'ArrowUp': next = panValRef.current + step; break
-      case 'ArrowLeft':
-      case 'ArrowDown': next = panValRef.current - step; break
+      case 'ArrowRight': next = panValRef.current + step; break
+      case 'ArrowLeft': next = panValRef.current - step; break
       case 'Home': next = -1; break
       case 'End': next = 1; break
       default: return
@@ -362,12 +387,14 @@ export function LivingInstrumentCard({
   const noop = () => {}
   const chainOn = fxChainEnabled ?? fx.some(p => p.enabled)
 
-  const readout = volumeDb <= DB_MIN ? '−∞' : `${volumeDb >= 0 ? '+' : ''}${volumeDb.toFixed(1)}`
-  const panText = panClamped === 0
-    ? 'Center'
-    : panClamped < 0
-      ? `Left ${Math.round(-panClamped * 100)}%`
-      : `Right ${Math.round(panClamped * 100)}%`
+  // Combined readout: "<db> db / <pan>" — e.g. "−24.3 db / 10% left". Volume in
+  // dB (with unit); pan as centre / N% left / N% right.
+  const volText = volumeDb <= DB_MIN ? '−∞' : `${volumeDb >= 0 ? '+' : ''}${volumeDb.toFixed(1)}`
+  const panPct = Math.round(Math.abs(panClamped) * 100)
+  const panText = panClamped === 0 ? 'center' : panClamped < 0 ? `${panPct}% left` : `${panPct}% right`
+  const readout = isMaster ? `${volText} db` : `${volText} db / ${panText}`
+  // Sentence-case for the slider's value text (screen readers).
+  const panValueText = panText.charAt(0).toUpperCase() + panText.slice(1)
 
   // One LED strip: the live signal, drawn with the Meter ramp (green→orange→red).
   // No fader fill — the body shows ONLY the signal; the set level is the line.
@@ -471,6 +498,7 @@ export function LivingInstrumentCard({
         onPointerMove={handleVolumePointerMove}
         onPointerUp={handleVolumePointerUp}
         onPointerCancel={handleVolumePointerUp}
+        onDoubleClick={handleVolumeDoubleClick}
       >
         <div className={styles.well}>
           <div className={styles.strips} data-channels={stereo ? 'stereo' : 'mono'}>
@@ -478,6 +506,49 @@ export function LivingInstrumentCard({
               ? <>{renderStrip('l', litL)}{renderStrip('r', litR)}</>
               : renderStrip('mono', litMono)}
           </div>
+
+          {/* L / R labels — the ends of the pan line's travel. */}
+          {!isMaster && (
+            <>
+              <span className={styles.ear} data-ear="l" aria-hidden>L</span>
+              <span className={styles.ear} data-ear="r" aria-hidden>R</span>
+            </>
+          )}
+
+          {/* The pan set-point line — a VERTICAL mirror of the volume line. Its
+              own grab target: drag it HORIZONTALLY (or focus + ←/→) to balance,
+              double-click to recentre. The strips show the resulting balance. */}
+          {!isMaster && (
+            <div
+              ref={panRef}
+              className={styles.panline}
+              data-testid="card-pan"
+              data-pan={panClamped === 0 ? 'center' : panClamped < 0 ? 'left' : 'right'}
+              data-panning={panning || undefined}
+              data-active={active || undefined}
+              data-readonly={!panInteractive || undefined}
+              role="slider"
+              aria-orientation="horizontal"
+              aria-valuemin={-1}
+              aria-valuemax={1}
+              aria-valuenow={panClamped}
+              aria-valuetext={panValueText}
+              aria-label={`${displayName} pan`}
+              aria-disabled={disabled || undefined}
+              aria-readonly={!onPanChange || undefined}
+              tabIndex={panInteractive ? 0 : -1}
+              onPointerDown={handlePanPointerDown}
+              onPointerMove={handlePanPointerMove}
+              onPointerUp={handlePanPointerUp}
+              onPointerCancel={handlePanPointerUp}
+              onDoubleClick={handlePanDoubleClick}
+              onKeyDown={handlePanKeyDown}
+              onClick={e => e.stopPropagation()}
+              style={{ '--pan-pos': (panClamped + 1) / 2 } as CSSProperties}
+            >
+              <span className={styles.panlineBar} aria-hidden />
+            </div>
+          )}
           {/* The set-point line — the fader. Drawn once across the full meter
               width (both strips). It IS the volume slider: drag it / the body
               vertically, or focus it and nudge with the arrow keys. */}
@@ -504,38 +575,6 @@ export function LivingInstrumentCard({
         </div>
         <span className={styles.readout} aria-hidden>{readout}</span>
       </div>
-
-      {/* ── Pan: a horizontal balance zone at the bottom (drag left/right) ── */}
-      {!isMaster && (
-        <div
-          ref={panRef}
-          className={styles.pan}
-          data-testid="card-pan"
-          data-pan={panClamped === 0 ? 'center' : panClamped < 0 ? 'left' : 'right'}
-          data-panning={panning || undefined}
-          data-readonly={!panInteractive || undefined}
-          role="slider"
-          aria-orientation="horizontal"
-          aria-valuemin={-1}
-          aria-valuemax={1}
-          aria-valuenow={panClamped}
-          aria-valuetext={panText}
-          aria-label={`${displayName} pan`}
-          aria-disabled={disabled || undefined}
-          aria-readonly={!onPanChange || undefined}
-          tabIndex={panInteractive ? 0 : -1}
-          onPointerDown={handlePanPointerDown}
-          onPointerMove={handlePanPointerMove}
-          onPointerUp={handlePanPointerUp}
-          onPointerCancel={handlePanPointerUp}
-          onKeyDown={handlePanKeyDown}
-          onClick={e => e.stopPropagation()}
-        >
-          <span className={styles.panTrack} aria-hidden>
-            <span className={styles.panHandle} style={{ '--pan-pos': (panClamped + 1) / 2 } as CSSProperties} />
-          </span>
-        </div>
-      )}
 
       {/* ── Controls: arm · mute/solo ── */}
       <div className={styles.controls} onClick={e => e.stopPropagation()}>
