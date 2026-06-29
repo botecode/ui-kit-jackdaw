@@ -3,7 +3,7 @@
 # kit — the UI-kit build loop. ONE command builds a component and merges it to main, live.
 #
 #   kit next            grab the next "Next" kit card, build it, gate, merge to main.
-#   kit auto            UNATTENDED: build→gate→merge every Next kit card; park failures to Backlog, never halt.
+#   kit auto            UNATTENDED: build→gate→merge every Next kit card; failures → Testing for review, never halt.
 #   kit launch <name>   build one component, gate (tsc+vitest), merge to main. No PR, no test step.
 #   kit fix <name> "…"  modify an already-shipped component IN PLACE per "…", gate, merge to main.
 #   kit gallery         run the gallery (npm run dev) on main — keep this open; merges hot-reload it.
@@ -182,8 +182,8 @@ case "$cmd" in
 
   auto)
     # Unattended: build → gate → merge every Next kit card, one at a time, until the queue is clear.
-    # A card that fails its gate (or whose agent stops to ask) is PARKED to Backlog and the run moves
-    # on — it never halts and never re-picks a failed card; all failures are reported at the end.
+    # A card that fails its gate (or whose agent stops to ask) is moved to Testing (the review bucket)
+    # and the run moves on — it never halts and never re-picks a failed card; all failures reported at end.
     # Run in YOUR terminal (it merges to kit main). Cards build in board order, so order Next for deps.
     echo "▶ kit auto: building every Next kit card, one at a time…"
     built=0; failed=""; prev=""
@@ -195,12 +195,12 @@ case "$cmd" in
       if ship_and_status "$name"; then
         built=$((built+1))
       else
-        echo "⚠ kit auto: '$name' didn't build (gate red, or the agent needs a decision) — parking to Backlog, moving on."
-        jdstatus "$name" "Backlog"; failed="$failed $name"
+        echo "⚠ kit auto: '$name' didn't build (gate red, or the agent needs a decision) — moving it to Testing for review, continuing."
+        jdstatus "$name" "Testing"; failed="$failed $name"
       fi
     done
     echo ""; echo "✅ kit auto: $built built."
-    [ -n "$failed" ] && echo "⚠ needs your review (parked in Backlog):$failed" >&2 || echo "Next kit queue is clear." ;;
+    [ -n "$failed" ] && echo "⚠ needs your review (moved to Testing):$failed" >&2 || echo "Next kit queue is clear." ;;
 
   launch|build|ship)
     name="${1:-}"; [ -n "$name" ] || { echo "usage: kit launch <name>" >&2; exit 1; }
