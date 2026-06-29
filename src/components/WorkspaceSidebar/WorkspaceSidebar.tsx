@@ -12,6 +12,11 @@
 // on the active row — the per-track colour spine, borrowed for the library. No
 // bevels, no inset wells, no LCD. The colour dot is the song's own data colour
 // (like a track's colour), so the list reads like a hand-tabbed notebook.
+//
+// The search field follows the same rule: it wears the shared TextField's
+// `tone="surface"` calm-paper face (warm light field, hairline keyline, ink text)
+// rather than the default dark `--stage` well — that recessed trench is hardware-
+// control vocabulary, and would read as a dark bar dropped onto the paper rail.
 
 import { useId, useMemo, useRef } from 'react'
 import {
@@ -174,6 +179,7 @@ export function WorkspaceSidebar({
         <div className={styles.search}>
           <TextField
             type="search"
+            tone="surface"
             value={query}
             onChange={onSearch ?? (() => {})}
             placeholder="Search songs…"

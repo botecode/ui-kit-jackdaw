@@ -73,6 +73,16 @@ describe('WorkspaceSidebar — rendering', () => {
     expect(screen.getByRole('searchbox', { name: 'Search library' })).toBeInTheDocument()
   })
 
+  it('renders the search field on the calm paper surface (not the dark stage well)', () => {
+    setup()
+    // The shared TextField carries its surface vocabulary on the root wrapper via
+    // data-tone. On the paper sidebar the field must wear the light "surface" face,
+    // never the default dark "stage" well (hardware-control vocabulary).
+    const search = screen.getByRole('searchbox', { name: 'Search library' })
+    const tfRoot = search.closest('[data-tone]')
+    expect(tfRoot).toHaveAttribute('data-tone', 'surface')
+  })
+
   it('renders New song + Import song footer actions', () => {
     setup()
     expect(screen.getByRole('button', { name: 'New song' })).toBeInTheDocument()
