@@ -1,8 +1,14 @@
 // src/components/FlyHighButton/FlyHighButton.test.tsx
+import { readFileSync } from 'node:fs'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { FlyHighButton } from './FlyHighButton'
 import type { FlyHighButtonProps } from './FlyHighButton'
+
+// Vitest stubs CSS, so we read the authored stylesheet to lock the mode swap:
+// idle is the warm accent faceplate; the dark --stage well is the listening
+// moment ONLY (the one time the hero goes dark, per the Home paper-face spec).
+const HERO_CSS = readFileSync('src/components/FlyHighButton/FlyHighButton.module.css', 'utf8')
 
 const BASE: FlyHighButtonProps = {
   onStart: () => {},
@@ -129,6 +135,22 @@ describe('FlyHighButton — size + passthrough', () => {
   it('forwards a custom className onto the root', () => {
     const { container } = render(<FlyHighButton {...BASE} className="custom" />)
     expect(container.querySelector('button.custom')).toBeInTheDocument()
+  })
+})
+
+describe('FlyHighButton — paper-face guarantee (idle warm, stage only when listening)', () => {
+  it('fills the idle faceplate with the warm accent — never the dark --stage well', () => {
+    const rootRule = HERO_CSS.match(/\.root\s*{[\s\S]*?}/)?.[0] ?? ''
+    expect(rootRule).toMatch(/background-color:\s*var\(--accent\)/)
+    expect(rootRule).not.toMatch(/var\(--stage\b/)
+  })
+
+  it('drops to the dark --stage well only in the listening state', () => {
+    // Every --stage reference in the sheet must be gated to the listening selector.
+    const stageLines = HERO_CSS.split('\n').filter(l => /var\(--stage\b/.test(l))
+    expect(stageLines.length).toBeGreaterThan(0)
+    const listeningRule = HERO_CSS.match(/\.root\[data-state="listening"\]\s*{[^}]*}/)?.[0] ?? ''
+    expect(listeningRule).toMatch(/background-color:\s*var\(--stage\)/)
   })
 })
 

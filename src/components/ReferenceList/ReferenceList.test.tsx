@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent, within } from '@testing-library/react'
 import { ReferenceList } from './ReferenceList'
@@ -9,6 +10,11 @@ import {
   youtubeId,
   spotifyPath,
 } from './referenceMarkdown'
+
+// Vitest stubs CSS, so we read the authored stylesheet to assert the Home
+// paper-face guarantee: the reference shelf sits on warm light surfaces, never
+// the dark --stage well (that is Studio hardware vocabulary).
+const REF_CSS = readFileSync('src/components/ReferenceList/ReferenceList.module.css', 'utf8')
 
 // ─── Markdown model (pure) ─────────────────────────────────────────────────────
 
@@ -209,5 +215,21 @@ describe('ReferenceList', () => {
   it('applies the aria-label to the region', () => {
     const { getByRole } = render(<ReferenceList value="" aria-label="Song references" />)
     expect(within(getByRole('region', { name: 'Song references' })).queryByText(/paste a link/i)).toBeTruthy()
+  })
+
+  // ─── Calm-paper guarantees (Home paper face, not the dark Studio stage) ──────
+
+  it('never paints a surface on the dark --stage well', () => {
+    expect(REF_CSS).not.toMatch(/var\(--stage\b/)
+  })
+
+  it('runs the "paste a link" collector field on the calm paper tone', () => {
+    const { getByLabelText } = render(<ReferenceList value="" />)
+    const field = getByLabelText('Add a reference by link').closest('[data-tone]')
+    expect(field).toHaveAttribute('data-tone', 'surface')
+  })
+
+  it('seats the link-card thumbnail on a recessed light paper chip', () => {
+    expect(REF_CSS).toMatch(/\.thumb\s*{[^}]*background-color:\s*var\(--surface-2\)/)
   })
 })

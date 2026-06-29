@@ -1,8 +1,14 @@
 // src/components/IdeasLibrary/IdeasLibrary.test.tsx
+import { readFileSync } from 'node:fs'
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { IdeasLibrary } from './IdeasLibrary'
 import type { Idea } from './IdeasLibrary'
+
+// Vitest stubs CSS, so we read the authored stylesheet to assert the Home
+// paper-face guarantee: the library lives on warm light surfaces, never the
+// dark --stage well (that is Studio hardware vocabulary).
+const LIB_CSS = readFileSync('src/components/IdeasLibrary/IdeasLibrary.module.css', 'utf8')
 
 // ─── Environment stubs ────────────────────────────────────────────────────────
 
@@ -786,5 +792,25 @@ describe('IdeasLibrary — multi-clip group card', () => {
     renderLibrary([{ ...IDEA_1, clips: [] }])
     expect(screen.queryByTestId('group-card')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Play Dusty Rhodes Intro' })).toBeInTheDocument()
+  })
+})
+
+// ─── Calm-paper guarantees (Home paper face, not the dark Studio stage) ────────
+
+describe('IdeasLibrary — calm-paper guarantees', () => {
+  it('never paints a surface on the dark --stage well', () => {
+    expect(LIB_CSS).not.toMatch(/var\(--stage\b/)
+  })
+
+  it('seats the idea rows in a recessed light paper well', () => {
+    expect(LIB_CSS).toMatch(/\.list\s*{[^}]*background:\s*var\(--surface-2\)/)
+  })
+
+  it('runs the search field on the calm paper tone', () => {
+    const { container } = renderLibrary()
+    const search = screen.getByRole('searchbox', { name: 'Search ideas' })
+    const field = search.closest('[data-tone]')
+    expect(field).toHaveAttribute('data-tone', 'surface')
+    expect(container).toBeTruthy()
   })
 })

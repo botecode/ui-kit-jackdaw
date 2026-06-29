@@ -10,6 +10,12 @@ export interface TextFieldProps {
   error?: string | boolean
   type?: 'text' | 'search' | 'password'
   size?: 'sm' | 'md'
+  /**
+   * Surface vocabulary. `'stage'` (default) is the recessed dark well — the
+   * Studio hardware face. `'surface'` is the calm paper face for Home screens
+   * (warm light field, ink text) so the same input reskins without a black well.
+   */
+  tone?: 'stage' | 'surface'
   'aria-label'?: string
   leading?: React.ReactNode
   trailing?: React.ReactNode
@@ -26,6 +32,7 @@ export function TextField({
   error,
   type = 'text',
   size = 'md',
+  tone = 'stage',
   'aria-label': ariaLabel,
   leading,
   trailing,
@@ -43,6 +50,7 @@ export function TextField({
     <div
       className={styles.root}
       data-size={size}
+      data-tone={tone}
       data-disabled={disabled || undefined}
       data-error={error ? '' : undefined}
     >

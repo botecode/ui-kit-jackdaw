@@ -1,6 +1,11 @@
+import { readFileSync } from 'node:fs'
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import { TextField } from './TextField'
+
+// Vitest stubs CSS (css:false), so we read the authored stylesheet directly to
+// assert the tone recipes (the dark --stage well vs the light paper face).
+const FIELD_CSS = readFileSync('src/components/TextField/TextField.module.css', 'utf8')
 
 // ─── Rendering ──────────────────────────────────────────────────────────────
 
@@ -182,5 +187,33 @@ describe('TextField interaction', () => {
     fireEvent.change(getByRole('textbox'), { target: { value: 'hello' } })
     expect(onChange).toHaveBeenCalledOnce()
     expect(onChange).toHaveBeenCalledWith('hello', expect.any(Object))
+  })
+})
+
+// ─── Tone (the recessed dark well vs the calm paper face) ─────────────────────
+
+describe('TextField tone', () => {
+  it('defaults to the stage tone (the recessed hardware well)', () => {
+    const { container } = render(
+      <TextField value="" onChange={vi.fn()} aria-label="test" />,
+    )
+    expect(container.querySelector('[data-tone="stage"]')).toBeInTheDocument()
+  })
+
+  it('exposes data-tone="surface" for the calm paper face', () => {
+    const { container } = render(
+      <TextField value="" onChange={vi.fn()} aria-label="test" tone="surface" />,
+    )
+    expect(container.querySelector('[data-tone="surface"]')).toBeInTheDocument()
+  })
+
+  it('paints the default field on the dark --stage well (Studio vocabulary)', () => {
+    expect(FIELD_CSS).toMatch(/\.field\s*{[^}]*background:\s*var\(--stage\)/)
+  })
+
+  it('paints the surface tone on a light paper token, never the --stage well', () => {
+    const surfaceRule = FIELD_CSS.match(/\[data-tone="surface"\]\s+\.field\s*{[^}]*}/)?.[0] ?? ''
+    expect(surfaceRule).toMatch(/background:\s*var\(--surface/)
+    expect(surfaceRule).not.toMatch(/var\(--stage\b/)
   })
 })

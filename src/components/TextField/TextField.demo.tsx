@@ -134,6 +134,40 @@ function StatesDemo() {
           type="password"
         />
       </State>
+
+      <State label="Surface tone (Home paper face)">
+        {/* The calm paper face — a warm light field, ink text, no dark well.
+            Used by Home screens (IdeasLibrary search, ReferenceList collector). */}
+        <TextField
+          value=""
+          onChange={() => {}}
+          placeholder="Paste a link…"
+          aria-label="Surface tone"
+          tone="surface"
+          leading={<MagnifyingGlass size={14} />}
+        />
+      </State>
+
+      <State label="Surface tone — focused">
+        <TextField
+          value=""
+          onChange={() => {}}
+          placeholder="Focus ring on paper"
+          aria-label="Surface tone focused"
+          tone="surface"
+          autoFocus
+        />
+      </State>
+
+      <State label="Surface tone — error">
+        <TextField
+          value="bad-value"
+          onChange={() => {}}
+          aria-label="Surface tone error"
+          tone="surface"
+          error="This field is required"
+        />
+      </State>
     </StatesGrid>
   )
 }
@@ -146,6 +180,7 @@ function PlaygroundDemo() {
   const [hasError, setHasError] = useState(false)
   const [hasLabel, setHasLabel] = useState(true)
   const [hasLeading, setHasLeading] = useState(false)
+  const [paperFace, setPaperFace] = useState(false)
   const [size, setSize] = useState<'sm' | 'md'>('md')
 
   return (
@@ -160,6 +195,7 @@ function PlaygroundDemo() {
           disabled={disabled}
           error={hasError ? 'Something went wrong' : undefined}
           size={size}
+          tone={paperFace ? 'surface' : 'stage'}
           leading={hasLeading ? <MagnifyingGlass size={size === 'sm' ? 12 : 14} /> : undefined}
         />
 
@@ -188,6 +224,12 @@ function PlaygroundDemo() {
             onChange={(next) => setHasLeading(next)}
             size="sm"
             label="leading icon"
+          />
+          <Toggle
+            checked={paperFace}
+            onChange={(next) => setPaperFace(next)}
+            size="sm"
+            label="paper face (surface)"
           />
           <label
             style={{

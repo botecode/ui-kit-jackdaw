@@ -862,6 +862,7 @@ export function IdeasLibrary({
               placeholder="Search ideas…"
               type="search"
               size="sm"
+              tone="surface"
               aria-label="Search ideas"
               leading={<MagnifyingGlass size={12} aria-hidden="true" />}
             />

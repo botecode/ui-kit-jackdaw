@@ -181,7 +181,9 @@ button.card:focus-visible {
   width: 72px;
   height: 54px;
   border-radius: calc(var(--radius) - 1px);
-  background-color: var(--stage);
+  /* recessed light chip — a paper well behind the artwork, never the dark stage */
+  background-color: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
   background-size: cover;
   background-position: center;
   overflow: hidden;
@@ -197,8 +199,8 @@ button.card:focus-visible {
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  color: var(--stage-text);
-  background-color: var(--stage);
+  color: var(--text-muted);
+  background-color: var(--surface-2);
 }
 
 .thumb[data-error] {
@@ -230,7 +232,8 @@ button.card:focus-visible {
   height: 28px;
   border-radius: 50%;
   font-size: 15px;
-  color: var(--stage);
+  /* the play triangle punched dark into the lit green disc (ink, not the stage well) */
+  color: var(--text);
   background: radial-gradient(
     circle at 45% 40%,
     var(--led-green-core),
@@ -319,7 +322,8 @@ button.card[data-facade]:active .playDisc {
   aspect-ratio: 16 / 9;
   border: none;
   border-radius: calc(var(--radius) - 1px);
-  background: var(--stage);
+  /* light placeholder behind the embed iframe (the iframe paints its own media) */
+  background: var(--surface-2);
   display: block;
 }
 

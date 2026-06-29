@@ -4,8 +4,11 @@
 // warm paper, not a stack of blue hyperlinks. A pasted link becomes a tactile object —
 // a YouTube/Spotify player you press to life (the play disc lights with a green LED
 // bloom on incandescent timing, the kit's signature), a web card stamped with its host,
-// an image chip, a file slug. The collector slot at the top is a recessed --stage well
-// ("paste a link…") — you feed the shelf, you don't fill a form. One accent (--accent),
+// an image chip, a file slug. The collector slot at the top is the calm paper face of
+// the kit input (TextField tone="surface") — warm light field, ink text ("paste a
+// link…"); you feed the shelf, you don't fill a form. This is Home: the paper face
+// throughout, no dark --stage well (that hardware vocabulary belongs to the device
+// face). One accent (--accent),
 // flat paper tiles, a physical grip for reordering. Drop a link card on the dark Ink
 // theme or the cream Chroma theme and it reskins through tokens — an instrument's
 // reference shelf, never a bookmarks list.
@@ -228,6 +231,7 @@ export function ReferenceList({
             placeholder="Paste a link…"
             aria-label="Add a reference by link"
             size={size}
+            tone="surface"
             leading={<LinkSimple aria-hidden="true" />}
           />
           <button
@@ -338,6 +342,7 @@ export function ReferenceList({
                           placeholder="Label…"
                           aria-label={`Label for ${hostOf(item.url)}`}
                           size="sm"
+                          tone="surface"
                           autoFocus
                         />
                         <button type="submit" className={styles.iconBtn} aria-label="Save label">
