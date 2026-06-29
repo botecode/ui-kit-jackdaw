@@ -1,12 +1,17 @@
 // src/components/WorkspaceSidebar/WorkspaceSidebar.demo.tsx
 import { useState } from 'react'
+import { TextAa }               from '@phosphor-icons/react'
 import type { DemoMeta }        from '../../gallery/registry'
 import { DemoShell }            from '../../gallery/ui/DemoShell'
 import { StatesGrid, State }    from '../../gallery/ui/StatesGrid'
 import { Playground }           from '../../gallery/ui/Playground'
 import { Toggle }               from '../Toggle'
 import { WorkspaceSidebar, HOME_ID } from './WorkspaceSidebar'
-import type { WorkspaceSong, WorkspaceCollection } from './WorkspaceSidebar'
+import type {
+  WorkspaceSong,
+  WorkspaceCollection,
+  LibraryEntry,
+} from './WorkspaceSidebar'
 
 export const meta: DemoMeta = {
   name:  'WorkspaceSidebar',
@@ -34,6 +39,13 @@ const COLLECTIONS: WorkspaceCollection[] = [
   { id: 'c3', title: 'Demos 2026' },
 ]
 
+// Pinned library destinations — top-level pages, not content. They ride with Home.
+// "Lyrics" is the first consumer; the array leaves room for more (Samples, Notebook…)
+// without any further kit change.
+const LIBRARY: LibraryEntry[] = [
+  { id: 'lyrics', label: 'Lyrics', icon: TextAa },
+]
+
 function SidebarWrap({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ height: 420, display: 'flex', alignItems: 'stretch' }}>
@@ -47,12 +59,28 @@ function SidebarWrap({ children }: { children: React.ReactNode }) {
 function StatesDemo() {
   return (
     <StatesGrid>
-      <State label="Default — Home active">
+      <State label="Default — Home active (Lyrics pinned, unselected)">
         <SidebarWrap>
           <WorkspaceSidebar
             active={HOME_ID}
             songs={SONGS}
             collections={COLLECTIONS}
+            libraryEntries={LIBRARY}
+            onSelect={() => {}}
+            onSearch={() => {}}
+            onNewSong={() => {}}
+            onImportSong={() => {}}
+          />
+        </SidebarWrap>
+      </State>
+
+      <State label="Library entry — Lyrics active (accent spine, like Home)">
+        <SidebarWrap>
+          <WorkspaceSidebar
+            active="lyrics"
+            songs={SONGS}
+            collections={COLLECTIONS}
+            libraryEntries={LIBRARY}
             onSelect={() => {}}
             onSearch={() => {}}
             onNewSong={() => {}}
@@ -103,13 +131,14 @@ function StatesDemo() {
         </SidebarWrap>
       </State>
 
-      <State label="Filtering — query echoes + filters">
+      <State label="Filtering — query filters songs/collections; Lyrics pin stays">
         <SidebarWrap>
           <WorkspaceSidebar
             query="li"
             active="s3"
             songs={SONGS}
             collections={COLLECTIONS}
+            libraryEntries={LIBRARY}
             onSelect={() => {}}
             onSearch={() => {}}
             onNewSong={() => {}}
@@ -173,13 +202,30 @@ function StatesDemo() {
         </SidebarWrap>
       </State>
 
-      <State label="Collapsed — icon-only rail, song selected">
+      <State label="Collapsed — icon-only rail, song selected (Lyrics pinned)">
         <SidebarWrap>
           <WorkspaceSidebar
             collapsed
             active="s1"
             songs={SONGS}
             collections={COLLECTIONS}
+            libraryEntries={LIBRARY}
+            onSelect={() => {}}
+            onSearch={() => {}}
+            onNewSong={() => {}}
+            onImportSong={() => {}}
+          />
+        </SidebarWrap>
+      </State>
+
+      <State label="Collapsed — Lyrics active (icon-only, accent spine)">
+        <SidebarWrap>
+          <WorkspaceSidebar
+            collapsed
+            active="lyrics"
+            songs={SONGS}
+            collections={COLLECTIONS}
+            libraryEntries={LIBRARY}
             onSelect={() => {}}
             onSearch={() => {}}
             onNewSong={() => {}}
@@ -210,6 +256,7 @@ function PlaygroundDemo() {
             onSelect={setActive}
             songs={SONGS}
             collections={COLLECTIONS}
+            libraryEntries={LIBRARY}
             onNewSong={() => setLast('New song')}
             onImportSong={() => setLast('Import song')}
             collapsed={collapsed}

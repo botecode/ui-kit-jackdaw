@@ -17,6 +17,14 @@
 // `tone="surface"` calm-paper face (warm light field, hairline keyline, ink text)
 // rather than the default dark `--stage` well — that recessed trench is hardware-
 // control vocabulary, and would read as a dark bar dropped onto the paper rail.
+//
+// Pinned library entries (e.g. "Lyrics") are top-level destinations, not content:
+// they ride in the Home group, share Home's row vocabulary (same accent spine when
+// active, same roving nav via [data-nav-row]), and — unlike songs/collections — are
+// NEVER hidden by the search filter. The consumer supplies the data (id, label, and
+// which Phosphor icon); the rail renders the glyph at its own size/weight so the
+// column stays uniform. That keeps the sidebar a calm, content-first index page:
+// the host adds a section by passing data, never by reaching into the kit.
 
 import { useId, useMemo, useRef } from 'react'
 import {
@@ -25,7 +33,9 @@ import {
   MagnifyingGlass,
   Plus,
   DownloadSimple,
+  BookmarkSimple,
 } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
 import { TextField } from '../TextField'
 import styles from './WorkspaceSidebar.module.css'
 
@@ -42,6 +52,17 @@ export interface WorkspaceCollection {
   title: string
 }
 
+/** A pinned library destination — a top-level nav row like Home (e.g. "Lyrics").
+ *  `icon` is the song-row's lead glyph: data (which Phosphor icon), not styling —
+ *  the kit renders it at the rail's own size/weight so the column stays uniform.
+ *  Selecting one fires `onSelect(id)`; the host routes to its library page. */
+export interface LibraryEntry {
+  id:    string
+  label: string
+  /** A Phosphor icon component. Absent → a neutral pinned-bookmark glyph. */
+  icon?: Icon
+}
+
 export interface WorkspaceSidebarProps {
   /** Search query (controlled). When set, the visible songs + collections are
    *  filtered by it locally AND `onSearch` echoes each keystroke to the host. */
@@ -52,6 +73,10 @@ export interface WorkspaceSidebarProps {
   onSelect:      (id: string) => void
   songs:         WorkspaceSong[]
   collections:   WorkspaceCollection[]
+  /** Pinned library destinations rendered with Home, near the top — top-level
+   *  pages beyond songs (e.g. "Lyrics"). The host adds sections here without a
+   *  kit change; selecting one routes via `onSelect(id)`. */
+  libraryEntries?: LibraryEntry[]
   onNewSong:     () => void
   onImportSong:  () => void
   /** Icon-only narrow rail. Hides the search field + group labels; rows keep
@@ -128,6 +153,7 @@ export function WorkspaceSidebar({
   onSelect,
   songs,
   collections,
+  libraryEntries = [],
   onNewSong,
   onImportSong,
   collapsed = false,
@@ -146,8 +172,9 @@ export function WorkspaceSidebar({
     [collections, query],
   )
 
-  // Roving Arrow/Home/End across every nav row (Home + songs + collections).
-  // The footer actions are reached by Tab — they aren't part of the list.
+  // Roving Arrow/Home/End across every nav row (Home + library entries + songs
+  // + collections) — driven by the shared [data-nav-row] set, so new pinned rows
+  // join automatically. The footer actions are reached by Tab — not in the list.
   function handleRowKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
     const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End']
     if (!keys.includes(e.key)) return
@@ -191,8 +218,9 @@ export function WorkspaceSidebar({
       )}
 
       <div ref={navRef} className={styles.scroll}>
-        {/* Home — pinned, ungrouped. */}
-        <ul className={styles.group} role="list" aria-label="Home">
+        {/* Pinned — Home + any library destinations (e.g. Lyrics), ungrouped.
+            These are fixed pages, not content, so search never filters them out. */}
+        <ul className={styles.group} role="list" aria-label="Pinned">
           <Row
             id={HOME_ID}
             label="Home"
@@ -202,6 +230,21 @@ export function WorkspaceSidebar({
             onKeyDown={handleRowKeyDown}
             lead={<House size={18} weight="regular" aria-hidden />}
           />
+          {libraryEntries.map(entry => {
+            const EntryIcon = entry.icon ?? BookmarkSimple
+            return (
+              <Row
+                key={entry.id}
+                id={entry.id}
+                label={entry.label}
+                isActive={active === entry.id}
+                collapsed={collapsed}
+                onSelect={onSelect}
+                onKeyDown={handleRowKeyDown}
+                lead={<EntryIcon size={18} weight="regular" aria-hidden />}
+              />
+            )
+          })}
         </ul>
 
         {/* Songs. */}

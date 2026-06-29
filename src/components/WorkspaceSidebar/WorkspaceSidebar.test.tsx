@@ -2,8 +2,13 @@
 import { readFileSync } from 'node:fs'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
+import { TextAa } from '@phosphor-icons/react'
 import { WorkspaceSidebar, HOME_ID } from './WorkspaceSidebar'
-import type { WorkspaceSong, WorkspaceCollection } from './WorkspaceSidebar'
+import type {
+  WorkspaceSong,
+  WorkspaceCollection,
+  LibraryEntry,
+} from './WorkspaceSidebar'
 
 // Vitest stubs CSS (css:false), so we read the authored stylesheet directly to
 // lock the CALM PAPER decision at its source: the sidebar paints on --rail-bg
@@ -210,6 +215,64 @@ describe('WorkspaceSidebar — keyboard', () => {
     last.focus()
     fireEvent.keyDown(last, { key: 'Home' })
     expect(screen.getByRole('button', { name: 'Home' })).toHaveFocus()
+  })
+})
+
+// ── Library entries (pinned nav rows) ───────────────────────────────────────────
+
+const LIBRARY: LibraryEntry[] = [
+  { id: 'lyrics', label: 'Lyrics', icon: TextAa },
+]
+
+describe('WorkspaceSidebar — library entries', () => {
+  it('renders a pinned library entry as a nav row', () => {
+    setup({ libraryEntries: LIBRARY })
+    expect(screen.getByRole('button', { name: 'Lyrics' })).toBeInTheDocument()
+  })
+
+  it('fires onSelect with the entry id when a library entry is clicked', () => {
+    const { onSelect } = setup({ libraryEntries: LIBRARY })
+    fireEvent.click(screen.getByRole('button', { name: 'Lyrics' }))
+    expect(onSelect).toHaveBeenCalledWith('lyrics')
+  })
+
+  it('highlights the active library entry with aria-current="page"', () => {
+    setup({ libraryEntries: LIBRARY, active: 'lyrics' })
+    expect(screen.getByRole('button', { name: 'Lyrics' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Home' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('participates in arrow-key roving nav: Home → Lyrics → first song', () => {
+    setup({ libraryEntries: LIBRARY })
+    const home = screen.getByRole('button', { name: 'Home' })
+    home.focus()
+    fireEvent.keyDown(home, { key: 'ArrowDown' })
+    const lyrics = screen.getByRole('button', { name: 'Lyrics' })
+    expect(lyrics).toHaveFocus()
+    fireEvent.keyDown(lyrics, { key: 'ArrowDown' })
+    expect(screen.getByRole('button', { name: 'Paper Boats' })).toHaveFocus()
+  })
+
+  it('renders without an icon prop (falls back to a default lead)', () => {
+    setup({ libraryEntries: [{ id: 'notebook', label: 'Notebook' }] })
+    expect(screen.getByRole('button', { name: 'Notebook' })).toBeInTheDocument()
+  })
+
+  it('keeps pinned entries visible while searching (they are not content)', () => {
+    setup({ libraryEntries: LIBRARY, query: 'zzzzz' })
+    // Songs/collections filter out, but the pinned Lyrics destination stays.
+    expect(screen.getByRole('button', { name: 'Lyrics' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Paper Boats' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the entry accessible name when collapsed', () => {
+    setup({ libraryEntries: LIBRARY, collapsed: true })
+    expect(screen.getByRole('button', { name: 'Lyrics' })).toBeInTheDocument()
+  })
+
+  it('renders no extra rows when libraryEntries is omitted (default empty)', () => {
+    setup()
+    expect(screen.queryByRole('button', { name: 'Lyrics' })).not.toBeInTheDocument()
   })
 })
 

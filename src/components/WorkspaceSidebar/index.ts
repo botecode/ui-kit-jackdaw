@@ -4,4 +4,5 @@ export type {
   WorkspaceSidebarProps,
   WorkspaceSong,
   WorkspaceCollection,
+  LibraryEntry,
 } from './WorkspaceSidebar'
