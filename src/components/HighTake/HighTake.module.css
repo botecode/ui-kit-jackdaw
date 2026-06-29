@@ -1,0 +1,216 @@
+/* src/components/HighTake/HighTake.module.css */
+
+/* ─── Root ────────────────────────────────────────────────────────────────── */
+
+.root {
+  --ht-track-h: 80px;
+  --ht-handle-overhang: 7px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  font-family: var(--font-ui);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.root[data-size='sm'] {
+  --ht-track-h: 52px;
+  --ht-handle-overhang: 5px;
+}
+
+/* ─── Label strip ─────────────────────────────────────────────────────────── */
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Waveform track — flat recessed well ────────────────────────────────────
+   A calm groove the take sits in: token surface + hairline keyline + a faint
+   inner shadow so it reads recessed without a bevel. Overflow visible so the
+   handle overhang can bleed past the top/bottom edges.                        */
+
+.waveform {
+  position: relative;
+  width: 100%;
+  height: var(--ht-track-h);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  box-shadow:
+    inset 0 0 0 1px var(--border),
+    inset 0 1px 3px color-mix(in srgb, black 22%, transparent);
+}
+
+/* ─── Waveform SVG ───────────────────────────────────────────────────────────  */
+
+.wave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  /* clip the lit/dim paths to the rounded well */
+  border-radius: var(--radius);
+}
+
+/* Whole take, drawn as quiet ink — the trimmed-off audio reads present but muted. */
+.waveBase {
+  fill: var(--text);
+  opacity: 0.26;
+}
+
+/* Kept span, redrawn in the accent at full presence (clipped to the kept range). */
+.waveKept {
+  fill: var(--accent);
+  opacity: 0.92;
+}
+
+/* ─── Kept-span tint band ─────────────────────────────────────────────────────
+   A soft accent wash behind the lit waveform so the kept range reads as the
+   live selection.                                                              */
+
+.kept {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow:
+    inset 1px 0 0 color-mix(in srgb, var(--accent) 45%, transparent),
+    inset -1px 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+  pointer-events: none;
+}
+
+/* ─── Trimmed-off scrims ──────────────────────────────────────────────────────
+   A faint wash over the discarded ends — dims the audio in place (not removed),
+   the universal "this part is being cut" read.                                 */
+
+.trimScrim {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+  pointer-events: none;
+}
+
+.trimScrim[data-side='start'] { left: 0; }
+
+/* ─── Handle group ──────────────────────────────────────────────────────────── */
+
+.handleGroup {
+  position: absolute;
+  inset: 0;
+}
+
+/* ─── Boundary handle ─────────────────────────────────────────────────────────
+   Wide transparent hit zone centred on the boundary; the visible grip is a
+   slim vertical bar that overhangs the well top and bottom so it reads as a
+   physical thing you can pinch.                                                */
+
+.handle {
+  position: absolute;
+  top: calc(-1 * var(--ht-handle-overhang));
+  bottom: calc(-1 * var(--ht-handle-overhang));
+  width: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 2;
+  border-radius: 4px;
+}
+
+.handle[aria-disabled] { cursor: default; }
+
+.handle:focus-visible {
+  outline: none;
+}
+
+.handle:focus-visible .grip {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--accent);
+}
+
+/* The visible bar — a slim accent rule with a centred knurl. */
+.grip {
+  position: relative;
+  width: 4px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 1px 2px color-mix(in srgb, black 35%, transparent);
+  /* widen on hover/drag via transform (no layout thrash). */
+  transform-origin: center;
+  transition: transform var(--dur-base) ease, background var(--dur-base) ease;
+}
+
+/* Knurl — three hairlines in the cap, the "grippable" cue. */
+.grip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  background-image: repeating-linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent-contrast) 70%, transparent) 0,
+    color-mix(in srgb, var(--accent-contrast) 70%, transparent) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border-radius: 1px;
+}
+
+.handle:hover .grip,
+.handle[data-dragging] .grip {
+  transform: scaleX(1.4);
+  background: color-mix(in srgb, var(--accent) 88%, white);
+}
+
+/* ─── Save row — anchored under the kept span ────────────────────────────────── */
+
+/* Reserve the Button's own height so the absolutely-centred anchor doesn't
+   overlap whatever follows the take. Mirrors Button's md/sm heights. */
+.saveRow {
+  position: relative;
+  height: 36px;
+}
+
+.root[data-size='sm'] .saveRow {
+  height: 28px;
+}
+
+.saveAnchor {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  transition: left var(--dur-base) ease;
+}
+
+/* ─── Disabled ────────────────────────────────────────────────────────────────── */
+
+.root[data-disabled] .waveform {
+  opacity: 0.5;
+}
+
+.root[data-disabled] .handle {
+  pointer-events: none;
+}
+
+/* ─── Empty (no peaks) ─────────────────────────────────────────────────────────
+   No audio to keep — the kept wash and lit waveform read as a flat baseline. */
+
+.root[data-empty] .waveKept {
+  opacity: 0.4;
+}
