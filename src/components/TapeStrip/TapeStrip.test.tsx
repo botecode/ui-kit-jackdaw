@@ -67,11 +67,52 @@ function setup(overrides: Partial<TapeStripProps> = {}) {
 // ─── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('TapeStrip', () => {
-  it('renders one lane per track', () => {
+  it('renders a fixed lane grid (default 10) with tracks filling top-down', () => {
     const { getAllByTestId } = setup()
     const lanes = getAllByTestId('tape-lane')
-    expect(lanes).toHaveLength(TRACKS.length)
-    expect(lanes.map(l => l.dataset.trackId)).toEqual(['guitar', 'bass', 'drums'])
+    expect(lanes).toHaveLength(10)
+    // First N lanes are the tracks, in order; the rest are empty.
+    expect(lanes.filter(l => l.dataset.trackId).map(l => l.dataset.trackId)).toEqual([
+      'guitar',
+      'bass',
+      'drums',
+    ])
+    expect(lanes.filter(l => l.hasAttribute('data-empty-lane'))).toHaveLength(7)
+  })
+
+  it('respects a custom laneCount', () => {
+    const { getAllByTestId } = setup({ laneCount: 6 })
+    expect(getAllByTestId('tape-lane')).toHaveLength(6)
+  })
+
+  it('extends the grid when there are more tracks than laneCount', () => {
+    const many: TapeTrack[] = Array.from({ length: 12 }, (_, i) => ({
+      id: `t${i}`,
+      color: 'var(--chroma-blue)',
+      clips: [],
+    }))
+    const { getAllByTestId } = setup({ tracks: many })
+    expect(getAllByTestId('tape-lane')).toHaveLength(12)
+  })
+
+  it('keeps the lane count constant as the track count changes (constant height)', () => {
+    const { getAllByTestId, rerender, props } = setup({ tracks: [] })
+    expect(getAllByTestId('tape-lane')).toHaveLength(10)
+    rerender(<TapeStrip {...props} tracks={[TRACKS[0]]} />)
+    expect(getAllByTestId('tape-lane')).toHaveLength(10)
+    rerender(<TapeStrip {...props} tracks={TRACKS} />)
+    expect(getAllByTestId('tape-lane')).toHaveLength(10)
+  })
+
+  it('lights a colored pill per track and a neutral pill for each empty lane', () => {
+    const { getAllByTestId } = setup() // 3 tracks → 10 lanes
+    const pills = getAllByTestId('tape-lane-pill')
+    expect(pills).toHaveLength(10)
+    expect(pills.filter(p => !p.hasAttribute('data-neutral'))).toHaveLength(3)
+    expect(pills.filter(p => p.hasAttribute('data-neutral'))).toHaveLength(7)
+    // The colored pills sit on the track-backed lanes, which carry --lane-color.
+    const tracked = getAllByTestId('tape-lane').filter(l => l.dataset.trackId)
+    expect(tracked[0].style.getPropertyValue('--lane-color')).toBe('var(--chroma-blue)')
   })
 
   it('renders each track\'s clips in the track colour', () => {
@@ -116,12 +157,17 @@ describe('TapeStrip', () => {
     lanes.forEach(l => expect(l.getAttribute('aria-pressed')).toBeNull())
   })
 
-  it('selectable lanes are real buttons', () => {
+  it('track-backed lanes are real buttons; empty lanes are inert (non-interactive)', () => {
     const { container } = setup()
-    within(container).getAllByTestId('tape-lane').forEach(l => expect(l.tagName).toBe('BUTTON'))
+    container.querySelectorAll('[data-track-id]').forEach(l => expect(l.tagName).toBe('BUTTON'))
+    container.querySelectorAll('[data-empty-lane]').forEach(l => {
+      expect(l.tagName).toBe('DIV')
+      expect(l.querySelector('button')).toBeNull()
+      expect(l.getAttribute('aria-hidden')).toBe('true')
+    })
   })
 
-  it('without onSelectTrack, lanes are display-only (no dead affordance)', () => {
+  it('without onSelectTrack, track lanes are display-only (no dead affordance)', () => {
     const { container } = render(
       <TapeStrip
         tracks={TRACKS}
@@ -135,7 +181,7 @@ describe('TapeStrip', () => {
         selection={null}
       />,
     )
-    within(container).getAllByTestId('tape-lane').forEach(l => {
+    container.querySelectorAll('[data-track-id]').forEach(l => {
       expect(l.tagName).toBe('DIV')
       expect(l.hasAttribute('data-static')).toBe(true)
       expect(l.getAttribute('role')).toBe('img')
@@ -201,10 +247,14 @@ describe('TapeStrip', () => {
     expect(getByTestId('tape-marker-strip').getAttribute('role')).toBeNull()
   })
 
-  it('renders an empty state with no lanes when there are no tracks', () => {
-    const { getByTestId, queryAllByTestId } = setup({ tracks: [] })
-    expect(getByTestId('tape-empty')).toBeInTheDocument()
-    expect(queryAllByTestId('tape-lane')).toHaveLength(0)
+  it('renders an all-neutral fixed grid when there are no tracks (no collapse)', () => {
+    const { getAllByTestId, queryByTestId } = setup({ tracks: [] })
+    const lanes = getAllByTestId('tape-lane')
+    expect(lanes).toHaveLength(10)
+    expect(lanes.every(l => l.hasAttribute('data-empty-lane'))).toBe(true)
+    expect(getAllByTestId('tape-lane-pill').every(p => p.hasAttribute('data-neutral'))).toBe(true)
+    // The old "No tracks" empty state is gone — 0 tracks is just a neutral grid.
+    expect(queryByTestId('tape-empty')).toBeNull()
   })
 
   it('always renders the playhead (functional motion, kept under reduced motion)', () => {

@@ -5,6 +5,9 @@
 
 .root {
   --tape-marker-h: 18px;
+  /* Left gutter holding each lane's color-pill; the ruler, markers, clips, and
+     overlays all start after it so the one time→x origin is preserved. */
+  --tape-gutter: 16px;
 
   position: relative;
   width: 100%;
@@ -17,6 +20,7 @@
 
 .root[data-size='sm'] {
   --tape-marker-h: 14px;
+  --tape-gutter: 12px;
 }
 
 /* Horizontal scroll — the tape can run longer than the studio viewport. */
@@ -27,13 +31,16 @@
 
 .content {
   position: relative;
+  width: calc(var(--tape-width) + var(--tape-gutter));
   min-width: 100%;
 }
 
 /* ─── Ruler ──────────────────────────────────────────────────────────────────
-   The ruler brings its own bar ink; a hairline seats it onto the tape ground.  */
+   The ruler brings its own bar ink; a hairline seats it onto the tape ground.
+   padding-left clears the pill gutter so the bar ink aligns with the clips.     */
 .ruler {
   position: relative;
+  padding-left: var(--tape-gutter);
   border-bottom: 1px solid var(--border);
 }
 
@@ -54,6 +61,12 @@
 .markerStrip[data-addable]:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+
+/* Time band — offset past the pill gutter so flags share the clips' x origin. */
+.markerStripInner {
+  position: absolute;
+  inset: 0 0 0 var(--tape-gutter);
 }
 
 .marker {
@@ -77,17 +90,15 @@
   cursor: grabbing;
 }
 
-/* Triangular flag tab at the top of the stem. */
+/* Triangular flag tab at the top of the stem (clip-path glyph, not a border edge). */
 .markerFlag {
   position: absolute;
   top: 1px;
   left: 0;
-  width: 0;
-  height: 0;
-  border-left: 5px solid var(--border-strong);
-  border-top: 5px solid var(--border-strong);
-  border-right: 5px solid transparent;
-  border-bottom: 5px solid transparent;
+  width: 9px;
+  height: 9px;
+  background: var(--border-strong);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
 /* Hairline stem dropping toward the lanes. */
@@ -116,8 +127,8 @@
 }
 
 /* One thin read-only lane. Selectable → <button> reset to a flush block.
-   Track identity is carried by the clips (rendered in the track colour) and, when
-   open, a faint colour wash — not a side accent bar.                             */
+   Track identity is carried by the gutter pill + the clips (in the track colour)
+   and, when open, a faint colour wash — not a side accent bar.                   */
 .lane {
   position: relative;
   display: block;
@@ -134,6 +145,26 @@
   color: inherit;
   cursor: pointer;
   transition: background var(--dur-150, 150ms) ease;
+}
+
+/* Color-pill — a small rounded colour indicator seated in the left gutter. A
+   track-backed lane lights it in its own colour (--lane-color); an empty lane
+   leaves --lane-color unset, so it falls back to a calm border token.           */
+.lanePill {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 52%;
+  border-radius: 99px;
+  background: var(--lane-color, var(--border-strong));
+}
+
+/* The clip strip — offset past the gutter so clip x=0 aligns with ruler/playhead. */
+.clipArea {
+  position: absolute;
+  inset: 0 0 0 var(--tape-gutter);
 }
 
 .lane[data-static] {
@@ -157,7 +188,8 @@
 }
 
 /* ─── Clips — compact, NON-interactive pictures of audio ─────────────────────
-   pointer-events:none so every click falls through to the lane (= select track). */
+   Fills the clip strip; pointer-events:none so every click falls through to the
+   lane (= select track).                                                         */
 .clipsLayer {
   position: absolute;
   inset: 0;
@@ -172,28 +204,13 @@
   pointer-events: none;
 }
 
-/* ─── Empty state ────────────────────────────────────────────────────────────*/
-.emptyState {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(var(--lane-height) * 2);
-  background: var(--arrange-bg);
-}
-
-.emptyMessage {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
-}
-
 /* ─── Shared overlay layer ───────────────────────────────────────────────────
-   Spans the full lane stack. pointer-events:none here; the punch region opts its
-   own children back in. Playhead carries its own z-index band (50).             */
+   Spans the full lane stack, offset past the gutter so the playhead/punch share
+   the clips' x origin. pointer-events:none here; the punch region opts its own
+   children back in. Playhead carries its own z-index band (50).                  */
 .overlayLayer {
   position: absolute;
-  inset: 0;
+  inset: 0 0 0 var(--tape-gutter);
   pointer-events: none;
   z-index: 20;
 }

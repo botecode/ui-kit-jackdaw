@@ -75,6 +75,22 @@ const TRACKS: TapeTrack[] = [
   },
 ]
 
+// A full 10-track session — proves the grid stays the same height whether it
+// holds 0, a few, or all ten tracks.
+const PALETTE = [
+  'var(--chroma-blue)', 'var(--chroma-green)', 'var(--chroma-purple)', 'var(--chroma-orange)',
+  'var(--chroma-teal)', 'var(--chroma-yellow)', 'var(--chroma-red)', 'var(--chroma-blue)',
+  'var(--chroma-green)', 'var(--chroma-purple)',
+]
+const FULL_TRACKS: TapeTrack[] = PALETTE.map((color, i) => ({
+  id: `track-${i + 1}`,
+  color,
+  clips: [
+    { clipId: `c${i}a`, startSeconds: bar(1), lengthSeconds: bar(3) - bar(1), peaks: W_GTR },
+    { clipId: `c${i}b`, startSeconds: bar(4), lengthSeconds: bar(6) - bar(4), peaks: W_BASS },
+  ],
+}))
+
 const MARKERS: AnnotationItem[] = [
   { id: 'm1', start: bar(1), text: 'Intro' },
   { id: 'm2', start: bar(3), text: 'Verse' },
@@ -218,10 +234,13 @@ export default function TapeStripDemo() {
     <DemoShell meta={meta}>
       <p style={{ color: 'var(--text-muted)', maxWidth: 640, lineHeight: 1.5 }}>
         The slim, read-only <strong>tape</strong> that rides on top of the studio view — a map you
-        read and navigate, never an edit surface. Thin lanes (one per track) show clips as compact
-        pictures of audio in the track's colour; clicking a lane is the doorway to that track's
-        drilldown. The single accent is reserved for the playhead, the punch region, and the
-        markers. No clip drag, trim, fade, or split anywhere.
+        read and navigate, never an edit surface. A <strong>fixed lane grid</strong> (default 10
+        lanes) keeps the tape the same height no matter how many tracks exist: the first N lanes
+        carry the tracks (a colour-pill in the track's colour + its clips), the rest sit empty
+        (a neutral pill). Adding a track lights the next lane's pill — the height never grows.
+        Clicking a track-backed lane is the doorway to that track's drilldown; empty lanes are
+        inert. The single accent is reserved for the playhead, the punch region, and the markers.
+        No clip drag, trim, fade, or split anywhere.
       </p>
 
       <h2 style={{ font: 'var(--font-ui)', fontSize: 14, marginTop: 8 }}>Live</h2>
@@ -249,11 +268,25 @@ export default function TapeStripDemo() {
         <State label="no markers">
           <StaticTape markers={[]} />
         </State>
-        <State label="empty (no tracks)">
+      </StatesGrid>
+
+      {/* ── Fixed lane grid: same height at 0, a few, and a full 10 tracks ── */}
+      <h2 style={{ font: 'var(--font-ui)', fontSize: 14, marginTop: 8 }}>
+        Constant height — 0, a few, full 10
+      </h2>
+      <p style={{ color: 'var(--text-muted)', maxWidth: 640, lineHeight: 1.5, fontSize: 13 }}>
+        The grid is the same height across all three — empty lanes show a neutral pill; the tape
+        never grows as tracks are added.
+      </p>
+      <StatesGrid>
+        <State label="0 tracks (all neutral)">
           <StaticTape tracks={[]} markers={[]} />
         </State>
-        <State label="single track">
-          <StaticTape tracks={[TRACKS[0]]} />
+        <State label="a few (mixed)">
+          <StaticTape tracks={[TRACKS[0]]} markers={[]} />
+        </State>
+        <State label="full (10 tracks)">
+          <StaticTape tracks={FULL_TRACKS} markers={[]} />
         </State>
       </StatesGrid>
 
