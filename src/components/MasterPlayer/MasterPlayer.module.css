@@ -1,0 +1,364 @@
+/* src/components/MasterPlayer/MasterPlayer.module.css */
+
+/* ─── Root — a warm paper card (Home register, NOT the dark --stage well) ────── */
+
+.root {
+  --mp-cover: 72px;
+  --mp-accent: var(--accent);
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border-radius: calc(var(--radius) + 2px);
+  background-color: var(--surface);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  border: 1px solid var(--border);
+  /* Hairline top-highlight + soft seated shadow — crafted, quiet, not a flat web pill. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 6px 16px rgba(0, 0, 0, 0.07);
+  color: var(--text);
+  font-family: var(--font-ui);
+  isolation: isolate;
+}
+
+.root[data-size="sm"] { --mp-cover: 56px; gap: var(--space-3); padding: var(--space-2); }
+
+.root[data-disabled] { opacity: 0.5; }
+.root[data-disabled] .cover,
+.root[data-disabled] .track { pointer-events: none; }
+
+/* ─── Cover ──────────────────────────────────────────────────────────────────── */
+
+.cover {
+  position: relative;
+  flex: none;
+  width: var(--mp-cover);
+  height: var(--mp-cover);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: var(--surface-2);
+  /* Sunk into a recessed frame — the art sits IN the card, not on it. */
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.10),
+    inset 0 1px 3px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  outline: none;
+  display: grid;
+  place-items: center;
+}
+
+.cover[data-static] { cursor: default; }
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.coverPlaceholder {
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+}
+
+/* Hover affordance — a soft scrim + pencil, only on the interactive cover. */
+.coverHover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--accent-contrast, #fff);
+  background: color-mix(in srgb, var(--stage) 52%, transparent);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+button.cover:hover .coverHover,
+button.cover:focus-visible .coverHover { opacity: 1; }
+
+button.cover:focus-visible {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.10),
+    0 0 0 2px var(--surface),
+    0 0 0 4px color-mix(in srgb, var(--mp-accent) 70%, transparent);
+}
+
+button.cover:active { transform: translateY(0.5px); }
+
+/* ─── Body ───────────────────────────────────────────────────────────────────── */
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-md);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.root[data-size="sm"] .title { font-size: var(--text-base); }
+.root[data-empty] .title { color: var(--text-dim); font-style: italic; font-weight: var(--weight-medium); }
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status line (rendering / error) — mono readout register, picks up tone. */
+.subtitle[data-status] {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+}
+.root[data-rendering] .subtitle[data-status] { color: var(--text-muted); }
+.root[data-error] .subtitle[data-status] { color: var(--danger); }
+
+/* ─── Progress groove ────────────────────────────────────────────────────────── */
+
+.track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  /* Pressed-in groove on paper. */
+  background-color: var(--surface-2);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+  margin: var(--space-1) 0;
+}
+
+.root[data-size="sm"] .track { height: 5px; }
+
+.trackFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background-color: var(--mp-accent);
+  /* The width IS the engine-reported position — rendered, not tweened (the
+     player shows authoritative state, it doesn't animate its own playhead). The
+     consumer drives positionSeconds at transport rate, so no layout transition. */
+}
+
+/* Rolling: the fill gets a faint incandescent bloom (state-carrying → kept under
+   reduced-motion). */
+.root[data-playing] .trackFill {
+  box-shadow: 0 0 6px color-mix(in srgb, var(--mp-accent) 45%, transparent);
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 2px solid var(--mp-accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%) scale(0.62);
+  opacity: 0;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+
+.track:hover .thumb,
+.track:focus-visible .thumb,
+.root[data-playing] .thumb { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+.track:focus-visible {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.22),
+    0 0 0 2px var(--surface),
+    0 0 0 4px color-mix(in srgb, var(--mp-accent) 65%, transparent);
+}
+
+.track[aria-disabled] { cursor: default; }
+
+/* Indeterminate (rendering / not ready): a flat dim groove with a slow barber
+   sweep. Decorative → snaps to a static flat track under reduced-motion. */
+.root[data-rendering] .track,
+.root[data-error] .track { cursor: default; }
+
+.root[data-rendering] .track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--mp-accent) 32%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: mp-render 1400ms linear infinite;
+}
+
+@keyframes mp-render {
+  from { background-position: -40% 0; }
+  to   { background-position: 140% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-rendering] .track::after {
+    animation: none;
+    background: color-mix(in srgb, var(--mp-accent) 20%, transparent);
+    background-size: auto;
+  }
+}
+
+/* ─── Times ──────────────────────────────────────────────────────────────────── */
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.timeRemaining { color: var(--text-dim); }
+
+/* ─── Transport row ──────────────────────────────────────────────────────────── */
+
+.transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+/* Skip buttons — quiet ghost controls on paper. */
+.skip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.root[data-size="sm"] .skip { width: 30px; height: 30px; }
+
+.skip:hover:not(:disabled) {
+  color: var(--text);
+  background-color: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.skip:active:not(:disabled) { transform: translateY(0.5px); }
+
+.skip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mp-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.skip:disabled { opacity: 0.32; cursor: default; }
+
+/* Play/pause — the hero. The one accent: a solid lit disc. */
+.play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--mp-accent);
+  color: var(--accent-contrast, #fff);
+  cursor: pointer;
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 3px 8px color-mix(in srgb, var(--mp-accent) 28%, transparent);
+  transition:
+    filter var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.root[data-size="sm"] .play { width: 38px; height: 38px; }
+
+.play:hover:not(:disabled) { filter: brightness(1.06); }
+
+.play:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+/* Rolling — incandescent bloom, fast attack (the slow decay lives on .play base). */
+.root[data-playing] .play {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 0 0 1px color-mix(in srgb, var(--mp-accent) 60%, transparent),
+    0 4px 14px color-mix(in srgb, var(--mp-accent) 48%, transparent);
+  transition:
+    filter var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.play:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mp-accent) 70%, transparent);
+  outline-offset: 3px;
+}
+
+.play:disabled {
+  cursor: default;
+  background-color: var(--surface-2);
+  color: var(--text-dim);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    inset 0 1px 2px rgba(0, 0, 0, 0.12);
+}

@@ -104,6 +104,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   IdeasLibrary: ['app', 'daw'],
   ImportFirst: ['app', 'daw'],
   LyricCRUD: ['app', 'daw'],
+  MasterPlayer: ['app', 'daw'], // Home's song-card / collection master mini-player — in-product, plays the rendered master
   VoiceIdeaCRUD: ['app', 'daw'],
   IncomingManifest: ['app', 'daw'],
   IncomingShare: ['app'],
