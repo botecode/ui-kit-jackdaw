@@ -134,6 +134,93 @@ describe('htmlToMarkdown', () => {
   })
 })
 
+// ─── Embeds: a link on its own line renders inline ────────────────────────────
+
+describe('markdownToHtml embeds', () => {
+  const YT = 'https://youtu.be/dQw4w9WgXcQ'
+
+  it('renders a bare YouTube line as an official embed iframe', () => {
+    const html = markdownToHtml(YT)
+    expect(html).toContain('data-embed="youtube"')
+    expect(html).toContain('<iframe')
+    expect(html).toContain('src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"')
+    // carries the original line so it round-trips as plain text
+    expect(html).toContain(`data-embed-url="${YT}"`)
+  })
+
+  it('never requests autoplay on the embed (reduced-motion / no autoplay)', () => {
+    expect(markdownToHtml(YT)).not.toContain('autoplay')
+  })
+
+  it('makes the embed widget non-editable inside the contenteditable surface', () => {
+    expect(markdownToHtml(YT)).toContain('contenteditable="false"')
+  })
+
+  it('renders a Spotify line as the Spotify embed iframe', () => {
+    const html = markdownToHtml('https://open.spotify.com/track/abc123')
+    expect(html).toContain('data-embed="spotify"')
+    expect(html).toContain('src="https://open.spotify.com/embed/track/abc123"')
+  })
+
+  it('renders a generic web link as a card, not an iframe', () => {
+    const html = markdownToHtml('https://example.com/article')
+    expect(html).toContain('data-embed="link"')
+    expect(html).not.toContain('<iframe')
+    expect(html).toContain('example.com')
+  })
+
+  it('renders an image url inline as an <img>', () => {
+    const html = markdownToHtml('https://ex.com/cover.png')
+    expect(html).toContain('data-embed="image"')
+    expect(html).toContain('<img')
+    expect(html).toContain('src="https://ex.com/cover.png"')
+  })
+
+  it('renders a markdown image line as an inline image with its alt', () => {
+    const html = markdownToHtml('![Cover art](https://ex.com/cover.png)')
+    expect(html).toContain('data-embed="image"')
+    expect(html).toContain('alt="Cover art"')
+  })
+
+  it('leaves plain prose untouched (no embed)', () => {
+    expect(markdownToHtml('Just a note about the chorus')).toBe(
+      '<p>Just a note about the chorus</p>',
+    )
+  })
+
+  it('leaves an inline url inside prose untouched', () => {
+    const html = markdownToHtml('watch https://youtu.be/dQw4w9WgXcQ later')
+    expect(html).not.toContain('<iframe')
+    expect(html).toContain('<p>')
+  })
+
+  it('does not embed when embeds are disabled', () => {
+    const html = markdownToHtml(YT, { embeds: false })
+    expect(html).not.toContain('<iframe')
+    expect(html).toContain('<p>')
+  })
+
+  it('round-trips an embed widget back to the plain url line', () => {
+    const div = document.createElement('div')
+    div.innerHTML = markdownToHtml(YT)
+    expect(htmlToMarkdown(div)).toBe(YT)
+  })
+
+  it('round-trips a markdown image embed back to its markdown line', () => {
+    const md = '![Cover art](https://ex.com/cover.png)'
+    const div = document.createElement('div')
+    div.innerHTML = markdownToHtml(md)
+    expect(htmlToMarkdown(div)).toBe(md)
+  })
+
+  it('round-trips embeds mixed with prose', () => {
+    const md = `# Reference\n\nFeel of the verse:\n\n${YT}\n\nBack to writing.`
+    const div = document.createElement('div')
+    div.innerHTML = markdownToHtml(md)
+    expect(htmlToMarkdown(div)).toBe(md)
+  })
+})
+
 // ─── SongNotesEditor rendering ───────────────────────────────────────────────
 
 describe('SongNotesEditor rendering', () => {
@@ -223,6 +310,24 @@ describe('SongNotesEditor rendering', () => {
       />,
     )
     expect(getByText('Write something here')).toBeInTheDocument()
+  })
+
+  it('renders a sole-URL line as an inline embed by default', () => {
+    const { getByRole } = render(
+      <SongNotesEditor value="https://youtu.be/dQw4w9WgXcQ" onChange={noop} />,
+    )
+    const editor = getByRole('textbox')
+    expect(editor.querySelector('iframe')).toBeTruthy()
+    expect(editor.querySelector('iframe')?.getAttribute('src')).toContain(
+      'youtube-nocookie.com/embed/dQw4w9WgXcQ',
+    )
+  })
+
+  it('does not embed when embeds={false}', () => {
+    const { getByRole } = render(
+      <SongNotesEditor value="https://youtu.be/dQw4w9WgXcQ" onChange={noop} embeds={false} />,
+    )
+    expect(getByRole('textbox').querySelector('iframe')).toBeNull()
   })
 
   it('renders markdown value as HTML in the editor on mount', () => {

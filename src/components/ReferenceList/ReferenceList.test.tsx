@@ -25,7 +25,8 @@ describe('classify', () => {
     expect(youtubeId('https://youtube.com/shorts/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
     const c = classify('https://youtu.be/dQw4w9WgXcQ')
     expect(c.kind).toBe('youtube')
-    expect(c.embedUrl).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ')
+    // Privacy-enhanced official embed (shared render layer, src/lib/embeds.ts).
+    expect(c.embedUrl).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
     expect(c.thumbnail).toContain('dQw4w9WgXcQ')
   })
 
@@ -123,7 +124,7 @@ describe('ReferenceList', () => {
     fireEvent.click(getByLabelText(/^Play /))
     const frame = getByTitle(/player/i) as HTMLIFrameElement
     expect(frame.tagName).toBe('IFRAME')
-    expect(frame.src).toContain('youtube.com/embed/dQw4w9WgXcQ')
+    expect(frame.src).toContain('youtube-nocookie.com/embed/dQw4w9WgXcQ')
   })
 
   it('renders a web link card with the host', () => {

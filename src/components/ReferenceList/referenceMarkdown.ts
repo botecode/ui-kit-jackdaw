@@ -13,7 +13,15 @@
 // become a real player. Classification is pure + offline — no scraping (the app
 // layer enriches link cards via `meta`; absence is a graceful fallback).
 
-export type RefKind = 'youtube' | 'spotify' | 'image' | 'link' | 'file'
+// Classification + embed-src generation now live in the shared embed render layer
+// (src/lib/embeds.ts) so there is ONE implementation behind every markdown surface
+// — Notes, Lyrics, Chords/Tabs, References, Collection notes. ReferenceList keeps
+// its own card UI, but the url→kind/embedUrl logic is shared.
+import { classifyEmbed, youtubeId, spotifyPath, type EmbedKind } from '../../lib/embeds'
+
+export { youtubeId, spotifyPath }
+
+export type RefKind = EmbedKind
 
 export interface RefItem {
   /** Stable per-position id: `ref-${index}`. References are order-defined in markdown. */
@@ -31,49 +39,9 @@ export interface RefItem {
   thumbnail?: string
 }
 
-const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif|bmp)(\?.*)?$/i
-const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i
-const LOCAL_SCHEME = /^(file|asset|blob):/i
-
-/** Pull a YouTube video id out of the common url shapes. */
-export function youtubeId(url: string): string | null {
-  const m =
-    url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i)
-  return m ? m[1] : null
-}
-
-/** Pull a Spotify `{type}/{id}` path out of an open.spotify.com url. */
-export function spotifyPath(url: string): string | null {
-  const m = url.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album|playlist|episode|show|artist)\/([\w-]+)/i)
-  return m ? `${m[1]}/${m[2]}` : null
-}
-
 /** Classify a url into a card kind + any offline-derivable embed/thumbnail. */
 export function classify(url: string): Pick<RefItem, 'kind' | 'embedUrl' | 'thumbnail'> {
-  const yt = youtubeId(url)
-  if (yt) {
-    return {
-      kind: 'youtube',
-      embedUrl: `https://www.youtube.com/embed/${yt}`,
-      thumbnail: `https://i.ytimg.com/vi/${yt}/hqdefault.jpg`,
-    }
-  }
-
-  const sp = spotifyPath(url)
-  if (sp) {
-    return { kind: 'spotify', embedUrl: `https://open.spotify.com/embed/${sp}` }
-  }
-
-  if (IMAGE_EXT.test(url)) {
-    return { kind: 'image', thumbnail: url }
-  }
-
-  // No web scheme (or a local/asset/blob scheme) and it looks like a path → a file.
-  if ((!HAS_SCHEME.test(url) || LOCAL_SCHEME.test(url)) && /[^/]\.[a-z0-9]{1,8}(\?.*)?$/i.test(url)) {
-    return { kind: 'file' }
-  }
-
-  return { kind: 'link' }
+  return classifyEmbed(url)
 }
 
 const IMAGE_LINE = /^!\[([^\]]*)\]\(([^)]+)\)$/

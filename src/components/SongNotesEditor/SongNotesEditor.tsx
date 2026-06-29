@@ -12,6 +12,33 @@
 //
 // External value changes re-render innerHTML only when the editor is not focused,
 // avoiding cursor disruption during active editing.
+//
+// Why this isn't a webpage: a pasted link doesn't become a blue underline — it
+// becomes the thing itself, inline on the calm paper page. A YouTube/Spotify line
+// blooms into the official player, an image lands as a framed plate, a web link
+// settles into a tidy host-stamped tile. Yet the page is still just markdown
+// underneath: the url is STORED as plain text and round-trips losslessly (the embed
+// is a render enhancement, never a schema). This is the SHARED capability behind
+// every markdown surface (Notes, Lyrics, Chords/Tabs, References, Collection notes),
+// so the embed logic lives in one place: src/lib/embeds.ts (ReferenceList shares it).
+//
+// Design calls recorded here (headless, resolved against KIT-LEAD.md):
+// - Render = element generation, not loading. markdownToHtml emits the official embed
+//   iframe / link card / <img>; it never fetches. This keeps the feature fully
+//   unit-testable (tsc + vitest) without a network or a live iframe — the re-queue
+//   blocker. Playback needs the webview CSP to allow EMBED_FRAME_DOMAINS (a runtime
+//   shell flag), but that is NOT a build dependency; the markup is correct regardless.
+// - Embeds render as contenteditable="false" islands carrying data-embed-url, so the
+//   caret treats each as one atomic block and htmlToMarkdown emits the stored url —
+//   lossless round-trip. They appear on mount / external change (while blurred); a
+//   freshly typed url settles into an embed on the next blur, never mid-keystroke.
+// - YouTube uses youtube-nocookie.com (privacy-enhanced official embed). No `autoplay`
+//   in the iframe allow-list → honours reduced-motion / never autoplays.
+// - No scraping/oEmbed (out of scope): a web link is a best-effort host + url card;
+//   offline / unembeddable degrades to that same card. Favicon fetch deliberately
+//   omitted (a 3rd-party request fighting "calm paper" + CSP) — host stamp is enough.
+// - embeds defaults on; the editor API is otherwise unchanged, so every consumer gets
+//   embeds for free.
 
 import { useRef, useCallback, useEffect } from 'react'
 import { markdownToHtml, htmlToMarkdown } from './markdownParser'
@@ -23,6 +50,12 @@ export interface SongNotesEditorProps {
   placeholder?: string
   readOnly?: boolean
   disabled?: boolean
+  /**
+   * Render a link on its own line as an inline embed — a YouTube/Spotify player,
+   * an image, or a tidy link card. The markdown still stores the plain url, so the
+   * value round-trips as text. Default on; set false for a plain-text editor.
+   */
+  embeds?: boolean
   'aria-label'?: string
 }
 
@@ -32,10 +65,12 @@ export function SongNotesEditor({
   placeholder = 'Ideas, reminders, what you\'re going for…',
   readOnly = false,
   disabled = false,
+  embeds = true,
   'aria-label': ariaLabel = 'Song notes',
 }: SongNotesEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const lastMarkdownRef = useRef(value)
+  const lastEmbedsRef = useRef(embeds)
   const isFirstRender = useRef(true)
   const isComposingRef = useRef(false)
   // Stable ref so keyboard handlers don't re-create on every onChange change
@@ -49,17 +84,22 @@ export function SongNotesEditor({
 
     if (isFirstRender.current) {
       isFirstRender.current = false
-      el.innerHTML = markdownToHtml(value)
+      el.innerHTML = markdownToHtml(value, { embeds })
       lastMarkdownRef.current = value
       return
     }
 
-    // Only re-render for external changes (not our own onChange), and only when blurred
-    if (value !== lastMarkdownRef.current && el !== document.activeElement) {
+    // Re-render for external changes (not our own onChange) or an embeds toggle,
+    // and only when blurred so we never disrupt the cursor mid-edit.
+    if (
+      (value !== lastMarkdownRef.current || embeds !== lastEmbedsRef.current) &&
+      el !== document.activeElement
+    ) {
       lastMarkdownRef.current = value
-      el.innerHTML = markdownToHtml(value)
+      lastEmbedsRef.current = embeds
+      el.innerHTML = markdownToHtml(value, { embeds })
     }
-  }, [value])
+  }, [value, embeds])
 
   const emitMarkdown = useCallback(() => {
     const el = editorRef.current

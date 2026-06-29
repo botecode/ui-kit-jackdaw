@@ -69,6 +69,30 @@ The room has a weird flutter echo between 2kHz and 4kHz. Ask FOH to notch it. *D
 - Meet and greet: 30 min cap, no exceptions
 - Bus call: midnight`
 
+// A reference note: one of every embed kind, each on its own line. The markdown
+// still STORES the plain url — embeds are a render enhancement that round-trips.
+const FIXTURE_EMBEDS = `# Reference board
+
+Paste a link on its own line and it becomes the thing — a player, an image, a card.
+
+## The feel we're chasing
+
+https://youtu.be/dQw4w9WgXcQ
+
+## The reference mix
+
+https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT
+
+## Cover direction
+
+https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4.jpg
+
+## Read before the session
+
+https://en.wikipedia.org/wiki/Reverb
+
+Everything above is still plain markdown underneath — it round-trips as text.`
+
 // ── States grid ───────────────────────────────────────────────────────────────
 
 function StatesDemo() {
@@ -111,6 +135,19 @@ function StatesDemo() {
           disabled
         />
       </State>
+
+      <State label="Embeds — one of each kind">
+        <SongNotesEditor value={FIXTURE_EMBEDS} onChange={noop} aria-label="Reference board" />
+      </State>
+
+      <State label="Embeds off — same notes, plain links">
+        <SongNotesEditor
+          value={FIXTURE_EMBEDS}
+          onChange={noop}
+          embeds={false}
+          aria-label="Reference board (embeds off)"
+        />
+      </State>
     </StatesGrid>
   )
 }
@@ -118,9 +155,10 @@ function StatesDemo() {
 // ── Playground ────────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
-  const [value, setValue] = useState(FIXTURE_WITH_CONTENT)
+  const [value, setValue] = useState(FIXTURE_EMBEDS)
   const [readOnly, setReadOnly] = useState(false)
   const [disabled, setDisabled] = useState(false)
+  const [embeds, setEmbeds] = useState(true)
 
   return (
     <Playground>
@@ -139,6 +177,7 @@ function PlaygroundDemo() {
           onChange={setValue}
           readOnly={readOnly}
           disabled={disabled}
+          embeds={embeds}
           aria-label="Song notes playground"
         />
 
@@ -155,6 +194,12 @@ function PlaygroundDemo() {
             onChange={(next) => setDisabled(next)}
             size="sm"
             label="disabled"
+          />
+          <Toggle
+            checked={embeds}
+            onChange={(next) => setEmbeds(next)}
+            size="sm"
+            label="embeds"
           />
         </div>
 

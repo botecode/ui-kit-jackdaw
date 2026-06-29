@@ -1,11 +1,84 @@
 // src/components/SongNotesEditor/markdownParser.ts
 
+import { embedForLine, type LineEmbed } from '../../lib/embeds'
+
+export interface MarkdownToHtmlOptions {
+  /** Render a sole-URL line as an inline embed (player / card / image). Default true. */
+  embeds?: boolean
+}
+
 // Escapes HTML special characters in raw text content.
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+}
+
+// Escapes a value for use inside a double-quoted HTML attribute.
+function escapeAttr(text: string): string {
+  return escapeHtml(text).replace(/"/g, '&quot;')
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url.replace(/^[a-z]+:\/\//i, '').split('/')[0] || url
+  }
+}
+
+// Builds the inline embed widget for a sole-URL line. The widget is a single
+// contenteditable="false" island so the cursor can't land inside it, and it carries
+// `data-embed-url` = the original markdown line so it round-trips losslessly as text.
+// Element generation only — no loading. Players are the two OFFICIAL embed iframes
+// (YouTube-nocookie / Spotify); everything else is a calm link card or an image.
+function embedWidget(e: LineEmbed, line: string): string {
+  const dataUrl = escapeAttr(line.trim())
+  const open = (kind: string) =>
+    `<figure data-embed="${kind}" data-embed-url="${dataUrl}" contenteditable="false">`
+
+  if ((e.kind === 'youtube' || e.kind === 'spotify') && e.embedUrl) {
+    const title = e.kind === 'youtube' ? 'YouTube video player' : 'Spotify player'
+    // No `autoplay` in `allow` → honours reduced-motion / never autoplays.
+    return (
+      open(e.kind) +
+      `<iframe src="${escapeAttr(e.embedUrl)}" title="${escapeAttr(e.label || title)}" ` +
+      `loading="lazy" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" ` +
+      `allow="encrypted-media; clipboard-write; picture-in-picture" allowfullscreen></iframe>` +
+      `</figure>`
+    )
+  }
+
+  if (e.kind === 'image') {
+    const alt = e.label || hostOf(e.url)
+    return (
+      open('image') +
+      `<img src="${escapeAttr(e.url)}" alt="${escapeAttr(alt)}" loading="lazy">` +
+      `</figure>`
+    )
+  }
+
+  // Generic web link (and offline/unembeddable fallback): a tidy link card. No
+  // scraping here — best-effort host + the bare url, opened in the browser.
+  const host = hostOf(e.url)
+  const title = e.label || host
+  // A calm, bespoke link glyph (inline SVG — markdownToHtml is string-based, so it
+  // can't import the Phosphor React set). Single-weight, currentColor, on brand.
+  const glyph =
+    `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ` +
+    `stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">` +
+    `<path d="M9 15l6-6"/><path d="M11 6l1-1a4 4 0 0 1 6 6l-1 1"/>` +
+    `<path d="M13 18l-1 1a4 4 0 0 1-6-6l1-1"/></svg>`
+  return (
+    open('link') +
+    `<a href="${escapeAttr(e.url)}" target="_blank" rel="noopener noreferrer">` +
+    `<span data-embed-glyph aria-hidden="true">${glyph}</span>` +
+    `<span data-embed-text><span data-embed-title>${escapeHtml(title)}</span>` +
+    `<span data-embed-host>${escapeHtml(host)}</span></span>` +
+    `</a>` +
+    `</figure>`
+  )
 }
 
 // Parses inline markdown within a line of text (bold, italic).
@@ -19,8 +92,9 @@ function parseInline(text: string): string {
 
 // Converts markdown string to an HTML string suitable for contenteditable innerHTML.
 // Handles: headings (h1–h3), bold, italic, unordered lists, task lists, paragraphs.
-export function markdownToHtml(md: string): string {
+export function markdownToHtml(md: string, options: MarkdownToHtmlOptions = {}): string {
   if (!md.trim()) return ''
+  const embeds = options.embeds ?? true
 
   const lines = md.split('\n')
   const output: string[] = []
@@ -36,6 +110,15 @@ export function markdownToHtml(md: string): string {
   }
 
   for (const line of lines) {
+    // A link on its own line becomes an inline embed (render enhancement; the
+    // line still STORES the plain url — see htmlToMarkdown round-trip).
+    const embed = embeds ? embedForLine(line) : null
+    if (embed) {
+      closeLists()
+      output.push(embedWidget(embed, line))
+      continue
+    }
+
     const h3 = line.match(/^### (.+)/)
     const h2 = line.match(/^## (.+)/)
     const h1 = line.match(/^# (.+)/)
@@ -105,6 +188,15 @@ function walkBlock(el: HTMLElement, lines: string[]): void {
 
 function serializeBlockElement(el: HTMLElement, lines: string[]): void {
   const tag = el.tagName
+
+  // Embed widgets store their original markdown line in data-embed-url — emit that
+  // verbatim so the embed round-trips as plain text (the markdown never sees the
+  // generated iframe/card markup).
+  const embedUrl = el.getAttribute('data-embed-url')
+  if (embedUrl != null) {
+    lines.push(embedUrl)
+    return
+  }
 
   if (tag === 'H1') {
     lines.push(`# ${serializeInline(el)}`)

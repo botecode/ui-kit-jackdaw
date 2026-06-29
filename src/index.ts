@@ -22,6 +22,21 @@ export { THEMES } from './tokens/themes'
 export { chromaTheme } from './tokens/themes/chroma'
 export type { ThemeId, ThemeMeta, ThemeTokens } from './tokens/types'
 
+// ── Shared markdown embed render layer (Notes / Lyrics / Chords / References) ──
+// EMBED_FRAME_DOMAINS is the runtime CSP config the webview/shell must allow.
+export {
+  classifyEmbed,
+  embedForLine,
+  youtubeId,
+  spotifyPath,
+  youtubeEmbedSrc,
+  spotifyEmbedSrc,
+  EMBED_FRAME_DOMAINS,
+  type EmbedKind,
+  type EmbedInfo,
+  type LineEmbed,
+} from './lib/embeds'
+
 // ── Components ──
 export * from './components/AnnotationEditor'
 export * from './components/AnnotationLane'
