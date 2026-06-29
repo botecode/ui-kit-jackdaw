@@ -299,10 +299,11 @@ describe('AnnotationEditor — positioning', () => {
     // jsdom getBoundingClientRect returns 0×0, so computePosition falls through
     // to the anchor directly (no overflow flip needed at 300,400 in 1024×768).
     render(<AnnotationEditor {...makeProps({ anchor: { x: 300, y: 400 } })} />)
-    // The Popover portals a div with inline left/top onto document.body
-    const portalShell = Array.from(document.body.children).find(
-      el => (el as HTMLElement).style?.left === '300px',
-    ) as HTMLElement | undefined
+    // The Popover portals a div with inline left/top onto document.body, nested
+    // inside a themed wrapper that re-declares the active theme's tokens.
+    const portalShell = Array.from(document.body.querySelectorAll<HTMLElement>('*')).find(
+      el => el.style?.left === '300px',
+    )
     expect(portalShell).toBeTruthy()
     expect(portalShell!.style.top).toBe('400px')
     expect(portalShell!.style.visibility).toBe('visible')

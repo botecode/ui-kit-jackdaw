@@ -1,7 +1,7 @@
 // src/components/Tooltip/Tooltip.tsx
 import { cloneElement, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { usePortalTarget } from '../../theme/ThemeProvider'
+import { usePortalTarget, useThemedPortalProps } from '../../theme/ThemeProvider'
 import styles from './Tooltip.module.css'
 
 export type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right'
@@ -67,6 +67,7 @@ interface BubbleProps {
 function TooltipBubble({ id, content, anchorRef, placement }: BubbleProps) {
   const bubbleRef    = useRef<HTMLDivElement>(null)
   const portalTarget = usePortalTarget()
+  const themedProps  = useThemedPortalProps()
   const [pos, setPos] = useState<{ left: number; top: number; placement: TooltipPlacement } | null>(null)
 
   // Two-pass measure → position: hidden first render, visible after layout effect.
@@ -108,17 +109,21 @@ function TooltipBubble({ id, content, anchorRef, placement }: BubbleProps) {
     ? { left: pos.left, top: pos.top, visibility: 'visible' }
     : { visibility: 'hidden' }
 
+  // Re-declare the opening subtree's theme tokens at the portal root so the bubble
+  // resolves var(--…) even though it escapes the themed subtree.
   return createPortal(
-    <div
-      ref={bubbleRef}
-      id={id}
-      role="tooltip"
-      className={styles.bubble}
-      data-placement={pos?.placement ?? placement}
-      style={style}
-    >
-      {content}
-      <span className={styles.arrow} aria-hidden="true" />
+    <div {...themedProps}>
+      <div
+        ref={bubbleRef}
+        id={id}
+        role="tooltip"
+        className={styles.bubble}
+        data-placement={pos?.placement ?? placement}
+        style={style}
+      >
+        {content}
+        <span className={styles.arrow} aria-hidden="true" />
+      </div>
     </div>,
     portalTarget ?? document.body,
   )

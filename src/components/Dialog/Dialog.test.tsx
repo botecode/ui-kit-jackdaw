@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { Dialog } from './Dialog'
+import { ThemeProvider } from '../../theme/ThemeProvider'
 
 const BASE = {
   open: true as const,
@@ -40,6 +41,28 @@ describe('Dialog — rendering', () => {
     expect(labelledBy).toBeTruthy()
     const titleEl = document.getElementById(labelledBy!)
     expect(titleEl?.textContent).toBe('Confirm')
+  })
+
+  // The dialog escapes its themed subtree (portal), so the tokens must be
+  // re-declared at the portal root or var(--accent) & co. resolve to nothing.
+  it('re-declares the opening theme tokens at the portal root', () => {
+    render(
+      <ThemeProvider theme="bowie">
+        <Dialog {...BASE} />
+      </ThemeProvider>,
+    )
+    const wrapper = screen.getByRole('dialog').closest('[data-theme]') as HTMLElement
+    expect(wrapper).not.toBeNull()
+    expect(wrapper.getAttribute('data-theme')).toBe('bowie')
+    expect(wrapper.style.getPropertyValue('--accent')).toBe('#ef2b3d')
+  })
+
+  it('falls back to the default theme when opened with no ThemeProvider ancestor', () => {
+    render(<Dialog {...BASE} />)
+    const wrapper = screen.getByRole('dialog').closest('[data-theme]') as HTMLElement
+    expect(wrapper).not.toBeNull()
+    expect(wrapper.getAttribute('data-theme')).toBe('chroma')
+    expect(wrapper.style.getPropertyValue('--accent')).not.toBe('')
   })
 
   it('uses aria-label when no title is provided', () => {

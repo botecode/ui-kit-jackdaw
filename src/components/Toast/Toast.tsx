@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Info, CheckCircle, WarningCircle, X } from '@phosphor-icons/react'
-import { usePortalTarget } from '../../theme/ThemeProvider'
+import { usePortalTarget, useThemedPortalProps } from '../../theme/ThemeProvider'
 import styles from './Toast.module.css'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -153,6 +153,7 @@ export interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<ToastState[]>([])
   const portalTarget = usePortalTarget()
+  const themedProps = useThemedPortalProps()
 
   const dismiss = useCallback((id: string) => {
     // Under reduced-motion, skip the exit animation and remove immediately.
@@ -178,15 +179,19 @@ export function ToastProvider({ children }: ToastProviderProps) {
   return (
     <ToastContext.Provider value={{ push, dismiss }}>
       {children}
+      {/* Re-declare the opening subtree's theme tokens at the portal root so toasts
+          resolve var(--…) even though they escape the themed subtree. */}
       {createPortal(
-        <div className={styles.container}>
-          {toasts.map(toast => (
-            <ToastItem
-              key={toast.id}
-              toast={toast}
-              onDismiss={() => dismiss(toast.id)}
-            />
-          ))}
+        <div {...themedProps}>
+          <div className={styles.container}>
+            {toasts.map(toast => (
+              <ToastItem
+                key={toast.id}
+                toast={toast}
+                onDismiss={() => dismiss(toast.id)}
+              />
+            ))}
+          </div>
         </div>,
         portalTarget ?? document.body,
       )}

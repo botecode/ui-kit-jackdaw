@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, fireEvent, screen, act } from '@testing-library/react'
 import { Popover } from './Popover'
+import { ThemeProvider } from '../../theme/ThemeProvider'
 
 // jsdom default viewport: 1024 × 768
 
@@ -33,6 +34,66 @@ describe('Popover anchorRef — portal', () => {
     const clipDiv  = screen.getByTestId('clip')
     expect(clipDiv.contains(content)).toBe(false)
     expect(document.body.contains(content)).toBe(true)
+
+    document.body.removeChild(triggerEl)
+    document.body.removeChild(containerEl)
+  })
+})
+
+// ── Test 1b: portalled content inherits the opening subtree's theme ───────────
+// The content escapes the themed subtree (portal), so the tokens must be
+// re-declared at the portal root or var(--accent) & co. resolve to nothing.
+
+describe('Popover — portalled theme inheritance', () => {
+  it('re-declares the opening theme tokens at the portal root', () => {
+    const triggerEl = document.createElement('button')
+    const containerEl = document.createElement('div')
+    document.body.appendChild(triggerEl)
+    document.body.appendChild(containerEl)
+
+    render(
+      <ThemeProvider theme="bowie">
+        <Popover
+          containerRef={{ current: containerEl }}
+          anchorRef={{ current: triggerEl }}
+          onClose={vi.fn()}
+        >
+          <div data-testid="content">hello</div>
+        </Popover>
+      </ThemeProvider>,
+    )
+
+    const content = screen.getByTestId('content')
+    const wrapper = content.closest('[data-theme]') as HTMLElement
+    expect(wrapper).not.toBeNull()
+    expect(wrapper.getAttribute('data-theme')).toBe('bowie')
+    expect(wrapper.style.getPropertyValue('--accent')).toBe('#ef2b3d')
+
+    document.body.removeChild(triggerEl)
+    document.body.removeChild(containerEl)
+  })
+
+  it('falls back to the default theme when opened with no ThemeProvider ancestor', () => {
+    const triggerEl = document.createElement('button')
+    const containerEl = document.createElement('div')
+    document.body.appendChild(triggerEl)
+    document.body.appendChild(containerEl)
+
+    render(
+      <Popover
+        containerRef={{ current: containerEl }}
+        anchorRef={{ current: triggerEl }}
+        onClose={vi.fn()}
+      >
+        <div data-testid="content">hello</div>
+      </Popover>,
+    )
+
+    const content = screen.getByTestId('content')
+    const wrapper = content.closest('[data-theme]') as HTMLElement
+    expect(wrapper).not.toBeNull()
+    expect(wrapper.getAttribute('data-theme')).toBe('chroma')
+    expect(wrapper.style.getPropertyValue('--accent')).not.toBe('')
 
     document.body.removeChild(triggerEl)
     document.body.removeChild(containerEl)

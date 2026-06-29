@@ -2,7 +2,7 @@
 import { useEffect, useRef, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from '@phosphor-icons/react'
-import { usePortalTarget } from '../../theme/ThemeProvider'
+import { usePortalTarget, useThemedPortalProps } from '../../theme/ThemeProvider'
 import styles from './Dialog.module.css'
 
 export interface DialogProps {
@@ -49,6 +49,7 @@ export function Dialog({
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const portalTarget = usePortalTarget()
+  const themedProps = useThemedPortalProps()
 
   // Capture the trigger element BEFORE the focus-shift effect below runs.
   // Effects fire in definition order — this runs first while trigger is still focused.
@@ -122,7 +123,10 @@ export function Dialog({
 
   if (!open) return null
 
+  // Re-declare the opening subtree's theme tokens at the portal root so the scrim
+  // and dialog resolve var(--…) even though they escape the themed subtree.
   return createPortal(
+    <div {...themedProps}>
     <div
       className={styles.scrim}
       onClick={dismissible ? onClose : undefined}
@@ -159,6 +163,7 @@ export function Dialog({
           <div className={styles.footer}>{actions}</div>
         )}
       </div>
+    </div>
     </div>,
     portalTarget ?? document.body,
   )

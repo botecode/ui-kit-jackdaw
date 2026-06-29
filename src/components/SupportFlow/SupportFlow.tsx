@@ -1,7 +1,7 @@
 // src/components/SupportFlow/SupportFlow.tsx
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { usePortalTarget } from '../../theme/ThemeProvider'
+import { usePortalTarget, useThemedPortalProps } from '../../theme/ThemeProvider'
 import { Dialog } from '../Dialog'
 import { Fader } from '../Fader'
 import styles from './SupportFlow.module.css'
@@ -32,6 +32,7 @@ export function SupportFlow({
 }: SupportFlowProps) {
   const [amountCents, setAmountCents] = useState(0)
   const portalTarget = usePortalTarget()
+  const themedProps = useThemedPortalProps()
 
   if (phase === 'dismissed') return null
 
@@ -40,7 +41,11 @@ export function SupportFlow({
 
   return (
     <>
+      {/* Re-declare the opening subtree's theme tokens at the portal root so the
+          countdown badge resolves var(--…) even though it escapes the themed subtree.
+          (The Dialog below self-wraps via its own portal.) */}
       {phase === 'countdown' && createPortal(
+        <div {...themedProps}>
         <div
           className={styles.badge}
           data-urgent={showDefer || undefined}
@@ -60,6 +65,7 @@ export function SupportFlow({
               +5 min
             </button>
           )}
+        </div>
         </div>,
         portalTarget ?? document.body,
       )}

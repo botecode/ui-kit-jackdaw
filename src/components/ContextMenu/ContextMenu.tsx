@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './ContextMenu.module.css'
 import { Popover } from '../Popover'
-import { usePortalTarget } from '../../theme/ThemeProvider'
+import { usePortalTarget, useThemedPortalProps } from '../../theme/ThemeProvider'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -166,6 +166,7 @@ function Submenu({
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
   const portalTarget  = usePortalTarget()
+  const themedProps   = useThemedPortalProps()
 
   // Leaf-only: a one-level flyout never renders carets for deeper submenus.
   const focusable = items.filter((e): e is MenuItem => !isSeparator(e))
@@ -253,7 +254,10 @@ function Submenu({
     ? { position: 'fixed', left: pos.left, top: pos.top, visibility: 'visible' }
     : { position: 'fixed', left: 0, top: 0, visibility: 'hidden' }
 
+  // Re-declare the opening subtree's theme tokens at the portal root so the menu
+  // resolves var(--…) even though it escapes the themed subtree.
   return createPortal(
+    <div {...themedProps}>
     <ul
       role="menu"
       aria-label={ariaLabel}
@@ -286,7 +290,8 @@ function Submenu({
           />
         )
       )}
-    </ul>,
+    </ul>
+    </div>,
     portalTarget ?? document.body,
   )
 }

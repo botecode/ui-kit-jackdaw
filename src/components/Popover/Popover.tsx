@@ -1,7 +1,7 @@
 // src/components/Popover/Popover.tsx
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { usePortalTarget } from '../../theme/ThemeProvider'
+import { usePortalTarget, useThemedPortalProps } from '../../theme/ThemeProvider'
 import styles from './Popover.module.css'
 
 export interface PopoverProps {
@@ -76,6 +76,7 @@ export function Popover({
   const contentRef  = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number; minWidth?: number } | null>(null)
   const portalTarget  = usePortalTarget()
+  const themedProps   = useThemedPortalProps()
 
   // Outside-click: close when mousedown is outside both containerRef AND contentRef.
   // The second check is essential for portaled content — the portaled div is not a
@@ -169,9 +170,13 @@ export function Popover({
     ? { left: pos.left, top: pos.top, minWidth: pos.minWidth, visibility: 'visible' }
     : { visibility: 'hidden' }
 
+  // Re-declare the opening subtree's theme tokens at the portal root so var(--…)
+  // resolves even when content escapes the themed subtree (or lands on body).
   return createPortal(
-    <div ref={contentRef} className={shellClass} style={style}>
-      {children}
+    <div {...themedProps}>
+      <div ref={contentRef} className={shellClass} style={style}>
+        {children}
+      </div>
     </div>,
     portalTarget ?? document.body,
   )

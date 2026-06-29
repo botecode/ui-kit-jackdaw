@@ -16,6 +16,35 @@ export function usePortalTarget(): HTMLElement | null {
   return useContext(PortalContext).current
 }
 
+// ── Portalled-theme inheritance ───────────────────────────────────────────────
+// Tokens are subtree-scoped (inline CSS vars on the themed <div>), never on :root —
+// Jackdaw runs two faces at once (Home's paper face, the Studio's device face), so
+// a single global theme can't exist. But every createPortal surface (Popover,
+// Dialog, ContextMenu, Tooltip, Toast …) renders OUTSIDE its themed subtree —
+// into usePortalTarget()'s root, or document.body when there's no provider — so the
+// CSS variables don't resolve there and the surface paints unstyled.
+// Fix: expose the opening subtree's active theme + its token style here, and have
+// each portal primitive re-declare them on a wrapper at the portal root via
+// useThemedPortalProps(). Default to chroma so a portal with no ThemeProvider
+// ancestor still resolves the brand tokens instead of rendering bare.
+interface PortalTheme {
+  theme: ThemeId
+  style: React.CSSProperties
+}
+
+const PortalThemeContext = createContext<PortalTheme>({
+  theme: 'chroma',
+  style: chromaTheme as React.CSSProperties,
+})
+
+// Spread onto the wrapper a portal primitive renders at its portal root:
+//   createPortal(<div {...useThemedPortalProps()}>…</div>, target ?? document.body)
+// so var(--accent) & co. resolve even when the content escapes the themed subtree.
+export function useThemedPortalProps(): { 'data-theme': ThemeId; style: React.CSSProperties } {
+  const { theme, style } = useContext(PortalThemeContext)
+  return { 'data-theme': theme, style }
+}
+
 // ── ThemeContext ─────────────────────────────────────────────────────────────
 
 interface ThemeCtx {
@@ -45,6 +74,9 @@ export function ThemeProvider({ theme, children }: Props) {
   // RULE: [data-theme] overrides in global.css affect structural tokens only.
   // Colour and radius are changed in the theme object — not via [data-theme] selectors.
   const tokens = THEMES.find(t => t.id === theme)?.tokens ?? chromaTheme
+  const tokenStyle = tokens as React.CSSProperties
+  // Re-declared by portalled surfaces (useThemedPortalProps) at the portal root.
+  const portalTheme = useMemo<PortalTheme>(() => ({ theme, style: tokenStyle }), [theme])
   // Layout-transparent wrapper: height:100% so a consumer whose root is height:100%
   // reaches the real viewport root instead of collapsing to content height (100% of
   // an otherwise auto-height wrapper) and letting the page background show below it.
@@ -52,13 +84,15 @@ export function ThemeProvider({ theme, children }: Props) {
   // as a second grid item — height:100% keeps the single-box + portal structure.)
   // background:var(--bg) paints the active theme's surface so a consumer's body
   // default (e.g. :root #0a0a0a) never shows through.
-  const style: React.CSSProperties = { height: '100%', background: 'var(--bg)', ...(tokens as React.CSSProperties) }
+  const style: React.CSSProperties = { height: '100%', background: 'var(--bg)', ...tokenStyle }
   return (
     <PortalContext.Provider value={portalRef}>
-      <div data-theme={theme} style={style}>
-        {children}
-        <div ref={portalRef} />
-      </div>
+      <PortalThemeContext.Provider value={portalTheme}>
+        <div data-theme={theme} style={style}>
+          {children}
+          <div ref={portalRef} />
+        </div>
+      </PortalThemeContext.Provider>
     </PortalContext.Provider>
   )
 }
