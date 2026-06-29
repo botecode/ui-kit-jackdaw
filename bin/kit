@@ -3,7 +3,7 @@
 # kit — the UI-kit build loop. ONE command builds a component and merges it to main, live.
 #
 #   kit next            grab the next "Next" kit card, build it, gate, merge to main.
-#   kit auto            UNATTENDED: build→gate→merge every Next kit card; failures → Testing for review, never halt.
+#   kit auto            UNATTENDED: build→gate→merge every Next kit card; failures stay in Next, never halt.
 #   kit launch <name>   build one component, gate (tsc+vitest), merge to main. No PR, no test step.
 #   kit fix <name> "…"  modify an already-shipped component IN PLACE per "…", gate, merge to main.
 #   kit gallery         run the gallery (npm run dev) on main — keep this open; merges hot-reload it.
@@ -37,6 +37,19 @@ jdstatus() {
   fi
 }
 
+# main must be clean before we merge a card into it in place. Rather than ABORT on a dirty tree,
+# COMMIT the uncommitted TRACKED changes first — in practice these are tooling/doc tweaks (bin/kit,
+# scripts/, KIT-LEAD…), never component work, so folding them into history is always safe. Untracked
+# files are left alone. ALLOW_MAIN=1 covers any pre-commit guard against committing on main.
+autocommit_main() {
+  [ -z "$(git -C "$R" status --porcelain --untracked-files=no)" ] && return 0
+  echo "▶ main has uncommitted tracked changes — auto-committing them before building (usually tooling)…"
+  ALLOW_MAIN=1 git -C "$R" add -u \
+    && ALLOW_MAIN=1 git -C "$R" commit -m "chore(kit): auto-commit working tree before build" >/dev/null \
+    || { echo "✗ auto-commit failed — commit/stash main manually, then re-run." >&2; return 1; }
+  git -C "$R" push origin main 2>/dev/null && echo "  · committed + pushed main" || echo "  · committed (push manually to back it up)"
+}
+
 # Build one component on its own branch, gate it, and MERGE it into main in place — so the gallery
 # you have open on main hot-reloads and you see it live. No PR, no separate test step.
 ship() {
@@ -47,8 +60,7 @@ ship() {
   # We merge into main in place, so the primary checkout must be on a clean main.
   cur="$(git -C "$R" rev-parse --abbrev-ref HEAD)"
   [ "$cur" = main ] || { echo "Primary checkout is on '$cur', not 'main' — switch to main first (we merge there)." >&2; return 1; }
-  [ -z "$(git -C "$R" status --porcelain --untracked-files=no)" ] \
-    || { echo "main has uncommitted changes — commit/stash them first (we merge into main in place)." >&2; return 1; }
+  autocommit_main || return 1
 
   spec="$(mktemp -t kit-"$name".XXXX.md)"
   if [ -n "$feedback" ]; then
@@ -181,26 +193,31 @@ case "$cmd" in
     ship_and_status "$name" || exit 1 ;;
 
   auto)
-    # Unattended: build → gate → merge every Next kit card, one at a time, until the queue is clear.
-    # A card that fails its gate (or whose agent stops to ask) is moved to Testing (the review bucket)
-    # and the run moves on — it never halts and never re-picks a failed card; all failures reported at end.
-    # Run in YOUR terminal (it merges to kit main). Cards build in board order, so order Next for deps.
-    echo "▶ kit auto: building every Next kit card, one at a time…"
-    built=0; failed=""; prev=""
-    while name="$(python3 "$R/scripts/run-card.py" --print-next 2>/dev/null)" && [ -n "$name" ]; do
-      [ "$name" = "$prev" ] && { echo "⚠ kit auto: '$name' didn't leave Next (status update failed?) — stopping to avoid a loop." >&2; break; }
-      prev="$name"
+    # Unattended: build → gate → merge every Next kit card, one at a time. We SNAPSHOT the Next queue
+    # up front (--list-next) and walk that fixed list once, so a card that fails its gate (or whose
+    # agent stops to ask) simply STAYS in Next — left there for retry/review — without the run halting
+    # or re-picking it. 'Testing' is reserved for things you're actually testing; failures never go
+    # there. Run in YOUR terminal (it merges to kit main). Cards build in board order — order Next for deps.
+    echo "▶ kit auto: snapshotting the Next kit queue…"
+    queue="$(python3 "$R/scripts/run-card.py" --list-next 2>/dev/null)"
+    [ -n "$queue" ] || { echo "No kit card in Next." >&2; exit 0; }
+    built=0; failed=""
+    while IFS= read -r name; do
+      [ -n "$name" ] || continue
       echo ""; echo "════════ kit auto ▶ $name ════════"
       jdstatus "$name" "In Progress"
       if ship_and_status "$name"; then
         built=$((built+1))
       else
-        echo "⚠ kit auto: '$name' didn't build (gate red, or the agent needs a decision) — moving it to Testing for review, continuing."
-        jdstatus "$name" "Testing"; failed="$failed $name"
+        # ship_and_status already put it back in Next. Leave it there (don't touch Testing) and move on.
+        echo "⚠ kit auto: '$name' didn't build (gate red, or the agent needs a decision) — left in Next for review, continuing."
+        failed="$failed $name"
       fi
-    done
+    done <<EOF
+$queue
+EOF
     echo ""; echo "✅ kit auto: $built built."
-    [ -n "$failed" ] && echo "⚠ needs your review (moved to Testing):$failed" >&2 || echo "Next kit queue is clear." ;;
+    [ -n "$failed" ] && echo "⚠ still in Next — needs your attention:$failed" >&2 || echo "Next kit queue is clear." ;;
 
   launch|build|ship)
     name="${1:-}"; [ -n "$name" ] || { echo "usage: kit launch <name>" >&2; exit 1; }

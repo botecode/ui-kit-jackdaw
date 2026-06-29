@@ -321,6 +321,26 @@ def print_next():
     return 0
 
 
+def list_next():
+    """Print EVERY kit card in 'Next', one slug per line, board order (oldest first).
+    A snapshot of the queue for `kit auto`: it processes this fixed list once, so a card that fails
+    its gate can stay in Next (for retry / review) without the loop re-picking it forever."""
+    res = _req("POST", f"/databases/{BOARD_DB}/query", {
+        "filter": {"and": [
+            {"property": "Status", "select": {"equals": "Next"}},
+            {"property": "Roles", "multi_select": {"contains": "kit"}},
+        ]},
+        "sorts": [{"timestamp": "created_time", "direction": "ascending"}],
+        "page_size": 100,
+    })
+    for r in res.get("results", []):
+        title = (r.get("properties", {}).get("Name", {}) or {}).get("title", [])
+        name = "".join(rt.get("plain_text", "") for rt in title).strip()
+        if name:
+            print(slug(name))
+    return 0
+
+
 def fetch_comments(page_id):
     """All comments on a page, oldest first (list of plain-text strings)."""
     out, cursor = [], None
@@ -374,6 +394,8 @@ def main(argv):
         return self_test()
     if "--print-next" in flags:
         return print_next()
+    if "--list-next" in flags:
+        return list_next()
     if "--meta" in flags:
         if not args:
             sys.exit("usage: run-card.py --meta <card>")
