@@ -123,6 +123,8 @@ function PlaygroundDemo() {
         />
       </div>
       <p style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)', maxWidth: 520, lineHeight: 1.5 }}>
+        Read it as a machined channel strip: the colour tie + name plate name the track first, the
+        recessed living meter is the hero, and arm / mute / solo sit a seam below as the secondary cluster.
         The card body IS the meter and both controls. The strips show only the live signal (dark at rest,
         lit when playing). Two crossing set-point lines live in the meter: the HORIZONTAL line is the
         level — drag the body up/down (↑/↓, or double-click to reset to unity); the VERTICAL orange line
