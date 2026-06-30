@@ -229,8 +229,9 @@ export default function DeviceChassisDemo() {
         body a content slot. The readout, transport and trailing are all slots the DAW fills — the
         chassis wraps the <strong>Clock</strong> in the recessed stage well and never builds its own
         digits. It is not AppShell (the old web shell) and not ProductFrame (a marketing wrapper); it
-        is a single machined object — flat, tactile, character from insets and the sunk LCD well, the
-        single hot accent reserved for record armed and the active Take.
+        is a single machined object — a warm textured case whose control deck sits above a recessed
+        stage tray seated in the case, every edge a real hairline and every recess read from tone, not
+        from a shadow or gloss. The single hot accent is reserved for record armed and the active Take.
       </p>
 
       <h2 style={{ font: 'var(--font-ui)', fontSize: 14, marginTop: 8 }}>Live</h2>

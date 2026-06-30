@@ -1,9 +1,17 @@
-/* src/components/DeviceChassis/DeviceChassis.module.css */
+/* src/components/DeviceChassis/DeviceChassis.module.css
+   Overdrive pass: a genuine hardware chassis, not a div with a border. The case
+   is one machined object — a warm textured shell (--surface) whose control deck
+   (the bay) sits above a recessed stage tray (the body, --bg) seated in the
+   case with a warm rim around it. All form comes from TONE + LINE: the tonal
+   step case→tray, the deck seam, and the tray's hairline keyline. No gradients,
+   no gloss, no glow, no shadow soup — every edge is a real hairline, every
+   surface a real token. The single hot accent is left to the slots (record
+   armed, the active Take); the chassis frames, it never competes. */
 
-/* ─── Root (the device body) ──────────────────────────────────────────────────
-   A single machined object: warm surface, hairline border + top-highlight, a
-   modest lift off the page. Flat — character comes from the inset tray and the
-   sunk LCD well below, never from gradients or gloss. */
+/* ─── Root (the case shell) ───────────────────────────────────────────────────
+   The outer body of the device: warm --surface with paper grain, wrapped in a
+   single hairline keyline. It sits flat on the page — no drop lift, no gloss
+   top-highlight — so the studio reads as a quiet, solid object. */
 
 .root {
   display: flex;
@@ -14,15 +22,14 @@
   background-image: var(--texture-paper);
   background-blend-mode: multiply;
   overflow: hidden;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 1px 3px rgba(0, 0, 0, 0.1);
   color: var(--text);
 }
 
-/* ─── Header bay ──────────────────────────────────────────────────────────────
+/* ─── Header bay — the control deck (top plate of the case) ────────────────────
    [ brand · name ]  …  [ LCD well ]  …  [ transport ] [ trailing ]
-   Lead and controls both flex:1 so the well sits centred between them. */
+   Lead and controls both flex:1 so the well sits centred between them. The
+   border-bottom is the deck seam — the real edge where the top plate meets the
+   recessed work area below. */
 
 .bay {
   display: flex;
@@ -129,16 +136,23 @@
   background-color: var(--border);
 }
 
-/* ─── Body — the recessed inner tray the studio sits in ─────────────────────── */
+/* ─── Body — the recessed stage tray, seated in the case ──────────────────────
+   The studio (tape + cards) sits in a tray sunk into the device: a --bg ground
+   inset from the case edge so a warm textured --surface rim shows around it, and
+   wrapped in its own hairline keyline. The recess is read from the tonal step
+   (case --surface → tray --bg) and these two lines (rim + keyline) — never from
+   an inset shadow. The result: content that feels held and framed by the case. */
 
 .body {
   flex: 1;
+  margin: var(--space-3);
   padding: var(--space-4);
   background-color: var(--bg);
-  /* Sunk one hairline below the bay so the tray reads recessed into the device. */
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .root[data-size="sm"] .body {
+  margin: var(--space-2);
   padding: var(--space-3);
 }

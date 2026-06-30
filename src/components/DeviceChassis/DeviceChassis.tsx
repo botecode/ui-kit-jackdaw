@@ -21,10 +21,13 @@
 // Header bay layout:  [ brand · project name ]  …  [ LCD well (readout) ]  …  [ transport ] [ trailing ]
 //
 // Why this isn't a webpage: the shell reads as a single machined object — a warm
-// surface body with a hairline top-highlight, a recessed inner tray (--bg) the body
-// sits in, and a black matrix LCD well sunk into the bay. No nav chrome, no cards of
-// links, no gradients. The only hot accent is whatever the slots light up (record
-// armed, the active Take); the chassis itself stays quiet so the instrument speaks.
+// textured case shell whose control deck (the bay) sits above a recessed stage
+// tray (the body) seated in the case with a warm rim around it, plus a black
+// matrix LCD well sunk into the deck. Every edge is a real hairline and every
+// recess is read from a tonal step, never from a gradient, gloss, glow, or inset
+// shadow (overdrive: form via tone + line, not lighting). No nav chrome, no cards
+// of links. The only hot accent is whatever the slots light up (record armed, the
+// active Take); the chassis itself stays quiet so the instrument speaks.
 //
 // Decision (headless, recorded per KIT-LEAD §6): the `dirty` unsaved-changes mark is
 // a quiet --text-muted dot, NOT the warm accent — the brief reserves the single hot
