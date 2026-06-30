@@ -28,6 +28,18 @@
 // arrow nav, reached by Tab. That keeps the ARIA model honest (rows navigate,
 // actions act) and the paper calm.
 //
+// The sidebar is a compact "recent" surface, not the full library: each content
+// section (Songs, Collections) caps to the first `cap` entries (~5) and, when the
+// real list runs longer, ends in a quiet "See all" row that routes the host to the
+// full-list page (`onSeeAllSongs` / `onSeeAllCollections`). The cap is for the
+// UNFILTERED list — while searching we show every match and drop the cap (and the
+// See all row): a search is itself a narrowing intent, so truncating its results
+// would hide the very rows the viewer is hunting. The See all row is NAVIGATION
+// (it goes to a page), so — unlike the "Create collection" command — it joins the
+// roving arrow nav as a quiet destination, but carries no aria-current (it routes
+// away; it is never the current page). It wears a link-row face, not a button: the
+// quietest thing on the paper that still reads as "more this way".
+//
 // Pinned library entries (e.g. "Lyrics") are top-level destinations, not content:
 // they ride in the Home group, share Home's row vocabulary (same accent spine when
 // active, same roving nav via [data-nav-row]), and — unlike songs/collections — are
@@ -44,6 +56,7 @@ import {
   Plus,
   DownloadSimple,
   BookmarkSimple,
+  CaretRight,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import { TextField } from '../TextField'
@@ -83,6 +96,18 @@ export interface WorkspaceSidebarProps {
   onSelect:      (id: string) => void
   songs:         WorkspaceSong[]
   collections:   WorkspaceCollection[]
+  /** How many entries each content section shows before it caps to a "See all"
+   *  row. Applies to the UNFILTERED list only (search shows every match). The
+   *  sidebar is a compact recent surface, not the full library. Default 5. */
+  cap?:          number
+  /** Route to the full songs list. When given AND the unfiltered list exceeds the
+   *  cap, a quiet "See all" row rides the bottom of the Songs section and fires
+   *  this. Omitted → the section simply caps with no way out (the host has no
+   *  full-list page). */
+  onSeeAllSongs?:       () => void
+  /** Route to the full collections list — the Collections-section twin of
+   *  `onSeeAllSongs`. */
+  onSeeAllCollections?: () => void
   /** Pinned library destinations rendered with Home, near the top — top-level
    *  pages beyond songs (e.g. "Lyrics"). The host adds sections here without a
    *  kit change; selecting one routes via `onSelect(id)`. */
@@ -161,6 +186,43 @@ function Row({ id, label, isActive, collapsed, onSelect, onKeyDown, lead }: RowP
   )
 }
 
+// ── See all (the capped section's quiet way to the full list) ────────────────────
+
+interface SeeAllRowProps {
+  /** Accessible name, e.g. "See all songs" — the visible text is just "See all". */
+  label:     string
+  collapsed: boolean
+  onActivate: () => void
+  onKeyDown:  (e: React.KeyboardEvent<HTMLButtonElement>) => void
+}
+
+// A link-row, not a button: the quietest affordance on the paper that still reads
+// as "more this way". It joins the roving nav ([data-nav-row]) because it is
+// NAVIGATION — but it routes to a page, so it carries no aria-current.
+function SeeAllRow({ label, collapsed, onActivate, onKeyDown }: SeeAllRowProps) {
+  return (
+    <li className={styles.listItem}>
+      <button
+        type="button"
+        className={styles.seeAll}
+        data-nav-row=""
+        // The visible "See all" is ambiguous to AT on its own, so the full
+        // "See all songs/collections" rides as the accessible name everywhere;
+        // collapsed it is the only name (no visible text) + a hover tooltip.
+        aria-label={label}
+        title={collapsed ? label : undefined}
+        onClick={onActivate}
+        onKeyDown={onKeyDown}
+      >
+        <span className={styles.seeAllLead} aria-hidden="true">
+          <CaretRight size={14} weight="bold" />
+        </span>
+        {!collapsed && <span className={styles.seeAllLabel}>See all</span>}
+      </button>
+    </li>
+  )
+}
+
 // ── WorkspaceSidebar ────────────────────────────────────────────────────────────
 
 export function WorkspaceSidebar({
@@ -170,6 +232,9 @@ export function WorkspaceSidebar({
   onSelect,
   songs,
   collections,
+  cap = 5,
+  onSeeAllSongs,
+  onSeeAllCollections,
   libraryEntries = [],
   onNewSong,
   onImportSong,
@@ -181,6 +246,11 @@ export function WorkspaceSidebar({
   const songsLabelId = useId()
   const collsLabelId = useId()
 
+  const filtering = query.length > 0
+
+  // While filtering, show every match (no cap, no See all): the search is itself
+  // the narrowing. Unfiltered, cap to the recent surface and offer See all when
+  // the real list runs longer AND the host gave us somewhere to route.
   const filteredSongs = useMemo(
     () => (query ? songs.filter(s => matches(s.title, query)) : songs),
     [songs, query],
@@ -189,6 +259,11 @@ export function WorkspaceSidebar({
     () => (query ? collections.filter(c => matches(c.title, query)) : collections),
     [collections, query],
   )
+
+  const visibleSongs       = filtering ? filteredSongs : songs.slice(0, cap)
+  const visibleCollections = filtering ? filteredCollections : collections.slice(0, cap)
+  const showSeeAllSongs       = !filtering && !!onSeeAllSongs && songs.length > cap
+  const showSeeAllCollections = !filtering && !!onSeeAllCollections && collections.length > cap
 
   // Roving Arrow/Home/End across every nav row (Home + library entries + songs
   // + collections) — driven by the shared [data-nav-row] set, so new pinned rows
@@ -210,7 +285,6 @@ export function WorkspaceSidebar({
     next?.focus()
   }
 
-  const filtering = query.length > 0
   const noMatches = filtering && filteredSongs.length === 0 && filteredCollections.length === 0
 
   return (
@@ -270,14 +344,14 @@ export function WorkspaceSidebar({
           {!collapsed && (
             <h2 id={songsLabelId} className={styles.groupLabel}>Songs</h2>
           )}
-          {filteredSongs.length > 0 ? (
+          {visibleSongs.length > 0 ? (
             <ul
               className={styles.group}
               role="list"
               aria-labelledby={collapsed ? undefined : songsLabelId}
               aria-label={collapsed ? 'Songs' : undefined}
             >
-              {filteredSongs.map(song => (
+              {visibleSongs.map(song => (
                 <Row
                   key={song.id}
                   id={song.id}
@@ -289,6 +363,14 @@ export function WorkspaceSidebar({
                   lead={<ColourDot colour={song.colour} />}
                 />
               ))}
+              {showSeeAllSongs && (
+                <SeeAllRow
+                  label="See all songs"
+                  collapsed={collapsed}
+                  onActivate={onSeeAllSongs!}
+                  onKeyDown={handleRowKeyDown}
+                />
+              )}
             </ul>
           ) : !collapsed && !filtering ? (
             <p className={styles.empty}>No songs yet</p>
@@ -300,14 +382,14 @@ export function WorkspaceSidebar({
           {!collapsed && (
             <h2 id={collsLabelId} className={styles.groupLabel}>Collections</h2>
           )}
-          {filteredCollections.length > 0 ? (
+          {visibleCollections.length > 0 ? (
             <ul
               className={styles.group}
               role="list"
               aria-labelledby={collapsed ? undefined : collsLabelId}
               aria-label={collapsed ? 'Collections' : undefined}
             >
-              {filteredCollections.map(coll => (
+              {visibleCollections.map(coll => (
                 <Row
                   key={coll.id}
                   id={coll.id}
@@ -319,6 +401,14 @@ export function WorkspaceSidebar({
                   lead={<Stack size={18} weight="regular" aria-hidden />}
                 />
               ))}
+              {showSeeAllCollections && (
+                <SeeAllRow
+                  label="See all collections"
+                  collapsed={collapsed}
+                  onActivate={onSeeAllCollections!}
+                  onKeyDown={handleRowKeyDown}
+                />
+              )}
             </ul>
           ) : !collapsed && !filtering && !onCreateCollection ? (
             // No way in: a plain read-only empty line (legacy behaviour).

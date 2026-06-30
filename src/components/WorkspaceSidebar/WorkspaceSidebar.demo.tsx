@@ -39,6 +39,15 @@ const COLLECTIONS: WorkspaceCollection[] = [
   { id: 'c3', title: 'Demos 2026' },
 ]
 
+// A longer collections list (> the default cap of 5) so the "See all" row appears —
+// the sidebar is a compact recent surface, not the full library.
+const MANY_COLLECTIONS: WorkspaceCollection[] = [
+  ...COLLECTIONS,
+  { id: 'c4', title: 'Sketches' },
+  { id: 'c5', title: 'Covers' },
+  { id: 'c6', title: 'Field recordings' },
+]
+
 // Pinned library destinations — top-level pages, not content. They ride with Home.
 // "Lyrics" is the first consumer; the array leaves room for more (Samples, Notebook…)
 // without any further kit change.
@@ -71,6 +80,40 @@ function StatesDemo() {
             onNewSong={() => {}}
             onImportSong={() => {}}
             onCreateCollection={() => {}}
+          />
+        </SidebarWrap>
+      </State>
+
+      <State label="See all — both sections exceed the cap (a quiet route to the full list)">
+        <SidebarWrap>
+          <WorkspaceSidebar
+            active={HOME_ID}
+            songs={SONGS}
+            collections={MANY_COLLECTIONS}
+            libraryEntries={LIBRARY}
+            onSelect={() => {}}
+            onSearch={() => {}}
+            onNewSong={() => {}}
+            onImportSong={() => {}}
+            onCreateCollection={() => {}}
+            onSeeAllSongs={() => {}}
+            onSeeAllCollections={() => {}}
+          />
+        </SidebarWrap>
+      </State>
+
+      <State label="See all — songs capped, collections short (only one See all)">
+        <SidebarWrap>
+          <WorkspaceSidebar
+            active={HOME_ID}
+            songs={SONGS}
+            collections={COLLECTIONS}
+            onSelect={() => {}}
+            onSearch={() => {}}
+            onNewSong={() => {}}
+            onImportSong={() => {}}
+            onSeeAllSongs={() => {}}
+            onSeeAllCollections={() => {}}
           />
         </SidebarWrap>
       </State>
@@ -267,6 +310,24 @@ function StatesDemo() {
           />
         </SidebarWrap>
       </State>
+
+      <State label="Collapsed — See all caret on the icon rail (cap still applies)">
+        <SidebarWrap>
+          <WorkspaceSidebar
+            collapsed
+            active="s1"
+            songs={SONGS}
+            collections={MANY_COLLECTIONS}
+            libraryEntries={LIBRARY}
+            onSelect={() => {}}
+            onSearch={() => {}}
+            onNewSong={() => {}}
+            onImportSong={() => {}}
+            onSeeAllSongs={() => {}}
+            onSeeAllCollections={() => {}}
+          />
+        </SidebarWrap>
+      </State>
     </StatesGrid>
   )
 }
@@ -289,11 +350,13 @@ function PlaygroundDemo() {
             active={active}
             onSelect={setActive}
             songs={SONGS}
-            collections={COLLECTIONS}
+            collections={MANY_COLLECTIONS}
             libraryEntries={LIBRARY}
             onNewSong={() => setLast('New song')}
             onImportSong={() => setLast('Import song')}
             onCreateCollection={() => setLast('Create collection')}
+            onSeeAllSongs={() => setLast('See all songs')}
+            onSeeAllCollections={() => setLast('See all collections')}
             collapsed={collapsed}
           />
         </SidebarWrap>

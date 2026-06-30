@@ -346,6 +346,130 @@ describe('WorkspaceSidebar — create collection', () => {
   })
 })
 
+// ── See all (capped recent surface) ─────────────────────────────────────────────
+
+// Six songs / six collections so the default cap (5) is exceeded in both sections.
+const MANY_SONGS: WorkspaceSong[] = [
+  { id: 's1', title: 'Paper Boats',          colour: '#EE5E2A' },
+  { id: 's2', title: 'Slow Tide',            colour: '#46A147' },
+  { id: 's3', title: 'Northern Lights',      colour: '#3C7DD9' },
+  { id: 's4', title: 'Quietly, Now',         colour: '#B5852E' },
+  { id: 's5', title: 'Untitled sketch' },
+  { id: 's6', title: 'Hymn for the Long Drive', colour: '#8E54C4' },
+]
+
+const MANY_COLLECTIONS: WorkspaceCollection[] = [
+  { id: 'c1', title: 'B-sides' },
+  { id: 'c2', title: 'Live takes' },
+  { id: 'c3', title: 'Demos 2026' },
+  { id: 'c4', title: 'Sketches' },
+  { id: 'c5', title: 'Covers' },
+  { id: 'c6', title: 'Field recordings' },
+]
+
+describe('WorkspaceSidebar — see all (capped recent surface)', () => {
+  it('caps the unfiltered songs list to the default 5 and shows a See all songs row', () => {
+    setup({ songs: MANY_SONGS, onSeeAllSongs: vi.fn() })
+    // Only the first five songs render...
+    for (const s of MANY_SONGS.slice(0, 5)) {
+      expect(screen.getByRole('button', { name: s.title })).toBeInTheDocument()
+    }
+    // ...the sixth is truncated...
+    expect(screen.queryByRole('button', { name: 'Hymn for the Long Drive' })).not.toBeInTheDocument()
+    // ...and a See all songs row takes its place.
+    expect(screen.getByRole('button', { name: 'See all songs' })).toBeInTheDocument()
+  })
+
+  it('fires onSeeAllSongs when the See all songs row is clicked', () => {
+    const onSeeAllSongs = vi.fn()
+    setup({ songs: MANY_SONGS, onSeeAllSongs })
+    fireEvent.click(screen.getByRole('button', { name: 'See all songs' }))
+    expect(onSeeAllSongs).toHaveBeenCalledTimes(1)
+  })
+
+  it('caps the unfiltered collections list and shows a See all collections row', () => {
+    setup({ collections: MANY_COLLECTIONS, onSeeAllCollections: vi.fn() })
+    for (const c of MANY_COLLECTIONS.slice(0, 5)) {
+      expect(screen.getByRole('button', { name: c.title })).toBeInTheDocument()
+    }
+    expect(screen.queryByRole('button', { name: 'Field recordings' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'See all collections' })).toBeInTheDocument()
+  })
+
+  it('fires onSeeAllCollections when the See all collections row is clicked', () => {
+    const onSeeAllCollections = vi.fn()
+    setup({ collections: MANY_COLLECTIONS, onSeeAllCollections })
+    fireEvent.click(screen.getByRole('button', { name: 'See all collections' }))
+    expect(onSeeAllCollections).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows no See all row when the list is within the cap', () => {
+    // SONGS (4) / COLLECTIONS (2) are both under the default 5.
+    setup({ onSeeAllSongs: vi.fn(), onSeeAllCollections: vi.fn() })
+    expect(screen.queryByRole('button', { name: 'See all songs' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'See all collections' })).not.toBeInTheDocument()
+  })
+
+  it('shows no See all row when the list exceeds the cap but no callback is given', () => {
+    setup({ songs: MANY_SONGS })
+    // All six still cap to five (the recent surface), but with no route there is
+    // no affordance to offer.
+    expect(screen.queryByRole('button', { name: 'See all songs' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Hymn for the Long Drive' })).not.toBeInTheDocument()
+  })
+
+  it('honours a custom cap', () => {
+    setup({ songs: MANY_SONGS, cap: 2, onSeeAllSongs: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Paper Boats' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Slow Tide' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Northern Lights' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'See all songs' })).toBeInTheDocument()
+  })
+
+  it('shows matches the cap would hide while filtering, and offers no See all', () => {
+    // "Hymn for the Long Drive" is the 6th song — cap (5) hides it on the recent
+    // surface. The query "n" matches it, so while filtering it must surface, and
+    // the See all row is gone: the search has already narrowed for the user.
+    setup({ songs: MANY_SONGS, query: 'n', onSeeAllSongs: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Hymn for the Long Drive' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'See all songs' })).not.toBeInTheDocument()
+  })
+
+  it('includes the See all rows in the roving arrow nav (End lands on See all collections)', () => {
+    setup({
+      songs:               MANY_SONGS,
+      collections:         MANY_COLLECTIONS,
+      onSeeAllSongs:       vi.fn(),
+      onSeeAllCollections: vi.fn(),
+    })
+    const home = screen.getByRole('button', { name: 'Home' })
+    home.focus()
+    fireEvent.keyDown(home, { key: 'End' })
+    expect(screen.getByRole('button', { name: 'See all collections' })).toHaveFocus()
+  })
+
+  it('arrows from the last visible song onto the See all songs row', () => {
+    setup({ songs: MANY_SONGS, onSeeAllSongs: vi.fn() })
+    const fifth = screen.getByRole('button', { name: 'Untitled sketch' })
+    fifth.focus()
+    fireEvent.keyDown(fifth, { key: 'ArrowDown' })
+    expect(screen.getByRole('button', { name: 'See all songs' })).toHaveFocus()
+  })
+
+  it('is a route, not the current page: the See all row carries no aria-current', () => {
+    setup({ songs: MANY_SONGS, onSeeAllSongs: vi.fn() })
+    expect(screen.getByRole('button', { name: 'See all songs' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('keeps the See all accessible name when collapsed (caps still apply on the rail)', () => {
+    setup({ collapsed: true, songs: MANY_SONGS, onSeeAllSongs: vi.fn() })
+    const seeAll = screen.getByRole('button', { name: 'See all songs' })
+    expect(seeAll).toBeInTheDocument()
+    // No visible text on the icon rail — the name comes from aria-label only.
+    expect(seeAll).not.toHaveTextContent('See all')
+  })
+})
+
 // ── Empty / collapsed ─────────────────────────────────────────────────────────
 
 describe('WorkspaceSidebar — empty + collapsed', () => {
