@@ -119,6 +119,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   Shortcuts: ['app', 'daw'],
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],
+  StudioSessionCard: ['app', 'daw'], // song page's gateway into the studio — the hero door, in-product chrome
   Versions: ['app', 'daw'],
   WorkspaceCard: ['app', 'daw'], // Home gallery card for a song / collection — in-product chrome
   WorkspaceSidebar: ['app', 'daw'],

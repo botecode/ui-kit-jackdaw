@@ -1,0 +1,317 @@
+/* src/components/StudioSessionCard/StudioSessionCard.module.css */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────────────
+   The paper door: flat warm --surface, one hairline keyline, no shadow / gradient /
+   glow. It is the most important panel on the song page, so it carries real width and
+   a generous interior rhythm — presence from form + space, not chrome. */
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: var(--card-w, 360px);
+  padding: var(--space-5);
+  background: var(--surface);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* Hairline top-highlight — light catching the raised paper edge (not a float).
+     The kit signature; kept low-alpha so it reads as a warm edge on cream and a
+     soft hairline on dark themes (Ink), never a stark white line. */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+.root[data-size='sm'] {
+  --card-w: 280px;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+/* ─── Eyebrow plate ──────────────────────────────────────────────────────────────────
+   The printed label on the device face + the quiet last-edited timestamp. */
+.eyebrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.eyebrowText {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+}
+
+.lastEdited {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ─── Glance row — the window + the headline ───────────────────────────────────────── */
+.glance {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+}
+
+/* ─── The window into the studio ──────────────────────────────────────────────────────
+   A recessed --stage well: a literal peek through the door into the dark device. The
+   inset shadow + hairline reads it as milled into the paper, not pasted on. */
+.window {
+  position: relative;
+  flex: 0 0 auto;
+  width: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  border-radius: calc(var(--radius) - 1px);
+  box-shadow:
+    inset 0 2px 5px hsl(0 0% 0% / 0.55),
+    inset 0 0 0 1px hsl(0 0% 0% / 0.4);
+  overflow: hidden;
+}
+
+.root[data-size='sm'] .window {
+  width: 76px;
+  padding: var(--space-2);
+}
+
+/* The stacked color-block of track lanes inside the window — ears-first hardware feel. */
+.lanes {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.lane {
+  height: 7px;
+  border-radius: 2px;
+  background: var(--lane-color, var(--accent));
+  /* LED bloom — the lane is lit hardware, fast attack / slow decay on appearance. */
+  box-shadow: 0 0 5px color-mix(in srgb, var(--lane-color, var(--accent)) 55%, transparent);
+  /* Subtle width stagger so the block reads like real waveform lanes, not a bar chart. */
+  animation: lane-in var(--dur-slow) var(--ease-out) backwards;
+}
+
+.lane:nth-child(2n) {
+  width: 82%;
+}
+.lane:nth-child(3n) {
+  width: 91%;
+}
+
+.root[data-size='sm'] .lane {
+  height: 6px;
+}
+
+/* The "+N" overflow plate when a session has more tracks than the window shows. */
+.overflow {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--stage-text);
+  opacity: 0.7;
+  letter-spacing: 0.02em;
+}
+
+/* No session: a dark room, lights off — dim stubs hint at empty lanes waiting. */
+.lanes[data-dim] .stub {
+  height: 7px;
+  border-radius: 2px;
+  background: hsl(0 0% 100% / 0.07);
+}
+.lanes[data-dim] .stub:nth-child(2) {
+  width: 70%;
+}
+.lanes[data-dim] .stub:nth-child(3) {
+  width: 84%;
+}
+
+/* ─── Headline ─────────────────────────────────────────────────────────────────────── */
+.headline {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The big track count — the number you read in one glance. Display face, confident. */
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.countNum {
+  font-family: var(--font-display);
+  font-size: 44px;
+  line-height: 0.9;
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.root[data-size='sm'] .countNum {
+  font-size: 34px;
+}
+
+.countWord {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  text-transform: lowercase;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+
+/* Imported / new modes get a larger door-name + an explanatory line. */
+.root[data-mode='imported'] .title,
+.root[data-mode='new'] .title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.prompt {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+  max-width: 30ch;
+}
+
+/* ─── The hero CTA — the door handle ───────────────────────────────────────────────────
+   The one hot accent in the whole composition. Bold, full-width, unmistakable. Flat
+   accent fill (no gradient/glow); it deepens on hover and seats 1px on press like a
+   real key. The eye lands here. */
+.cta {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, #000 12%);
+  border-radius: calc(var(--radius) - 1px);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  /* Hairline top-highlight on the cap — a lit key, not a web button. */
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.22);
+  transition:
+    background var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out),
+    filter var(--dur-base) var(--ease-out);
+}
+
+.root[data-size='sm'] .cta {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-base);
+}
+
+.cta:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, #000 12%);
+}
+
+.cta:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px hsl(0 0% 0% / 0.25);
+}
+
+.cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, var(--text));
+  outline-offset: 2px;
+}
+
+/* Opening — the load is owned by the button: it dims slightly and stops accepting input. */
+.cta:disabled {
+  cursor: default;
+  filter: saturate(0.85);
+  opacity: 0.92;
+}
+
+.ctaIcon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.ctaGlyph {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+/* Hover nudges the door-arrow forward — a small "go in" gesture. */
+.cta:hover:not(:disabled) .ctaGlyph {
+  transform: translateX(2px);
+}
+
+.ctaSpinner {
+  width: 16px;
+  height: 16px;
+  animation: cta-spin 0.7s linear infinite;
+}
+
+.ctaLabel {
+  white-space: nowrap;
+}
+
+/* ─── Motion ───────────────────────────────────────────────────────────────────────── */
+@keyframes lane-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.6);
+    transform-origin: left;
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes cta-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Decorative motion snaps; the "Opening…" label keeps carrying the busy state. */
+@media (prefers-reduced-motion: reduce) {
+  .lane {
+    animation: none;
+  }
+  .ctaSpinner {
+    animation: none;
+  }
+  .ctaGlyph,
+  .cta {
+    transition: none;
+  }
+}
