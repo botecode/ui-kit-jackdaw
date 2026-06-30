@@ -121,10 +121,14 @@
 }
 
 /* ─── Disabled ───────────────────────────────────────────────────────────────── */
+/* Inert by greying the lit fill (the played portion goes neutral), NOT by an
+   opacity wash — so it composes cleanly when a host (e.g. MasterPlayer) already
+   dims the whole player. No thumb, no hover, no sweep. */
 
-.track[data-disabled] {
-  cursor: default;
-  opacity: 0.5;
+.track[data-disabled] { cursor: default; }
+.track[data-disabled] .fill {
+  background-color: var(--text-dim);
+  box-shadow: none;
 }
 
 /* ─── Times ──────────────────────────────────────────────────────────────────── */

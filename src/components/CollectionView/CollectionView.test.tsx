@@ -161,6 +161,47 @@ describe('CollectionView now playing', () => {
   })
 })
 
+// ─── Album seeker (now-playing transport) ────────────────────────────────────────
+
+describe('CollectionView album seeker', () => {
+  it('shows a position seeker for the now-playing track', () => {
+    const { getByTestId } = renderView({ nowPlayingId: 't2' })
+    const seek = getByTestId('collection-seek-track')
+    expect(seek).toHaveAttribute('role', 'slider')
+    // t2 (Second light) runs 211s → the seeker reads its duration.
+    expect(seek).toHaveAttribute('aria-valuemax', '211')
+  })
+
+  it('renders no seeker when nothing is playing', () => {
+    const { queryByTestId } = renderView({ nowPlayingId: null })
+    expect(queryByTestId('collection-seek-track')).toBeNull()
+  })
+
+  it('renders no seeker when nowPlayingId does not match a track', () => {
+    const { queryByTestId } = renderView({ nowPlayingId: 'gone' })
+    expect(queryByTestId('collection-seek-track')).toBeNull()
+  })
+
+  it('positions the seeker from positionSeconds', () => {
+    const { getByTestId } = renderView({ nowPlayingId: 't2', positionSeconds: 60 })
+    expect(getByTestId('collection-seek-track')).toHaveAttribute('aria-valuenow', '60')
+  })
+
+  it('fires onSeek when the album seeker is scrubbed by keyboard', () => {
+    const onSeek = vi.fn()
+    const { getByTestId } = renderView({ nowPlayingId: 't2', positionSeconds: 60, onSeek })
+    fireEvent.keyDown(getByTestId('collection-seek-track'), { key: 'ArrowRight' })
+    expect(onSeek).toHaveBeenLastCalledWith(65)
+  })
+
+  it('is display-only when no onSeek is wired', () => {
+    const { getByTestId } = renderView({ nowPlayingId: 't2' })
+    const seek = getByTestId('collection-seek-track')
+    expect(seek).toHaveAttribute('aria-disabled', 'true')
+    expect(seek).toHaveAttribute('tabindex', '-1')
+  })
+})
+
 // ─── Reorder ────────────────────────────────────────────────────────────────────
 
 describe('CollectionView reorder', () => {

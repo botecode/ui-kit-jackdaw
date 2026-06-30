@@ -25,9 +25,16 @@
 //   Play-album action use the warm --accent — one accent, as the card asks.
 // - Row play is an action button (relabels "Play <title>"/"Pause <title>", no aria-pressed);
 //   the grip is a labelled "Reorder <title> (use arrow keys)" button — one ARIA model each.
+// - The album player gets a position seeker (kit-player-seeker): when a track is
+//   playing, a "Now playing" transport strip sits below the header with the shared
+//   <Seeker> showing position vs. that track's duration, scrubbable when the host
+//   wires onSeek (display-only otherwise). It uses --accent (the now-playing spine
+//   color), one seeker shared with MasterPlayer — not a second inline copy. The
+//   per-row play studs stay for picking the track; the strip is the position scrub.
 import { useEffect, useId, useRef, useState } from 'react'
 import { Play, Pause, CaretLeft, DotsSixVertical } from '@phosphor-icons/react'
 import { SongNotesEditor } from '../SongNotesEditor'
+import { Seeker } from '../Seeker'
 import { Badge } from '../Badge'
 import styles from './CollectionView.module.css'
 
@@ -63,6 +70,21 @@ export interface CollectionViewProps {
   onOpenSong: (id: string) => void
   /** The id of the song currently playing, if any — highlights its row. */
   nowPlayingId?: string | null
+  /**
+   * Elapsed position of the now-playing track, seconds — feeds the album seeker.
+   * Only meaningful with `nowPlayingId` set. The host drives this at transport rate.
+   */
+  positionSeconds?: number
+  /**
+   * Whether the now-playing track is actually rolling (vs paused) — lights the
+   * seeker's played portion. Defaults to true while there's a now-playing track.
+   */
+  isPlaying?: boolean
+  /**
+   * Seek within the now-playing track to an absolute position in seconds.
+   * Absent → the album seeker is display-only (shows position, not scrubbable).
+   */
+  onSeek?: (seconds: number) => void
   /** Back to the collections shelf. The control only renders when provided. */
   onBack?: () => void
   size?: 'sm' | 'md'
@@ -99,6 +121,9 @@ export function CollectionView({
   onPlayAll,
   onOpenSong,
   nowPlayingId = null,
+  positionSeconds = 0,
+  isPlaying,
+  onSeek,
   onBack,
   size = 'md',
   className,
@@ -136,6 +161,10 @@ export function CollectionView({
 
   const total = totalDuration(tracks)
   const metaLabel = `ALBUM · ${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'} · ${formatDuration(total)}`
+
+  // The album player's seeker tracks the now-playing song's position. It only
+  // surfaces once a track is playing — there's nothing to scrub otherwise.
+  const nowPlaying = nowPlayingId != null ? tracks.find(t => t.id === nowPlayingId) ?? null : null
 
   return (
     <section
@@ -184,6 +213,25 @@ export function CollectionView({
           <span>Play album</span>
         </button>
       </header>
+
+      {/* ── Now-playing transport — the album player's position seeker ───────── */}
+      {nowPlaying && (
+        <div className={styles.nowPlaying} data-now-playing-bar>
+          <span className={styles.nowPlayingLabel}>
+            <span className={styles.nowPlayingTag} aria-hidden="true">Now playing</span>
+            <span className={styles.nowPlayingTitle}>{nowPlaying.title}</span>
+          </span>
+          <Seeker
+            idPrefix="collection-seek"
+            label={`Seek — ${nowPlaying.title}`}
+            positionSeconds={positionSeconds}
+            durationSeconds={nowPlaying.durationSeconds}
+            isPlaying={isPlaying ?? true}
+            onSeek={onSeek}
+            size={size}
+          />
+        </div>
+      )}
 
       {/* ── Tracklist — the hero, directly under the header ──────────────────── */}
       {tracks.length === 0 ? (

@@ -1,5 +1,5 @@
 // src/components/CollectionView/CollectionView.demo.tsx
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
@@ -94,18 +94,22 @@ function StatesDemo() {
       </State>
 
       <State label="active">
-        {/* A live row — the green play LED lit, the accent spine on the now-playing track. */}
+        {/* A live row — the green play LED lit, the accent spine + the now-playing
+            transport seeker, scrubbing the live track's position. */}
         <CollectionView
           title="Paper Houses"
           coverColor="var(--chroma-green)"
           notes={NOTES}
           tracks={TRACKS}
           nowPlayingId="t4"
+          positionSeconds={142}
+          isPlaying
           onNotesChange={noop}
           onReorder={noop}
           onPlayTrack={noop}
           onPlayAll={noop}
           onOpenSong={noop}
+          onSeek={noop}
         />
       </State>
 
@@ -124,18 +128,22 @@ function StatesDemo() {
       </State>
 
       <State label="selected">
-        {/* nowPlaying = the selected/lit row. */}
+        {/* nowPlaying = the selected/lit row; paused, so the seeker holds its
+            position with no rolling bloom (isPlaying={false}). */}
         <CollectionView
           title="Paper Houses"
           coverColor="var(--chroma-red)"
           notes={NOTES}
           tracks={TRACKS.slice(0, 5)}
           nowPlayingId="t2"
+          positionSeconds={64}
+          isPlaying={false}
           onNotesChange={noop}
           onReorder={noop}
           onPlayTrack={noop}
           onPlayAll={noop}
           onOpenSong={noop}
+          onSeek={noop}
         />
       </State>
 
@@ -189,10 +197,24 @@ function PlaygroundDemo() {
   const [tracks, setTracks] = useState(TRACKS)
   const [notes, setNotes] = useState(NOTES)
   const [nowPlayingId, setNowPlayingId] = useState<string | null>('t2')
+  const [playing, setPlaying] = useState(true)
+  const [position, setPosition] = useState(64)
   const [withCover, setWithCover] = useState(true)
   const [small, setSmall] = useState(false)
   const [withBack, setWithBack] = useState(true)
   const [lastAction, setLastAction] = useState('')
+
+  const nowDuration = tracks.find(t => t.id === nowPlayingId)?.durationSeconds ?? 0
+
+  // Roll the now-playing position forward while playing — the host owns the
+  // clock; CollectionView only renders positionSeconds (audio is native).
+  useEffect(() => {
+    if (!playing || nowPlayingId == null) return
+    const id = window.setInterval(() => {
+      setPosition(p => (p >= nowDuration ? 0 : p + 1))
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [playing, nowPlayingId, nowDuration])
 
   return (
     <Playground>
@@ -205,6 +227,8 @@ function PlaygroundDemo() {
             onNotesChange={setNotes}
             tracks={tracks}
             nowPlayingId={nowPlayingId}
+            positionSeconds={position}
+            isPlaying={playing}
             size={small ? 'sm' : 'md'}
             onBack={withBack ? () => setLastAction('back') : undefined}
             onReorder={(from, to) => {
@@ -213,13 +237,21 @@ function PlaygroundDemo() {
             }}
             onPlayTrack={id => {
               setNowPlayingId(id)
+              setPosition(0)
+              setPlaying(true)
               setLastAction(`playTrack ${id}`)
             }}
             onPlayAll={() => {
               setNowPlayingId(tracks[0]?.id ?? null)
+              setPosition(0)
+              setPlaying(true)
               setLastAction('playAll')
             }}
             onOpenSong={id => setLastAction(`openSong ${id}`)}
+            onSeek={s => {
+              setPosition(s)
+              setLastAction(`seek → ${s.toFixed(0)}s`)
+            }}
           />
         </div>
 
@@ -230,9 +262,18 @@ function PlaygroundDemo() {
           <Checkbox checked={small} onChange={setSmall} size="sm" label="small density" />
           <Checkbox
             checked={nowPlayingId != null}
-            onChange={on => setNowPlayingId(on ? tracks[1]?.id ?? null : null)}
+            onChange={on => {
+              setNowPlayingId(on ? tracks[1]?.id ?? null : null)
+              setPosition(0)
+            }}
             size="sm"
             label="now playing"
+          />
+          <Toggle
+            checked={playing}
+            onChange={setPlaying}
+            size="sm"
+            label="rolling (seeker bloom)"
           />
 
           {lastAction && (
