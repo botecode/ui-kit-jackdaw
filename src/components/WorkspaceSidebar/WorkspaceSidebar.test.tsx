@@ -276,6 +276,76 @@ describe('WorkspaceSidebar — library entries', () => {
   })
 })
 
+// ── Create collection (in-section action affordance) ────────────────────────────
+
+describe('WorkspaceSidebar — create collection', () => {
+  it('renders the "+ Create collection" affordance when onCreateCollection is given', () => {
+    setup({ onCreateCollection: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Create collection' })).toBeInTheDocument()
+  })
+
+  it('renders no create affordance when onCreateCollection is omitted (read-only)', () => {
+    setup()
+    expect(screen.queryByRole('button', { name: 'Create collection' })).not.toBeInTheDocument()
+  })
+
+  it('fires onCreateCollection when clicked', () => {
+    const onCreateCollection = vi.fn()
+    setup({ onCreateCollection })
+    fireEvent.click(screen.getByRole('button', { name: 'Create collection' }))
+    expect(onCreateCollection).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the create affordance when collections exist (rides the list bottom)', () => {
+    setup({ onCreateCollection: vi.fn() })
+    // The destinations are still there...
+    expect(screen.getByRole('button', { name: 'B-sides' })).toBeInTheDocument()
+    // ...and the affordance sits alongside them.
+    expect(screen.getByRole('button', { name: 'Create collection' })).toBeInTheDocument()
+  })
+
+  it('replaces the "No collections" empty text when there are none', () => {
+    setup({ collections: [], onCreateCollection: vi.fn() })
+    // The create affordance IS the empty state — the plain text is gone.
+    expect(screen.getByRole('button', { name: 'Create collection' })).toBeInTheDocument()
+    expect(screen.queryByText(/no collections/i)).not.toBeInTheDocument()
+  })
+
+  it('keeps the legacy "No collections" text when there are none and no handler', () => {
+    setup({ collections: [] })
+    expect(screen.getByText(/no collections/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Create collection' })).not.toBeInTheDocument()
+  })
+
+  it('stays reachable while filtering (it is the way in, not content)', () => {
+    setup({ query: 'zzzzz', onCreateCollection: vi.fn() })
+    // Collections filter out, but the affordance persists.
+    expect(screen.queryByRole('button', { name: 'B-sides' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create collection' })).toBeInTheDocument()
+  })
+
+  it('is a command, not a destination: no aria-current even when a collection is active', () => {
+    setup({ active: 'c1', onCreateCollection: vi.fn() })
+    expect(screen.getByRole('button', { name: 'Create collection' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('stays OUT of the roving arrow nav — End lands on the last collection, not the affordance', () => {
+    setup({ onCreateCollection: vi.fn() })
+    const home = screen.getByRole('button', { name: 'Home' })
+    home.focus()
+    fireEvent.keyDown(home, { key: 'End' })
+    expect(screen.getByRole('button', { name: 'Live takes' })).toHaveFocus()
+  })
+
+  it('collapses to an icon-only affordance that keeps its accessible name', () => {
+    setup({ collapsed: true, onCreateCollection: vi.fn() })
+    const create = screen.getByRole('button', { name: 'Create collection' })
+    expect(create).toBeInTheDocument()
+    // No visible text label on the rail — the name comes from aria-label only.
+    expect(create).not.toHaveTextContent('Create collection')
+  })
+})
+
 // ── Empty / collapsed ─────────────────────────────────────────────────────────
 
 describe('WorkspaceSidebar — empty + collapsed', () => {

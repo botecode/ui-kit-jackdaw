@@ -18,6 +18,16 @@
 // rather than the default dark `--stage` well — that recessed trench is hardware-
 // control vocabulary, and would read as a dark bar dropped onto the paper rail.
 //
+// "+ Create collection" is the way INTO a collection, so it lives in the
+// Collections section (never the footer, by design): when the section is empty it
+// IS the empty state — offering the way in instead of merely printing "No
+// collections" — and when collections exist it rides the list bottom. It borrows
+// the footer's quiet action vocabulary (a flat row, a + that warms to the accent
+// on hover — not a loud primary button), and like the footer actions it's a
+// COMMAND not a destination: no accent spine, no aria-current, out of the roving
+// arrow nav, reached by Tab. That keeps the ARIA model honest (rows navigate,
+// actions act) and the paper calm.
+//
 // Pinned library entries (e.g. "Lyrics") are top-level destinations, not content:
 // they ride in the Home group, share Home's row vocabulary (same accent spine when
 // active, same roving nav via [data-nav-row]), and — unlike songs/collections — are
@@ -79,6 +89,13 @@ export interface WorkspaceSidebarProps {
   libraryEntries?: LibraryEntry[]
   onNewSong:     () => void
   onImportSong:  () => void
+  /** Make a new collection — the way INTO a collection. When given, a quiet
+   *  "+ Create collection" affordance sits in the Collections section (under the
+   *  header): it replaces the "No collections" empty text when there are none,
+   *  and rides at the bottom of the list when collections exist. Always present
+   *  so the section is never a dead end. Omitted → the section is read-only and
+   *  falls back to the plain "No collections" empty line (no behaviour change). */
+  onCreateCollection?: () => void
   /** Icon-only narrow rail. Hides the search field + group labels; rows keep
    *  their accessible names. */
   collapsed?:    boolean
@@ -156,6 +173,7 @@ export function WorkspaceSidebar({
   libraryEntries = [],
   onNewSong,
   onImportSong,
+  onCreateCollection,
   collapsed = false,
   'aria-label': ariaLabel = 'Library',
 }: WorkspaceSidebarProps) {
@@ -302,9 +320,32 @@ export function WorkspaceSidebar({
                 />
               ))}
             </ul>
-          ) : !collapsed && !filtering ? (
+          ) : !collapsed && !filtering && !onCreateCollection ? (
+            // No way in: a plain read-only empty line (legacy behaviour).
             <p className={styles.empty}>No collections</p>
           ) : null}
+
+          {/* The way INTO a collection. A quiet action affordance (not a nav
+              destination): it commands rather than navigates, so — like the
+              footer's New/Import — it carries no aria-current and stays OUT of
+              the roving arrow nav (Tab reaches it). It IS the empty state when
+              there are no collections, and rides the list bottom when there
+              are. Always rendered when the prop is given, so the section is
+              never a dead end. */}
+          {onCreateCollection && (
+            <button
+              type="button"
+              className={styles.action}
+              onClick={onCreateCollection}
+              aria-label={collapsed ? 'Create collection' : undefined}
+              title={collapsed ? 'Create collection' : undefined}
+            >
+              <span className={styles.actionLead} aria-hidden="true">
+                <Plus size={18} weight="regular" />
+              </span>
+              {!collapsed && <span className={styles.actionLabel}>Create collection</span>}
+            </button>
+          )}
         </div>
 
         {noMatches && !collapsed && (

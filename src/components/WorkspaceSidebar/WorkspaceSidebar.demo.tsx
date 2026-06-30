@@ -70,6 +70,7 @@ function StatesDemo() {
             onSearch={() => {}}
             onNewSong={() => {}}
             onImportSong={() => {}}
+            onCreateCollection={() => {}}
           />
         </SidebarWrap>
       </State>
@@ -103,7 +104,7 @@ function StatesDemo() {
         </SidebarWrap>
       </State>
 
-      <State label="Active — a collection">
+      <State label="Active — a collection (Create collection rides the list bottom)">
         <SidebarWrap>
           <WorkspaceSidebar
             active="c2"
@@ -113,6 +114,22 @@ function StatesDemo() {
             onSearch={() => {}}
             onNewSong={() => {}}
             onImportSong={() => {}}
+            onCreateCollection={() => {}}
+          />
+        </SidebarWrap>
+      </State>
+
+      <State label="Empty Collections — Create collection IS the empty state (the way in)">
+        <SidebarWrap>
+          <WorkspaceSidebar
+            active={HOME_ID}
+            songs={SONGS}
+            collections={[]}
+            onSelect={() => {}}
+            onSearch={() => {}}
+            onNewSong={() => {}}
+            onImportSong={() => {}}
+            onCreateCollection={() => {}}
           />
         </SidebarWrap>
       </State>
@@ -233,6 +250,23 @@ function StatesDemo() {
           />
         </SidebarWrap>
       </State>
+
+      <State label="Collapsed — Create collection as a lone + on the icon rail">
+        <SidebarWrap>
+          <WorkspaceSidebar
+            collapsed
+            active="s1"
+            songs={SONGS}
+            collections={COLLECTIONS}
+            libraryEntries={LIBRARY}
+            onSelect={() => {}}
+            onSearch={() => {}}
+            onNewSong={() => {}}
+            onImportSong={() => {}}
+            onCreateCollection={() => {}}
+          />
+        </SidebarWrap>
+      </State>
     </StatesGrid>
   )
 }
@@ -259,6 +293,7 @@ function PlaygroundDemo() {
             libraryEntries={LIBRARY}
             onNewSong={() => setLast('New song')}
             onImportSong={() => setLast('Import song')}
+            onCreateCollection={() => setLast('Create collection')}
             collapsed={collapsed}
           />
         </SidebarWrap>
