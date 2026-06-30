@@ -1,10 +1,33 @@
 /* src/components/FocusedTrackDetailPanel/FocusedTrackDetailPanel.module.css */
 
+/* ─── Why this isn't a webpage ───────────────────────────────────────────────
+   The focused single-track detail panel, overdrive pass: the recording room you
+   drop into to work one track with full focus. A flat Chroma device face, not a
+   detail pane. Hierarchy is built from form, spacing and type — never chrome:
+
+   • The take reads first. The clip lane is the hero (it owns the width and the
+     full body height); the level meter and the volume/pan strip flank it as
+     quiet device columns; the FX + routing rail is a clearly secondary column.
+   • Flat, not glossy. No drop-shadow halos, no gloss highlights, no knurl
+     gradients — recess is carried by the dark --stage well against the cream
+     surface and crisp hairline keylines, the Chroma way. Every depth cue is a
+     token, so the whole face reskins through every theme.
+   • The accent stays reserved. Colour that lights up is meaning: the semantic FX
+     LEDs (cyan chain / amber partial / per-slot colour) and the per-track keyline
+     spine. The orange accent is held for focus rings and live state only — the
+     surface never borrows it for decoration.
+   • Tactile resize. The top edge is a recessed stage channel with a single grip
+     pill — a real handle, drag-1:1 (functional motion, never animated).
+
+   Open/close animates a grid track (0fr→1fr) so it's layout-cheap; resize drag
+   removes the transition for 1:1 feel. Decorative motion snaps under
+   prefers-reduced-motion; the state-carrying LED bloom stays.
+*/
+
 /* ─── Root ───────────────────────────────────────────────────────────────────
-   Uses grid-template-rows: 0fr → 1fr for the open/close transition so we
-   animate a grid track size rather than layout height (no layout thrash).
-   --panel-height on .inner gives the actual pixel size that the grid expands to.
-   data-resizing removes the transition so resize drag is always 1:1 (functional).
+   grid-template-rows: 0fr → 1fr animates a grid track rather than layout height
+   (no thrash). --panel-height on .inner is the pixel size the 1fr expands to.
+   data-resizing drops the transition so resize drag is always 1:1 (functional).
 */
 
 .root {
@@ -12,10 +35,8 @@
   grid-template-rows: 0fr;
   width: 100%;
   overflow: hidden;
-  border-top: 1px solid var(--border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 -4px 16px rgba(0, 0, 0, 0.18);
+  /* A single crisp top lip — the device's edge. No drop-shadow halo. */
+  border-top: 1px solid var(--border-strong, var(--border));
   transition: grid-template-rows var(--dur-slow, 200ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
 }
 
@@ -57,8 +78,8 @@
 }
 
 /* ─── Divider (resize handle) ────────────────────────────────────────────────
-   Horizontal 8 px drag target at the top. Knurl dots provide a tactile drag
-   affordance without fake hardware texture.
+   A recessed stage channel across the top with one centred grip pill — a real
+   handle, no fake hardware texture. Flat and tokenised so it reskins.
 */
 
 .divider {
@@ -67,6 +88,9 @@
   left: 0;
   right: 0;
   height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: ns-resize;
   z-index: 10;
   background-color: var(--stage);
@@ -74,15 +98,25 @@
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  /* Knurl dots — 2 px circular pillars on the stage surface */
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
-  background-size: 6px 6px;
-  background-position: center center;
+  transition: background-color var(--dur-base, 120ms);
+}
+
+/* Centred grip pill — the tactile affordance. */
+.divider::after {
+  content: "";
+  width: 28px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--text-dim);
   transition: background-color var(--dur-base, 120ms);
 }
 
 .divider:hover {
-  background-color: color-mix(in srgb, var(--accent) 12%, var(--stage));
+  background-color: var(--stage-2);
+}
+
+.divider:hover::after {
+  background-color: var(--text-muted);
 }
 
 .divider:focus-visible {
@@ -91,15 +125,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .divider { transition: none; }
+  .divider,
+  .divider::after { transition: none; }
 }
 
-/* ─── Header ─────────────────────────────────────────────────────────────── */
+/* ─── Header — the room's title bar ───────────────────────────────────────── */
 
 .header {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   padding: 0 var(--space-3) 0 var(--space-5);
   height: 40px;
   min-height: 40px;
@@ -109,12 +144,13 @@
   position: relative;
 }
 
-/* Per-track color keyline — left edge of the header, matching TrackHeader spine */
+/* Per-track colour keyline — left edge spine, matching TrackHeader. The one
+   place colour identifies the track; the accent stays reserved elsewhere. */
 .keyline {
   position: absolute;
   left: 0;
-  top: 6px;
-  bottom: 6px;
+  top: 5px;
+  bottom: 5px;
   width: 3px;
   background: var(--track-color, var(--accent));
   border-radius: 0 2px 2px 0;
@@ -122,9 +158,10 @@
 
 .trackName {
   flex: 1;
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
   font-weight: var(--weight-medium);
+  letter-spacing: 0.01em;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -137,7 +174,7 @@
 .headerControls {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
@@ -176,14 +213,17 @@
   .closeBtn { transition: none; }
 }
 
-/* ─── Body ───────────────────────────────────────────────────────────────── */
+/* ─── Body ───────────────────────────────────────────────────────────────────
+   Vertical padding is held at --space-2 (8px) — the lane-height math in the TSX
+   subtracts it; only the inter-column gap breathes wider.
+*/
 
 .body {
   display: flex;
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  gap: var(--space-2);
+  gap: var(--space-3);
   padding: var(--space-2);
 }
 
@@ -199,7 +239,8 @@
   overflow: hidden;
 }
 
-/* Recessed well for the always-on stereo meter */
+/* Recessed stage well for the stereo meter — a quiet flanking column. The dark
+   --stage against the cream surface IS the recess; no inset shadow soup. */
 .meterWell {
   display: flex;
   align-items: center;
@@ -207,14 +248,12 @@
   flex-shrink: 0;
   padding: var(--space-1) var(--space-2);
   background-color: var(--stage);
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
   border-radius: var(--radius, 4px);
-  box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.18);
 }
 
-/* Scrollable clip canvas — TrackLane fills this */
+/* The hero — the clip canvas. Owns the width and full body height; TrackLane
+   fills it. A crisp ledger keyline frames it; nothing competes. */
 .laneArea {
   flex: 1;
   min-width: 0;
@@ -236,25 +275,24 @@
 .emptyMsg {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  color: var(--text-muted);
-  font-style: italic;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
 }
 
-/* Compact volume + pan strip */
+/* Compact volume + pan strip — a quiet recessed device column flanking the lane. */
 .mixerStrip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   flex-shrink: 0;
-  padding: var(--space-2) var(--space-1);
-  background-color: var(--surface);
+  padding: var(--space-2) var(--space-2);
+  background-color: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius, 4px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-/* ─── Right column: FX chain + advanced slots ───────────────────────────── */
+/* ─── Right column: FX chain + routing — the secondary rail ──────────────── */
 
 .rightCol {
   display: flex;
@@ -268,7 +306,10 @@
   scrollbar-color: var(--border) transparent;
 }
 
-/* ─── Inline FX chain — master LED ──────────────────────────────────────── */
+/* ─── Inline FX chain — master LED ──────────────────────────────────────────
+   Recessed-off / lit-on, the FxChip language reused inline. The bloom is a crisp
+   functional indicator (state-carrying — it stays under reduced motion), not a
+   decorative surface glow. */
 
 .masterChainLed {
   width: 10px;
@@ -280,9 +321,7 @@
   outline: none;
   flex-shrink: 0;
   background: var(--stage);
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
   transition:
     background  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     box-shadow  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
@@ -292,7 +331,7 @@
   background: var(--led-cyan);
   box-shadow:
     0 0 0 1px var(--led-cyan),
-    0 0 8px 3px color-mix(in srgb, var(--led-cyan) 40%, transparent);
+    0 0 6px 1px color-mix(in srgb, var(--led-cyan) 35%, transparent);
   transition:
     background  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     box-shadow  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
@@ -302,7 +341,7 @@
   background: var(--led-yellow);
   box-shadow:
     0 0 0 1px var(--led-yellow),
-    0 0 12px 5px color-mix(in srgb, var(--led-yellow) 55%, transparent);
+    0 0 6px 1px color-mix(in srgb, var(--led-yellow) 40%, transparent);
   transition:
     background  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     box-shadow  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
@@ -335,7 +374,7 @@
 .pluginRow {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding: var(--space-1) 0;
   min-height: 26px;
   user-select: none;
@@ -346,7 +385,7 @@
   border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
 }
 
-/* ─── Plugin LED (enable/bypass) ─────────────────────────────────────────── */
+/* ─── Plugin LED (enable/bypass) — recessed-off, slot-colour lit-on ──────── */
 
 .pluginLed {
   flex-shrink: 0;
@@ -358,9 +397,7 @@
   cursor: pointer;
   outline: none;
   background: var(--stage);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
   transition:
     background  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     box-shadow  var(--dur-led-off, 220ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
@@ -370,7 +407,7 @@
   background: var(--slot-color);
   box-shadow:
     0 0 0 1px var(--slot-color),
-    0 0 5px 2px color-mix(in srgb, var(--slot-color) 38%, transparent);
+    0 0 4px 1px color-mix(in srgb, var(--slot-color) 35%, transparent);
   transition:
     background  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     box-shadow  var(--dur-led-on, 40ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
@@ -560,16 +597,18 @@
   border: 0;
 }
 
-/* ─── Routing placeholder slots ──────────────────────────────────────────── */
+/* ─── Routing rows ───────────────────────────────────────────────────────────
+   Deliberate labelled device rows on a faintly recessed ground — a solid
+   hairline, never a dashed wireframe placeholder. */
 
 .advancedSlot {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-2);
-  border: 1px dashed color-mix(in srgb, var(--border) 60%, transparent);
+  border: 1px solid var(--border);
   border-radius: var(--radius, 4px);
-  background-color: color-mix(in srgb, var(--stage) 30%, var(--surface));
+  background-color: var(--surface-2);
   margin-bottom: var(--space-1);
 }
 
@@ -607,6 +646,6 @@
 .slotDesc {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
-  color: color-mix(in srgb, var(--text-muted) 60%, transparent);
+  color: var(--text-dim);
   line-height: var(--leading-sm, 1.3);
 }
