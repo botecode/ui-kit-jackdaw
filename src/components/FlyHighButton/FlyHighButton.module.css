@@ -181,6 +181,7 @@
 .text {
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -224,6 +225,25 @@
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--stage-text) 60%, transparent);
 }
+
+/* ─── Capture tease — the miniature catch on the right of the faceplate ───────── */
+.wave {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: clamp(92px, 22%, 200px);
+  align-self: stretch;
+  min-height: 48px;
+  margin-left: var(--space-4);
+  /* Fade the left edge so the loop bleeds out of the text rather than butting it. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 22%);
+  mask-image: linear-gradient(to right, transparent, #000 22%);
+}
+.wave canvas { position: absolute; inset: 0; }
+/* The listening stage owns the look; the idle advertisement steps aside. */
+.root[data-state="listening"] .wave { display: none; }
+/* Too tight to read on the small size — drop it. */
+.root[data-size="sm"] .wave { display: none; }
 
 /* ─── Reduced motion — the mode swap stays calm; decorative breathing snaps off ─ */
 @media (prefers-reduced-motion: reduce) {

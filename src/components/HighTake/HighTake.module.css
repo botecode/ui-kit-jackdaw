@@ -20,9 +20,18 @@
   --ht-handle-overhang: 5px;
 }
 
-/* ─── Label strip ─────────────────────────────────────────────────────────── */
+/* ─── Header strip (play control + label) ───────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 0;
+}
 
 .label {
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   letter-spacing: 0.02em;
@@ -30,6 +39,32 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ─── Playback playhead — green sweep (play semantics) ───────────────────────── */
+
+.playLine {
+  position: absolute;
+  top: calc(-1 * var(--ht-handle-overhang));
+  bottom: calc(-1 * var(--ht-handle-overhang));
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--accent-green);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--accent-green) 55%, transparent);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.playLine[data-playing] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playLine {
+    transition: none;
+  }
 }
 
 /* ─── Waveform track — flat recessed well ────────────────────────────────────

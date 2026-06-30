@@ -90,6 +90,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   DotMatrix: ['app', 'daw'],
   Fader: ['app', 'daw'],
   Meter: ['app', 'daw'],
+  Metronome: ['app', 'daw'],
   MuteSoloToggle: ['app', 'daw'],
   PanKnob: ['app', 'daw'],
 
@@ -100,6 +101,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   CommentsPanel: ['app', 'daw'],
   ExportDialog: ['app', 'daw'],
   FlyHighButton: ['app', 'daw'], // Home's catch-ideas (High mode) hero — in-product, not the marketing site
+  'High Mode': ['app', 'daw'], // the full catch-ideas flow (Focus mode) — pick → record → review → save
   HighTake: ['app', 'daw'], // High mode's captured-take trim review — same catch-ideas family
   IdeasLibrary: ['app', 'daw'],
   ImportFirst: ['app', 'daw'],

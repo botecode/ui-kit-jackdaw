@@ -1,0 +1,8 @@
+/* src/components/FlyHighButton/CaptureTease.module.css */
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* `color` is the ink the bars + badge draw with — set by the host per state. */
+  color: var(--accent-contrast);
+}

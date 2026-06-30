@@ -1,0 +1,87 @@
+/* src/components/HighMode/LiveCaptureTrack.module.css */
+
+/* The recorder screen — a recessed inset on the dark stage. */
+.root {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 5.2;
+  min-height: 160px;
+  border-radius: calc(var(--radius) * 1.8);
+  background: var(--stage-2);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  border: 1px solid color-mix(in srgb, var(--stage-text) 9%, transparent);
+  box-shadow:
+    inset 0 2px 16px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+.canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+/* HUD — status (lower-left) + caught counter (upper-right). */
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: var(--space-4) var(--space-5);
+}
+.statusLine {
+  position: absolute;
+  left: var(--space-5);
+  bottom: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--stage-text) 64%, transparent);
+  transition: color var(--dur-base) var(--ease-out);
+}
+.statusDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--stage-text) 30%, transparent);
+  flex: 0 0 auto;
+}
+/* Recording → live red dot; holding → accent (sealing); caught → accent, lit. */
+.statusLine[data-state="recording"] { color: color-mix(in srgb, var(--stage-text) 82%, transparent); }
+.statusLine[data-state="recording"] .statusDot {
+  background: var(--led-red);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--led-red) 60%, transparent);
+  animation: lct-blink 1.1s var(--ease-in-out) infinite;
+}
+.statusLine[data-state="holding"] { color: color-mix(in srgb, var(--accent) 86%, var(--stage-text)); }
+.statusLine[data-state="holding"] .statusDot {
+  background: var(--accent);
+  box-shadow: 0 0 7px 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.statusLine[data-state="caught"] { color: var(--accent); }
+.statusLine[data-state="caught"] .statusDot {
+  background: var(--accent);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Announce only the capture milestone to screen readers (the visible status line
+   cycles too often to be a live region). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes lct-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusLine, .statusLine[data-state="recording"] .statusDot { transition: none; animation: none; }
+}

@@ -1,6 +1,7 @@
 // src/components/FlyHighButton/FlyHighButton.tsx
 import { useEffect, useId, useState } from 'react'
 import { Feather } from '@phosphor-icons/react'
+import { CaptureTease } from './CaptureTease'
 import styles from './FlyHighButton.module.css'
 
 // ── Why this isn't a webpage ──────────────────────────────────────────────────
@@ -13,6 +14,12 @@ import styles from './FlyHighButton.module.css'
 // went from paper to lit hardware. Tokens only → the same swap reskins through
 // every theme. No gradient, no gloss — the loudness is the accent fill and the
 // LED bloom, not a shiny button.
+//
+// The doorway also *shows* the feature: a CaptureTease (a miniature of High mode's
+// catch) plays quietly on the right of the idle faceplate — a waveform that sweeps
+// and, each loop, "catches" one span with a check badge, echoing the how-it-works
+// screen. Decorative, hidden in listening / sm, paused offscreen and under reduced
+// motion (a settled still).
 //
 // Decisions (headless, resolved against KIT-LEAD.md):
 // • The whole hero IS the <button> — Home's one bold tap target, not a card that
@@ -122,6 +129,12 @@ export function FlyHighButton({
         <span id={sublineId} className={styles.subline} aria-live="polite">
           {subline}
         </span>
+      </span>
+
+      {/* The capture tease — a miniature of High mode's catch, advertising the
+          feature on the faceplate. Decorative; hidden in the listening state. */}
+      <span className={styles.wave} aria-hidden="true">
+        <CaptureTease paused={listening} />
       </span>
     </button>
   )

@@ -1,0 +1,134 @@
+/* src/components/Metronome/Metronome.module.css */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ── The click toggle — recessed off, cyan LED lit on ───────────────────────── */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+.root[data-size="sm"] .toggle {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+.toggle:hover:not(:disabled) {
+  color: var(--text);
+}
+.toggle:focus-visible {
+  outline: 2px solid var(--led-cyan);
+  outline-offset: 2px;
+}
+.toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.toggle[data-on] {
+  color: var(--led-cyan);
+  border-color: color-mix(in srgb, var(--led-cyan) 45%, transparent);
+  background: color-mix(in srgb, var(--led-cyan) 9%, transparent);
+}
+
+/* The LED in the toggle — dark recessed off, blooming cyan on. */
+.led {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+.toggle[data-on] .led {
+  background: var(--led-cyan);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--led-cyan) 70%, transparent),
+    0 0 8px 1px color-mix(in srgb, var(--led-cyan) 55%, transparent);
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.label {
+  line-height: 1;
+}
+
+/* ── Beat pips — the bar lighting across as the click runs ───────────────────── */
+.pips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out),
+    transform var(--dur-led-off) var(--ease-out);
+}
+.pip[data-downbeat] {
+  width: 7px;
+  height: 7px;
+}
+.pip[data-lit] {
+  background: var(--led-cyan);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--led-cyan) 70%, transparent),
+    0 0 7px 1px color-mix(in srgb, var(--led-cyan) 50%, transparent);
+  transform: scale(1.15);
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out),
+    transform var(--dur-led-on) var(--ease-out);
+}
+
+/* ── Tempo readout ──────────────────────────────────────────────────────────── */
+.bpm {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-md);
+  color: var(--text);
+}
+.root[data-size="sm"] .bpm {
+  font-size: var(--text-base);
+}
+.bpmUnit {
+  font-weight: var(--weight-normal);
+  font-size: var(--text-xs);
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle,
+  .led,
+  .pip {
+    transition: none;
+  }
+}

@@ -12,9 +12,10 @@
 // (seconds / durationSeconds). Drag maps pointer X → seconds via the waveform's own bounding
 // rect (same approach as TimeSelection), so it drops in anywhere with no coordinate plumbing.
 
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Plus } from '@phosphor-icons/react'
 import { Button } from '../Button'
+import { TransportButton } from '../TransportButton'
 import styles from './HighTake.module.css'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -85,6 +86,15 @@ export interface HighTakeProps {
   onSave: () => void
   /** Take name shown on the strip. */
   label?: string
+  // ── Playback (optional) — listen to a take before you keep it ───────────────
+  /** Is this take playing? Lights the play control green and sweeps the playhead. */
+  playing?: boolean
+  /** Toggle playback. When provided, a play/pause control appears in the header. */
+  onTogglePlay?: () => void
+  /** Parked playhead position (seconds) shown when not playing. */
+  playheadSeconds?: number
+  /** Live playhead read for the rAF sweep while playing — the transport owns the clock. */
+  getPlayheadSeconds?: () => number
   disabled?: boolean
   size?: 'sm' | 'md'
   'aria-label'?: string
@@ -110,11 +120,16 @@ export function HighTake({
   onTrim,
   onSave,
   label,
+  playing = false,
+  onTogglePlay,
+  playheadSeconds,
+  getPlayheadSeconds,
   disabled = false,
   size = 'md',
   'aria-label': ariaLabel = label ? `${label} trim` : 'Take trim',
 }: HighTakeProps) {
   const trackRef = useRef<HTMLDivElement>(null)
+  const playLineRef = useRef<HTMLDivElement>(null)
   const [dragging, setDragging] = useState<Side | null>(null)
   const clipId = useId().replace(/:/g, '')
 
@@ -130,6 +145,29 @@ export function HighTake({
   const startFrac = clampFrac(trimStart / dur)
   const endFrac = clampFrac(trimEnd / dur)
   const midFrac = (startFrac + endFrac) / 2
+
+  // ── Playback playhead ───────────────────────────────────────────────────────
+  const hasPlayback = playing || playheadSeconds != null
+  const parkedFrac = clampFrac((playheadSeconds ?? trimStart) / dur)
+
+  // Sweep the line while playing via our own rAF reading the host clock (the
+  // transport owns time), positioning it imperatively so the sweep never triggers
+  // a re-render. Parks at playheadSeconds when stopped.
+  useEffect(() => {
+    const line = playLineRef.current
+    if (!line) return
+    if (!playing || !getPlayheadSeconds) {
+      line.style.left = `${parkedFrac * 100}%`
+      return
+    }
+    let raf = 0
+    const tick = () => {
+      line.style.left = `${clampFrac(getPlayheadSeconds() / dur) * 100}%`
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [playing, getPlayheadSeconds, parkedFrac, dur])
 
   // ── Coord helper ────────────────────────────────────────────────────────
   function clientXToSeconds(clientX: number): number {
@@ -211,9 +249,23 @@ export function HighTake({
       data-trimmed={isTrimmed || undefined}
       data-empty={isEmpty || undefined}
     >
-      {label && (
-        <div className={styles.label} data-testid="high-take-label">
-          {label}
+      {(label || onTogglePlay) && (
+        <div className={styles.header}>
+          {onTogglePlay && (
+            <TransportButton
+              variant="play"
+              playing={playing}
+              size={size}
+              disabled={disabled}
+              onClick={onTogglePlay}
+              aria-label={playing ? `Pause ${label ?? 'take'}` : `Play ${label ?? 'take'}`}
+            />
+          )}
+          {label && (
+            <span className={styles.label} data-testid="high-take-label">
+              {label}
+            </span>
+          )}
         </div>
       )}
 
@@ -269,6 +321,18 @@ export function HighTake({
           />
           <path className={styles.waveKept} d={wavePath} clipPath={`url(#${clipId})`} />
         </svg>
+
+        {/* Playback playhead — green sweep over the take while playing. */}
+        {hasPlayback && (
+          <div
+            ref={playLineRef}
+            className={styles.playLine}
+            data-playing={playing || undefined}
+            data-testid="high-take-playhead"
+            style={{ left: `${parkedFrac * 100}%` }}
+            aria-hidden="true"
+          />
+        )}
 
         {/* ── Boundary handles ──────────────────────────────────────────── */}
         <div

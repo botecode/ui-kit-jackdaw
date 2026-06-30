@@ -423,3 +423,45 @@ describe('HighTake — empty (no peaks)', () => {
       .toHaveAttribute('data-empty')
   })
 })
+
+// ─── Playback (optional play affordance) ──────────────────────────────────────
+
+describe('HighTake — playback', () => {
+  it('shows no play control or playhead without onTogglePlay (additive)', () => {
+    const { container, queryByRole } = setup()
+    expect(queryByRole('button', { name: /play|pause/i })).toBeNull()
+    expect(container.querySelector('[data-testid="high-take-playhead"]')).toBeNull()
+  })
+
+  it('renders a play control when onTogglePlay is provided', () => {
+    const { getByRole } = setup({ onTogglePlay: vi.fn(), label: 'Take 1' })
+    expect(getByRole('button', { name: /play take 1/i })).toBeInTheDocument()
+  })
+
+  it('relabels the control to Pause while playing', () => {
+    const { getByRole } = setup({ onTogglePlay: vi.fn(), playing: true, label: 'Take 1' })
+    expect(getByRole('button', { name: /pause take 1/i })).toBeInTheDocument()
+  })
+
+  it('fires onTogglePlay when the play control is clicked', () => {
+    const onTogglePlay = vi.fn()
+    const { getByRole } = setup({ onTogglePlay, label: 'Take 1' })
+    fireEvent.click(getByRole('button', { name: /play take 1/i }))
+    expect(onTogglePlay).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the playhead while playing and marks it data-playing', () => {
+    const { container } = setup({ onTogglePlay: vi.fn(), playing: true })
+    const ph = container.querySelector('[data-testid="high-take-playhead"]')
+    expect(ph).not.toBeNull()
+    expect(ph).toHaveAttribute('data-playing')
+  })
+
+  it('parks the playhead at playheadSeconds when provided and stopped', () => {
+    const { container } = setup({ playheadSeconds: 5, durationSeconds: DURATION })
+    const ph = container.querySelector('[data-testid="high-take-playhead"]') as HTMLElement
+    // 5 / 10 = 50%
+    expect(ph.style.left).toBe('50%')
+    expect(ph).not.toHaveAttribute('data-playing')
+  })
+})

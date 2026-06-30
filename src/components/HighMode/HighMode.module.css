@@ -1,0 +1,422 @@
+/* src/components/HighMode/HighMode.module.css */
+
+/* ─── Room shell ──────────────────────────────────────────────────────────────
+   One full surface that morphs through phases. Dark "in the zone" for select /
+   record / processing; warm paper for the calm review. A single warm pool of
+   light centres attention while dark. Tokens only → reskins through every theme. */
+.root {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  overflow: hidden;
+  font-family: var(--font-ui);
+}
+.root[data-face="stage"] {
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  color: var(--stage-text);
+}
+.root[data-face="paper"] {
+  background: var(--bg);
+  background-image: var(--texture-paper);
+  background-blend-mode: multiply;
+  color: var(--text);
+}
+.root > * { position: relative; z-index: 1; }
+
+/* ─── Room header ─────────────────────────────────────────────────────────────── */
+.roomHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-8);
+  border-bottom: 1px solid color-mix(in srgb, var(--stage-text) 8%, transparent);
+}
+.spacer { flex: 1; }
+.leave,
+.leaveDark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  color: color-mix(in srgb, var(--stage-text) 72%, transparent);
+  transition: color var(--dur-base) var(--ease-out);
+}
+.leave:hover { color: var(--stage-text); }
+.leave svg,
+.leaveDark svg { width: 15px; height: 15px; }
+.leaveDark {
+  color: var(--text-muted);
+  align-self: flex-start;
+  margin-bottom: var(--space-3);
+}
+.leaveDark:hover { color: var(--text); }
+.leave:focus-visible,
+.leaveDark:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: var(--radius); }
+
+.bpmTag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-lg);
+  color: var(--stage-text);
+}
+.bpmUnit {
+  font-weight: var(--weight-normal);
+  font-size: var(--text-xs);
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+}
+
+/* ─── Centred column (select / setup / processing) ──────────────────────────────
+   Centres when it fits; when the content is taller than the room (e.g. the setup
+   cards on a short viewport), `safe center` falls back to top-aligned + scrolls
+   instead of clipping the CTA off the bottom. */
+.center {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  gap: var(--space-7);
+  padding: var(--space-8) var(--space-10);
+  overflow-y: auto;
+  text-align: center;
+}
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 56ch;
+}
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.kicker svg { width: 13px; height: 13px; color: var(--accent); }
+.title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: clamp(1.9rem, 1.2rem + 2.4vw, 2.6rem);
+  line-height: var(--leading-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: inherit;
+}
+.lede {
+  font-size: var(--text-md);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+.root[data-face="stage"] .lede { color: color-mix(in srgb, var(--stage-text) 60%, transparent); }
+
+/* ─── How it works — the capture demo screen ─────────────────────────────────── */
+.demoWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 560px;
+}
+.demoPanel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 6.4;
+  border-radius: calc(var(--radius) * 1.8);
+  background: var(--stage-2);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  border: 1px solid color-mix(in srgb, var(--stage-text) 9%, transparent);
+  box-shadow:
+    inset 0 2px 14px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+.demoPanel canvas { position: absolute; inset: 0; }
+.demoCaption {
+  min-height: 1.5em;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--stage-text) 66%, transparent);
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+/* ─── Select — instrument pick cards ─────────────────────────────────────────── */
+.cardRow {
+  display: flex;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.pick {
+  position: relative;
+  width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: calc(var(--radius) * 2);
+  background: var(--stage-2);
+  border: 1px solid color-mix(in srgb, var(--stage-text) 8%, transparent);
+  cursor: pointer;
+  text-align: left;
+  color: var(--stage-text);
+  transition: border-color var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
+}
+.pick:hover { border-color: color-mix(in srgb, var(--stage-text) 18%, transparent); }
+.pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pick[data-selected] {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 10px 30px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.pickCheck {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+.pickCheck svg { width: 12px; height: 12px; }
+.pick[data-selected] .pickCheck { opacity: 1; transform: scale(1); }
+.pickTop { display: flex; align-items: center; gap: var(--space-2); }
+.pickPill { width: 14px; height: 14px; border-radius: 4px; flex: 0 0 auto; }
+.pickName { font-weight: var(--weight-bold); font-size: var(--text-md); }
+.pickSub {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.miniMeter {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 42px;
+}
+.miniMeter > span {
+  flex: 1;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--stage-text) 8%, transparent);
+}
+
+/* Setup (soundcheck) — the chosen instruments as LivingInstrumentCards. */
+.setupRow {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.startRow { display: flex; align-items: center; gap: var(--space-6); }
+.selCount {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ─── Record — the live capture room (topbar pills + pause only) ─────────────── */
+.recHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-8);
+  border-bottom: 1px solid color-mix(in srgb, var(--stage-text) 8%, transparent);
+}
+.headRow { display: flex; align-items: center; gap: var(--space-5); }
+
+/* Arm / unarm pills — the only inputs, on the topbar. */
+.armPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.armPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--stage-text) 14%, transparent);
+  background: transparent;
+  color: color-mix(in srgb, var(--stage-text) 55%, transparent);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+.armPill:hover { color: var(--stage-text); }
+.armPill:focus-visible { outline: 2px solid var(--led-red); outline-offset: 2px; }
+.armPill[data-armed] {
+  color: var(--stage-text);
+  border-color: color-mix(in srgb, var(--led-red) 55%, transparent);
+  background: color-mix(in srgb, var(--led-red) 12%, transparent);
+}
+/* Off: a hollow dot. Armed: the track colour lit, ringed red (record-armed). */
+.armDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--stage-text) 35%, transparent);
+  flex: 0 0 auto;
+  transition: box-shadow var(--dur-led-off) var(--ease-out);
+}
+.armPill[data-armed] .armDot {
+  box-shadow:
+    0 0 0 1px var(--led-red-deep),
+    0 0 8px 1px color-mix(in srgb, var(--led-red) 55%, transparent);
+}
+
+/* Capture record view — the live take track, centred. */
+.captureStage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  min-height: 0;
+}
+.captureWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 760px;
+}
+.captureHint {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: color-mix(in srgb, var(--stage-text) 52%, transparent);
+  text-wrap: pretty;
+  max-width: 52ch;
+}
+
+.dock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  border-top: 1px solid color-mix(in srgb, var(--stage-text) 8%, transparent);
+}
+
+/* ─── Review — calm paper ─────────────────────────────────────────────────────── */
+.review {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-10) var(--space-12);
+}
+.reviewHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 70ch;
+  margin-bottom: var(--space-8);
+}
+.reviewTitle {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem);
+  line-height: var(--leading-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.takeList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 920px;
+}
+.takeCard {
+  padding: var(--space-5) var(--space-6);
+  border-radius: calc(var(--radius) * 2.4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+.takeCard[data-saved] {
+  border-color: color-mix(in srgb, var(--accent-green) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent-green) 5%, var(--surface));
+}
+
+/* ─── Dialog content ──────────────────────────────────────────────────────────── */
+.dlgText {
+  font-size: var(--text-md);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+  text-wrap: pretty;
+}
+.safeNote {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+}
+.safeNote svg { width: 14px; height: 14px; color: var(--accent-green); flex: 0 0 auto; }
+.danger {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  background: transparent;
+  color: var(--danger);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-md);
+  cursor: pointer;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+.danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.danger:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+
+/* ─── Reduced motion ──────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pick, .pickCheck, .leave, .leaveDark, .takeCard, .danger { transition: none; }
+}

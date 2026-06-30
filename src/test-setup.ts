@@ -6,6 +6,16 @@ if (!HTMLElement.prototype.setPointerCapture) {
   HTMLElement.prototype.releasePointerCapture = () => {}
 }
 
+// jsdom does not implement ResizeObserver — stub it for components that measure
+// their own box (Clip, TapeStrip clips). No-op observe is fine; tests don't resize.
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver
+}
+
 // JSDOM does not implement window.matchMedia — stub it for all tests.
 // useSpring reads prefers-reduced-motion; without this every component
 // that imports useSpring crashes with "window.matchMedia is not a function".
