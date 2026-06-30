@@ -1,0 +1,215 @@
+/* src/components/ClipPlayer/ClipPlayer.module.css */
+
+/* ─── Root — a lean transport row that drops onto the paper sheet ─────────────── */
+
+.root {
+  --cp-accent: var(--accent);
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-ui);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.root[data-size="sm"] {
+  gap: var(--space-2);
+}
+
+.root[data-disabled] {
+  opacity: 0.55;
+}
+
+/* ─── Play / pause — paper-register pill, accent bloom while rolling ──────────── */
+
+.play {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;             /* drives the 1em Phosphor glyph */
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--cp-accent);
+  color: var(--accent-contrast, #fff);
+  cursor: pointer;
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 3px 8px color-mix(in srgb, var(--cp-accent) 26%, transparent);
+  transition:
+    filter var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+.root[data-size="sm"] .play {
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+}
+
+.play:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.play:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+/* Rolling — incandescent bloom (fast attack; the slow decay lives on the base). */
+.root[data-playing] .play {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 0 0 1px color-mix(in srgb, var(--cp-accent) 60%, transparent),
+    0 4px 14px color-mix(in srgb, var(--cp-accent) 48%, transparent);
+  transition:
+    filter var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.play:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cp-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+.play:disabled {
+  cursor: default;
+  background-color: color-mix(in srgb, var(--text-dim) 60%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ─── Waveform — ink on paper, sunk into a hairline groove, IS the scrubber ───── */
+
+.waveArea {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wave {
+  position: relative;
+  width: 100%;
+  height: 52px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+
+  /* A light recessed groove — paper register, not the dark --stage well. */
+  background-color: color-mix(in srgb, var(--surface-2) 70%, var(--surface));
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 0 0 1px var(--border);
+  transition: box-shadow var(--dur-led-off) var(--ease-out);
+}
+.root[data-size="sm"] .wave {
+  height: 40px;
+}
+
+/* Hover hint — the groove keyline warms so it reads as "you can grab this". */
+.wave[aria-disabled="true"] {
+  cursor: default;
+}
+.wave:not([aria-disabled="true"]):hover {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 0 0 1px color-mix(in srgb, var(--cp-accent) 45%, var(--border));
+}
+
+/* Rolling — the groove picks up a faint lit keyline (fast attack). */
+.root[data-playing] .wave {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 0 0 1px color-mix(in srgb, var(--cp-accent) 50%, var(--border));
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.wave:focus-visible {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    0 0 0 2px color-mix(in srgb, var(--cp-accent) 70%, transparent);
+}
+
+.waveform {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Unplayed bars — neutral espresso ink, dark on paper / light on dark themes. */
+.waveBase {
+  fill: color-mix(in srgb, var(--text) 36%, transparent);
+}
+
+/* Played bars — lit in the one hot accent, with a soft incandescent lift. */
+.wavePlayed {
+  fill: var(--cp-accent);
+  filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--cp-accent) 55%, transparent));
+}
+
+/* Playhead — bright accent core at the fill boundary (functional motion). */
+.playhead {
+  stroke: color-mix(in srgb, var(--cp-accent) 45%, #fff);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--cp-accent) 60%, transparent));
+}
+
+/* No peaks — the clip exists but its waveform hasn't loaded: a faint flat ink
+   baseline so the row still reads as a clip, not an error. */
+.root[data-no-peaks] .waveBase {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 22%, transparent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* No duration — still rendering: the groove holds, ink dims, no scrub. */
+.wave[data-state="no-duration"] .waveBase {
+  fill: color-mix(in srgb, var(--text) 22%, transparent);
+}
+
+/* ─── Time readout — mono digital register, position vs duration ─────────────── */
+
+.time {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4ch;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.root[data-size="sm"] .time {
+  font-size: var(--text-xs);
+}
+
+/* Elapsed reads "lit" while rolling; duration stays dim. */
+.elapsed {
+  color: var(--text);
+  transition: color var(--dur-led-off) var(--ease-out);
+}
+.root[data-playing] .elapsed,
+.root[data-scrubbing] .elapsed {
+  color: var(--cp-accent);
+  transition: color var(--dur-led-on) var(--ease-out);
+}
+.timeSep {
+  color: var(--text-dim);
+}
+.duration {
+  color: var(--text-muted);
+}

@@ -117,6 +117,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   ProjectPicker: ['app', 'daw'],
   ReferenceList: ['app', 'daw'],
   Seeker: ['app', 'daw'], // scrubbable position groove — shared by MasterPlayer + CollectionView's album player
+  ClipPlayer: ['app', 'daw'], // Ideas-nest clip player — scrubbable waveform, play from any point
   Shortcuts: ['app', 'daw'],
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],
