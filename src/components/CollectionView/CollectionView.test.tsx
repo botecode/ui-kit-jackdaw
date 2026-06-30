@@ -202,6 +202,54 @@ describe('CollectionView album seeker', () => {
   })
 })
 
+// ─── Wide layout (robustness at any container width) ─────────────────────────────
+// Note: jsdom doesn't compute flexbox geometry, so these guard the STRUCTURE the
+// CSS fix relies on (title+meta grouped with the cover, play action trailing) and
+// that the sleeve renders coherently when a host hands it a very wide container.
+// Pixel placement across 400 / 700 / 1600px is verified manually on the shelf.
+
+describe('CollectionView wide layout', () => {
+  it('keeps the title + meta grouped with the cover, not flung to the far edge — even with a back button', () => {
+    const { container } = renderView({ onBack: vi.fn() })
+    const header = container.querySelector('header') as HTMLElement
+    const cover = header.querySelector('[data-cover]') as HTMLElement
+    expect(cover).toBeTruthy()
+
+    // The title + meta live in one group that sits immediately after the cover…
+    const headMeta = cover.nextElementSibling as HTMLElement
+    expect(headMeta).toBeTruthy()
+    expect(within(headMeta).getByRole('heading', { name: 'Paper Houses' })).toBeTruthy()
+    expect(within(headMeta).getByText(/ALBUM/)).toBeTruthy()
+
+    // …and that group is NOT pushed to the trailing end — the play action holds it.
+    const playAll = within(header).getByRole('button', { name: /play album/i })
+    expect(header.lastElementChild).toBe(playAll)
+    expect(headMeta).not.toBe(header.lastElementChild)
+  })
+
+  it('renders coherently in a very wide container', () => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ width: 1600 }}>
+        <CollectionView
+          title="Paper Houses"
+          notes="A winter record."
+          tracks={TRACKS}
+          nowPlayingId="t2"
+          onNotesChange={vi.fn()}
+          onReorder={vi.fn()}
+          onPlayTrack={vi.fn()}
+          onOpenSong={vi.fn()}
+          onBack={vi.fn()}
+        />
+      </div>,
+    )
+    expect(getByRole('heading', { name: 'Paper Houses' })).toBeTruthy()
+    expect(getByRole('list', { name: /tracklist|tracks/i })).toBeTruthy()
+    expect(getByRole('button', { name: /play album/i })).toBeTruthy()
+    expect(getByTestId('collection-seek-track')).toBeTruthy()
+  })
+})
+
 // ─── Reorder ────────────────────────────────────────────────────────────────────
 
 describe('CollectionView reorder', () => {

@@ -191,6 +191,50 @@ function StatesDemo() {
   )
 }
 
+// ─── Wide container ─────────────────────────────────────────────────────────────
+// Regression guard on the shelf: the host (the DAW collection page) hands the
+// component the full viewport. Render it in a deliberately wide, uncapped
+// container so the sleeve must hold itself together — the title + meta stay with
+// the cover, the column doesn't sprawl edge-to-edge — and this class of breakage
+// is caught here, not only in the app.
+
+function WideDemo() {
+  return (
+    <section style={{ marginBottom: 'var(--space-8)' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-ui)',
+        fontSize: 'var(--text-sm)',
+        fontWeight: 'var(--weight-medium)',
+        color: 'var(--text-dim)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        marginBottom: 'var(--space-4)',
+      }}>
+        Wide container (full width, uncapped)
+      </h2>
+      {/* No maxWidth here — the component caps itself to a coherent album column. */}
+      <div style={{ width: '100%' }}>
+        <CollectionView
+          title="Paper Houses"
+          coverColor="var(--chroma-teal)"
+          notes={NOTES}
+          tracks={TRACKS}
+          nowPlayingId="t4"
+          positionSeconds={142}
+          isPlaying
+          onBack={noop}
+          onNotesChange={noop}
+          onReorder={noop}
+          onPlayTrack={noop}
+          onPlayAll={noop}
+          onOpenSong={noop}
+          onSeek={noop}
+        />
+      </div>
+    </section>
+  )
+}
+
 // ─── Playground ───────────────────────────────────────────────────────────────
 
 function PlaygroundDemo() {
@@ -202,6 +246,7 @@ function PlaygroundDemo() {
   const [withCover, setWithCover] = useState(true)
   const [small, setSmall] = useState(false)
   const [withBack, setWithBack] = useState(true)
+  const [wide, setWide] = useState(false)
   const [lastAction, setLastAction] = useState('')
 
   const nowDuration = tracks.find(t => t.id === nowPlayingId)?.durationSeconds ?? 0
@@ -219,7 +264,7 @@ function PlaygroundDemo() {
   return (
     <Playground>
       <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 380, maxWidth: 620 }}>
+        <div style={{ flex: 1, minWidth: 380, maxWidth: wide ? undefined : 620 }}>
           <CollectionView
             title="Paper Houses"
             coverColor={withCover ? 'var(--chroma-teal)' : undefined}
@@ -259,6 +304,7 @@ function PlaygroundDemo() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', minWidth: 220 }}>
           <Toggle checked={withCover} onChange={setWithCover} size="sm" label="cover color" />
           <Toggle checked={withBack} onChange={setWithBack} size="sm" label="back button" />
+          <Toggle checked={wide} onChange={setWide} size="sm" label="wide container" />
           <Checkbox checked={small} onChange={setSmall} size="sm" label="small density" />
           <Checkbox
             checked={nowPlayingId != null}
@@ -317,6 +363,7 @@ export default function CollectionViewDemo() {
   return (
     <DemoShell meta={meta}>
       <StatesDemo />
+      <WideDemo />
       <PlaygroundDemo />
     </DemoShell>
   )

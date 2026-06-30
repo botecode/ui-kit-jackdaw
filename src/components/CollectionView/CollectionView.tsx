@@ -25,6 +25,12 @@
 //   Play-album action use the warm --accent — one accent, as the card asks.
 // - Row play is an action button (relabels "Play <title>"/"Pause <title>", no aria-pressed);
 //   the grip is a labelled "Reorder <title> (use arrow keys)" button — one ARIA model each.
+// - Width-robust at any container: a host (the DAW collection page) can hand the
+//   sleeve the full viewport, so the root caps to an album-column reading width and
+//   centres — it stays one coherent sleeve at 400 / 700 / 1600px, never sprawling.
+//   The header is flex (not a fixed 3-col grid): the back button is optional, and a
+//   grid put the stretchy column on the cover and flung the title to the far edge
+//   when back was present. Flex keeps title+meta grouped with the cover, play trailing.
 // - The album player gets a position seeker (kit-player-seeker): when a track is
 //   playing, a "Now playing" transport strip sits below the header with the shared
 //   <Seeker> showing position vs. that track's duration, scrubbable when the host

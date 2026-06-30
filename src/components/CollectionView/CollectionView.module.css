@@ -6,6 +6,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+  /* The sleeve is an album column, not a full-bleed page. Cap it to a sensible
+     reading width and centre it so a wide host (the DAW collection page at full
+     viewport) still reads as one coherent sleeve — header, tracklist and liner
+     stay grouped instead of sprawling edge-to-edge. Below the cap it's fluid. */
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
   font-family: var(--font-ui);
   color: var(--text);
   background: var(--bg);
@@ -23,9 +30,12 @@
 
 /* ─── Header: cover + title + meta + play ───────────────────────────────────── */
 
+/* Flex, not a fixed 3-column grid: the back button is optional, so a grid would
+   land the stretchy column on the cover and fling the title to the far edge when
+   the back control is present. Here the title+meta group (.headMeta) takes the
+   slack and stays adjacent to the cover; the play action holds the trailing end. */
 .header {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
   gap: var(--space-4);
 }
@@ -94,6 +104,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  /* Take the header's slack so the play action sits at the trailing end while
+     the title+meta stay grouped beside the cover. min-width:0 lets the title
+     wrap (overflow-wrap) instead of forcing the row wider. */
+  flex: 1 1 auto;
   min-width: 0;
 }
 
