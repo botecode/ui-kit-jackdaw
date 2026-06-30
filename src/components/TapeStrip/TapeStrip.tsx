@@ -26,6 +26,16 @@
 // A slim left gutter holds each lane's color-pill; the ruler, markers, clips, and
 // overlays all start AFTER the gutter, so the one time→x origin is preserved.
 //
+// Why it reads as an instrument, not a webpage: the gutter is a single recessed
+// device channel (--strip-bg + one hairline divider) running the height of the lane
+// stack, and the tape rides to its right on crisp, ledger-ruled lanes (--grid-line-lane).
+// Filled lanes light a TALL track-colour pill; empty lanes show a SHORT dim stub over a
+// faintly recessed strip — filled vs empty reads at a glance, the height never moves.
+// The row background + hover/selected wash live on the tape ground (not the gutter), so
+// the device channel stays constant while only the tape lights up. Flat throughout — no
+// gradient, gloss, glow, or shadow; the single accent stays reserved for the playhead,
+// the punch region, and focus. Markers dim to --text-dim so they support, never compete.
+//
 // Clicking a track-backed lane (or a clip inside it) emits onSelectTrack(trackId) →
 // the doorway to the drilldown room. Empty lanes are non-interactive. There is NO
 // clip drag, trim, fade, or split anywhere here.

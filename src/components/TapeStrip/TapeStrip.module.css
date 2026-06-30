@@ -1,13 +1,18 @@
 /* src/components/TapeStrip/TapeStrip.module.css
-   The slim read-only tape: warm --arrange-bg ground, hairline-separated thin lanes,
-   clips in the track colour, the single accent reserved for playhead / punch / marker.
-   Flat — no gradients, no gloss. This is a map; the workspace is the drilldown. */
+   The slim read-only tape, overdrive pass: a flat Chroma device face you read like a
+   tape transport. A recessed pill-gutter channel runs the height of the lane stack; the
+   tape rides to its right on crisp, ledger-ruled lanes. Filled lanes light a tall
+   track-colour pill + carry clips; empty lanes show a short, dim stub and a faintly
+   recessed strip. The single accent stays reserved for the playhead / punch / focus —
+   markers and the ruler only support. No gradients, no gloss, no glow, no shadow. */
 
 .root {
   --tape-marker-h: 18px;
   /* Left gutter holding each lane's color-pill; the ruler, markers, clips, and
      overlays all start after it so the one time→x origin is preserved. */
-  --tape-gutter: 16px;
+  --tape-gutter: 18px;
+  /* Pill geometry — a crisp colour chip seated, centered, in the gutter channel. */
+  --tape-pill-w: 4px;
 
   position: relative;
   width: 100%;
@@ -20,7 +25,8 @@
 
 .root[data-size='sm'] {
   --tape-marker-h: 14px;
-  --tape-gutter: 12px;
+  --tape-gutter: 14px;
+  --tape-pill-w: 3px;
 }
 
 /* Horizontal scroll — the tape can run longer than the studio viewport. */
@@ -45,8 +51,8 @@
 }
 
 /* ─── Marker layer ───────────────────────────────────────────────────────────
-   Calm ink flags — alignment aids, NOT the accent. Read-mostly. When addable the
-   strip is a button (click adds at pointer, Enter adds at the playhead).         */
+   Calm ink flags — alignment aids that SUPPORT, never the accent. Read-mostly.
+   When addable the strip is a button (click adds at pointer, Enter at playhead).  */
 .markerStrip {
   position: relative;
   height: var(--tape-marker-h);
@@ -90,14 +96,16 @@
   cursor: grabbing;
 }
 
-/* Triangular flag tab at the top of the stem (clip-path glyph, not a border edge). */
+/* Triangular flag tab at the top of the stem (clip-path glyph, not a border edge).
+   Dimmed to --text-dim so markers sit a clear step below the ruler ink and the
+   accent — supporting, not competing. */
 .markerFlag {
   position: absolute;
   top: 1px;
   left: 0;
-  width: 9px;
-  height: 9px;
-  background: var(--border-strong);
+  width: 8px;
+  height: 8px;
+  background: var(--text-dim);
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
@@ -108,7 +116,7 @@
   bottom: 0;
   left: 0;
   width: 1px;
-  background: var(--border-strong);
+  background: var(--text-dim);
 }
 
 .markerLabel {
@@ -121,14 +129,33 @@
 }
 
 /* ─── Lanes region ───────────────────────────────────────────────────────────
-   Positioning context for the shared overlays (Playhead / TimeSelection).       */
+   Positioning context for the shared overlays (Playhead / TimeSelection) and for
+   the recessed pill-gutter channel that runs the full height of the stack.       */
 .lanes {
   position: relative;
 }
 
-/* One thin read-only lane. Selectable → <button> reset to a flush block.
-   Track identity is carried by the gutter pill + the clips (in the track colour)
-   and, when open, a faint colour wash — not a side accent bar.                   */
+/* The pill-gutter channel — one recessed strip down the left, the device column
+   the colour-pills are seated in. A single hairline on its right edge divides the
+   gutter from the tape, so the readout reads as one crafted face. Sits beneath the
+   lane content (pills paint above it); the tape ground is painted by .clipArea. */
+.lanes::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--tape-gutter);
+  background: var(--strip-bg);
+  border-right: 1px solid var(--border);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* One thin read-only lane. Selectable → <button> reset to a flush block. The lane
+   box itself is transparent (the gutter channel shows through on the left, the tape
+   ground is painted by .clipArea on the right); it carries only the ledger rule that
+   separates rows — crisp and constant at the full 10 lanes.                       */
 .lane {
   position: relative;
   display: block;
@@ -137,42 +164,58 @@
   padding: 0;
   margin: 0;
   border: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--grid-line-lane, var(--border));
   border-radius: 0;
-  background: var(--arrange-bg);
+  background: transparent;
   text-align: left;
   font: inherit;
   color: inherit;
   cursor: pointer;
-  transition: background var(--dur-150, 150ms) ease;
 }
 
-/* Color-pill — a small rounded colour indicator seated in the left gutter. A
-   track-backed lane lights it in its own colour (--lane-color); an empty lane
-   leaves --lane-color unset, so it falls back to a calm border token.           */
+/* Color-pill — a crisp colour chip seated, centered, in the gutter channel. A
+   track-backed lane lights a TALL bar in its own colour (--lane-color); an empty
+   lane shows a SHORT, dim stub — so filled vs empty reads at a glance.            */
 .lanePill {
   position: absolute;
-  left: 4px;
+  left: calc((var(--tape-gutter) - var(--tape-pill-w)) / 2);
   top: 50%;
   transform: translateY(-50%);
-  width: 5px;
-  height: 52%;
+  width: var(--tape-pill-w);
+  height: 58%;
   border-radius: 99px;
   background: var(--lane-color, var(--border-strong));
+  z-index: 1;
 }
 
-/* The clip strip — offset past the gutter so clip x=0 aligns with ruler/playhead. */
+/* Empty lane → a short, dim stub: the slot is present but plainly OFF. */
+.lanePill[data-neutral] {
+  height: var(--tape-pill-w);
+  background: var(--text-dim);
+  opacity: 0.55;
+}
+
+/* The tape ground — offset past the gutter so clip x=0 aligns with ruler/playhead.
+   This (not the lane box) carries the row background + the hover/selected wash, so
+   the gutter channel stays a constant device strip while the tape lights up.       */
 .clipArea {
   position: absolute;
   inset: 0 0 0 var(--tape-gutter);
+  background: var(--arrange-bg);
+  transition: background var(--dur-150, 150ms) ease;
+}
+
+/* Empty lane → a faintly recessed tape ground (no signal here). */
+.lane[data-empty-lane] .clipArea {
+  background: color-mix(in srgb, var(--text-dim) 5%, var(--arrange-bg));
 }
 
 .lane[data-static] {
   cursor: default;
 }
 
-.lane:not([data-static]):hover {
-  background: color-mix(in srgb, var(--lane-color, var(--accent)) 7%, var(--arrange-bg));
+.lane:not([data-static]):hover .clipArea {
+  background: color-mix(in srgb, var(--lane-color, var(--accent)) 8%, var(--arrange-bg));
 }
 
 .lane:focus-visible {
@@ -181,14 +224,14 @@
   z-index: 30;
 }
 
-/* Selected lane — the open track. A faint wash in the track's own colour, so the
-   identity reads from the audio itself, not a decorative tab.                    */
-.lane[data-selected] {
-  background: color-mix(in srgb, var(--lane-color, var(--accent)) 12%, var(--arrange-bg));
+/* Selected lane — the open track. A faint wash in the track's own colour on the
+   tape ground, so identity reads from the audio itself, not a decorative tab.     */
+.lane[data-selected] .clipArea {
+  background: color-mix(in srgb, var(--lane-color, var(--accent)) 14%, var(--arrange-bg));
 }
 
 /* ─── Clips — compact, NON-interactive pictures of audio ─────────────────────
-   Fills the clip strip; pointer-events:none so every click falls through to the
+   Fills the tape ground; pointer-events:none so every click falls through to the
    lane (= select track).                                                         */
 .clipsLayer {
   position: absolute;
@@ -222,10 +265,10 @@
 /* TimeSelection's band/handles opt back into pointer events via their own CSS. */
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────────
-   Decorative lane transitions snap. Functional motion (the Playhead rAF sweep,
-   the state-carrying recording tint) is owned by Playhead and stays.            */
+   Decorative tape-ground transitions snap. Functional motion (the Playhead rAF
+   sweep, the state-carrying recording tint) is owned by Playhead and stays.       */
 @media (prefers-reduced-motion: reduce) {
-  .lane {
+  .clipArea {
     transition: none;
   }
 }
