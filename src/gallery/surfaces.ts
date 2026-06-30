@@ -116,6 +116,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   Preferences: ['app', 'daw'],
   ProjectPicker: ['app', 'daw'],
   ReferenceList: ['app', 'daw'],
+  Seeker: ['app', 'daw'], // scrubbable position groove — shared by MasterPlayer + CollectionView's album player
   Shortcuts: ['app', 'daw'],
   SongNotesEditor: ['app', 'daw'],
   SplashScreen: ['app', 'daw'],

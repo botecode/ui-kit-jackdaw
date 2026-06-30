@@ -1,25 +1,7 @@
 // src/components/MasterPlayer/MasterPlayer.tsx
-import { useRef } from 'react'
 import { Play, Pause, SkipBack, SkipForward, PencilSimple, MusicNote } from '@phosphor-icons/react'
+import { Seeker } from '../Seeker'
 import styles from './MasterPlayer.module.css'
-
-// ─── Time formatting ──────────────────────────────────────────────────────────
-
-const EM_DASH_TIME = '–:––'
-
-/** seconds → m:ss; em-dash placeholder when the value isn't known yet. */
-function formatTime(seconds: number | undefined): string {
-  if (seconds == null || !Number.isFinite(seconds)) return EM_DASH_TIME
-  const s = Math.max(0, seconds)
-  const m = Math.floor(s / 60)
-  const sec = Math.floor(s % 60)
-  return `${m}:${String(sec).padStart(2, '0')}`
-}
-
-// ─── Seek step sizes (seconds) ────────────────────────────────────────────────
-
-const STEP_ARROW = 5
-const STEP_PAGE = 15
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
@@ -90,6 +72,11 @@ export interface MasterPlayerProps {
 //    baked in — single vs playlist falls out of the contract.
 //  • Action buttons relabel (Play⇄Pause, Previous, Next) with no aria-pressed
 //    (KIT-LEAD §5 — one ARIA model).
+//  • The progress groove is the shared <Seeker> primitive (kit-player-seeker),
+//    composed under the "masterplayer" testid namespace — one scrubbable seeker
+//    everywhere it's needed (here + CollectionView's album player), not a
+//    second inline copy to drift. MasterPlayer maps its states onto Seeker:
+//    rendering → no-duration sweep, error/empty/disabled → disabled flat groove.
 
 export function MasterPlayer({
   title,
@@ -109,8 +96,6 @@ export function MasterPlayer({
   canNext = true,
   onCoverClick,
 }: MasterPlayerProps) {
-  const trackRef = useRef<HTMLDivElement>(null)
-
   const isEmpty = title.trim() === ''
   const hasError = errorText != null && errorText !== ''
   const ready = !hasError && durationSeconds != null && Number.isFinite(durationSeconds) && durationSeconds > 0
@@ -124,87 +109,14 @@ export function MasterPlayer({
 
   const transportLive = !disabled && !isEmpty && !hasError
   const canPlay = transportLive && (ready || isPlaying)
-  const seekable = transportLive && ready && onSeek != null
-
-  const duration = ready ? (durationSeconds as number) : 0
-  const position = Math.min(duration, Math.max(0, positionSeconds))
-  const progress = ready ? position / duration : 0
-  const remaining = ready ? duration - position : NaN
-
-  // ── Seeking ────────────────────────────────────────────────────────────────
-
-  function commitSeek(seconds: number) {
-    if (!seekable) return
-    const clamped = Math.min(duration, Math.max(0, seconds))
-    onSeek?.(clamped)
-  }
-
-  /** clientX → seconds within the track. Null if the track has no width. */
-  function timeAtClientX(clientX: number): number | null {
-    const el = trackRef.current
-    if (!el) return null
-    const rect = el.getBoundingClientRect()
-    if (rect.width <= 0) return null
-    const frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
-    return frac * duration
-  }
-
-  function handleTrackPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (!seekable || e.button !== 0) return
-    const t = timeAtClientX(e.clientX)
-    if (t === null) return
-    e.preventDefault()
-    trackRef.current?.focus()
-    trackRef.current?.setPointerCapture(e.pointerId)
-    commitSeek(t)
-  }
-
-  function handleTrackPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!seekable || !trackRef.current?.hasPointerCapture(e.pointerId)) return
-    const t = timeAtClientX(e.clientX)
-    if (t === null) return
-    commitSeek(t)
-  }
-
-  function handleTrackKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    if (!seekable) return
-    switch (e.key) {
-      case 'ArrowLeft':
-      case 'ArrowDown':
-        e.preventDefault()
-        commitSeek(position - STEP_ARROW)
-        break
-      case 'ArrowRight':
-      case 'ArrowUp':
-        e.preventDefault()
-        commitSeek(position + STEP_ARROW)
-        break
-      case 'PageDown':
-        e.preventDefault()
-        commitSeek(position - STEP_PAGE)
-        break
-      case 'PageUp':
-        e.preventDefault()
-        commitSeek(position + STEP_PAGE)
-        break
-      case 'Home':
-        e.preventDefault()
-        commitSeek(0)
-        break
-      case 'End':
-        e.preventDefault()
-        commitSeek(duration)
-        break
-    }
-  }
+  // The seeker is live only when transport is + the master is ready. Rendering
+  // keeps the indeterminate sweep; error/empty/disabled hand it a held groove.
+  const seekerDisabled = !transportLive || (!ready && !rendering)
 
   // ── Derived display ──────────────────────────────────────────────────────────
   const iconSize = size === 'sm' ? 16 : 20
   const skipSize = size === 'sm' ? 15 : 18
-  const elapsedText = ready ? formatTime(position) : EM_DASH_TIME
-  const remainingText = ready ? `-${formatTime(remaining)}` : EM_DASH_TIME
   const statusText = hasError ? errorText : rendering ? 'Rendering…' : null
-  const seekValueText = ready ? `${formatTime(position)} of ${formatTime(duration)}` : 'Not ready'
 
   const coverGlyphSize = size === 'sm' ? 20 : 26
 
@@ -266,31 +178,17 @@ export function MasterPlayer({
           )}
         </div>
 
-        {/* Progress groove + thumb */}
-        <div
-          ref={trackRef}
-          className={styles.track}
-          data-testid="masterplayer-track"
-          role="slider"
-          aria-label={`Seek — ${isEmpty ? 'master' : title}`}
-          aria-valuemin={0}
-          aria-valuemax={ready ? Math.round(duration) : 0}
-          aria-valuenow={ready ? Math.round(position) : 0}
-          aria-valuetext={seekValueText}
-          aria-disabled={!seekable || undefined}
-          tabIndex={seekable ? 0 : -1}
-          onKeyDown={handleTrackKeyDown}
-          onPointerDown={handleTrackPointerDown}
-          onPointerMove={handleTrackPointerMove}
-        >
-          <div className={styles.trackFill} style={{ width: `${(progress * 100).toFixed(2)}%` }} data-testid="masterplayer-fill" />
-          {ready && <div className={styles.thumb} style={{ left: `${(progress * 100).toFixed(2)}%` }} aria-hidden="true" />}
-        </div>
-
-        <div className={styles.times} aria-hidden="true">
-          <span className={styles.timeElapsed} data-testid="masterplayer-elapsed">{elapsedText}</span>
-          <span className={styles.timeRemaining} data-testid="masterplayer-remaining">{remainingText}</span>
-        </div>
+        {/* Progress groove — the shared scrubbable Seeker (kit-player-seeker). */}
+        <Seeker
+          idPrefix="masterplayer"
+          label={`Seek — ${isEmpty ? 'master' : title}`}
+          positionSeconds={positionSeconds}
+          durationSeconds={ready ? durationSeconds : undefined}
+          isPlaying={isPlaying && !disabled && !hasError}
+          disabled={seekerDisabled}
+          onSeek={onSeek}
+          size={size}
+        />
 
         {/* Transport row */}
         <div className={styles.transport}>
