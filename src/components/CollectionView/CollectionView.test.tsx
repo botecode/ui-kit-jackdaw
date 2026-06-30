@@ -67,6 +67,15 @@ describe('CollectionView render', () => {
     expect(getByText('Opening, slow tape')).toBeTruthy()
   })
 
+  it('puts the tracklist above the notes — the tracklist is the hero, notes are the footer', () => {
+    const { getByRole, container } = renderView()
+    const list = getByRole('list', { name: /tracklist|tracks/i })
+    const notes = container.querySelector('[data-notes]') as HTMLElement
+    expect(notes).toBeTruthy()
+    // The tracklist precedes the notes footer in document order.
+    expect(list.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('renders the ALBUM · N · time meta', () => {
     const { getByText } = renderView()
     // 3 tracks, total 184+211+372 = 767s = 12:47

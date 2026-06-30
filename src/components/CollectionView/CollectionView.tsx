@@ -1,15 +1,17 @@
 // src/components/CollectionView/CollectionView.tsx
 //
-// Why this isn't a webpage: the Album page is a record sleeve, not a CMS page. A warm
+// Why this isn't a webpage: the Album page is a record sleeve, not a CMS page. It reads
+// in the order a physical release does — header, then the side, then the liner. A warm
 // cover plate (a flat color field or art, never a drop-shadowed "card"), the title set
 // in display type, and a mono meta stamp — ALBUM · N · run-time — read like the spine of
-// a physical release. Below it the concept notes live in the same warm editor as the
-// scrapbook (SongNotesEditor), so the page IS the notebook. The tracklist is the new
-// instrument part: dense bordered rows (a setlist, not a grid of cards), each with a
-// physical grip you drag — or arrow-key — to resequence, a mono index and run-time, and a
-// recessed play stud that lights green (the kit's rolling semantic) when its track is the
-// one playing. One accent carries the now-playing spine and the Play-album action; the
-// whole sleeve reskins through tokens. A setlist you can pick up, not a database table.
+// a physical release. Directly under it, the tracklist IS the record: dense bordered rows
+// (a setlist, not a grid of cards), each with a physical grip you drag — or arrow-key — to
+// resequence, a mono index and run-time, and a recessed play stud that lights green (the
+// kit's rolling semantic) when its track is the one playing. The hero, the main action.
+// The concept notes sit last, as a footer below a hairline keyline — the liner note in
+// the same warm editor as the scrapbook (SongNotesEditor), supporting the side, never
+// above it. One accent carries the now-playing spine and the Play-album action; the whole
+// sleeve reskins through tokens. A setlist you can pick up, not a database table.
 //
 // Design calls recorded here (headless, resolved against KIT-LEAD.md):
 // - Ordering is fully CONTROLLED. `tracks` is the source of truth from the host; the
@@ -183,18 +185,7 @@ export function CollectionView({
         </button>
       </header>
 
-      {/* ── Concept notes ───────────────────────────────────────────────────── */}
-      <div className={styles.notes}>
-        <label className={styles.notesLabel} id={notesId}>Notes</label>
-        <SongNotesEditor
-          value={notes}
-          onChange={onNotesChange}
-          aria-label="Album notes"
-          placeholder="What this record is — the concept, the order, what you're going for…"
-        />
-      </div>
-
-      {/* ── Tracklist ───────────────────────────────────────────────────────── */}
+      {/* ── Tracklist — the hero, directly under the header ──────────────────── */}
       {tracks.length === 0 ? (
         <p className={styles.empty}>No tracks yet — add songs to build the album.</p>
       ) : (
@@ -277,6 +268,17 @@ export function CollectionView({
           })}
         </ol>
       )}
+
+      {/* ── Concept notes — the liner, a footer below the side ───────────────── */}
+      <footer className={styles.notes} data-notes>
+        <label className={styles.notesLabel} id={notesId}>Notes</label>
+        <SongNotesEditor
+          value={notes}
+          onChange={onNotesChange}
+          aria-label="Album notes"
+          placeholder="What this record is — the concept, the order, what you're going for…"
+        />
+      </footer>
     </section>
   )
 }
