@@ -1,0 +1,241 @@
+/* src/components/Tuner/Tuner.module.css */
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 320px;
+}
+.root[data-size='sm'] {
+  width: 240px;
+  gap: var(--space-2);
+}
+
+/* ── The screen — dark glass recessed into the panel ─────────────────────── */
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-radius: calc(var(--radius) * 2);
+  background: var(--stage);
+  background-image: var(--texture-stage);
+  background-blend-mode: multiply;
+  color: var(--stage-text);
+  /* recessed: inner shadow below the top lip + hairline top-highlight */
+  box-shadow:
+    inset 0 2px 6px color-mix(in srgb, #000 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--stage-text) 12%, transparent);
+}
+.root[data-size='sm'] .screen {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-radius: var(--radius);
+}
+
+/* MUTE tag — tuning silently, quiet amber caption in the corner */
+.muteTag {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--led-orange);
+  opacity: 0.8;
+}
+
+/* ── ▸ note ◂ ────────────────────────────────────────────────────────────── */
+.noteRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.note {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: 56px;
+  line-height: 1;
+  min-width: 1.2em;
+  justify-content: center;
+  color: var(--stage-text);
+  transition: color var(--dur-led-off) var(--ease-out), text-shadow var(--dur-led-off) var(--ease-out);
+}
+.root[data-size='sm'] .note {
+  font-size: 36px;
+}
+.octave {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-normal);
+  font-size: 0.32em;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--stage-text) 60%, transparent);
+}
+/* in tune: the letter itself goes green with an LED bloom (fast attack) */
+.root[data-in-tune] .note {
+  color: var(--led-green);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--led-green) 45%, transparent);
+  transition: color var(--dur-led-on) var(--ease-out), text-shadow var(--dur-led-on) var(--ease-out);
+}
+.root[data-idle] .note {
+  color: color-mix(in srgb, var(--stage-text) 30%, transparent);
+}
+
+/* direction arrows — recessed dark when quiet, amber LED when lit */
+.arrow {
+  display: inline-flex;
+  color: color-mix(in srgb, var(--stage-text) 16%, transparent);
+  transition: color var(--dur-led-off) var(--ease-out), filter var(--dur-led-off) var(--ease-out);
+}
+.arrowGlyph {
+  width: 12px;
+  height: 14px;
+  fill: currentColor;
+}
+.root[data-size='sm'] .arrowGlyph {
+  width: 9px;
+  height: 11px;
+}
+.arrow[data-lit] {
+  color: var(--led-orange);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--led-orange) 65%, transparent));
+  transition: color var(--dur-led-on) var(--ease-out), filter var(--dur-led-on) var(--ease-out);
+}
+
+/* ── Cents / Hz readout ──────────────────────────────────────────────────── */
+.readout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+  min-height: 1.2em;
+}
+.readoutValue {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: color-mix(in srgb, var(--stage-text) 85%, transparent);
+}
+.root[data-size='sm'] .readoutValue {
+  font-size: var(--text-base);
+}
+.root[data-in-tune] .readoutValue {
+  color: var(--led-green);
+}
+.root[data-idle] .readoutValue {
+  color: color-mix(in srgb, var(--stage-text) 30%, transparent);
+}
+.readoutUnit {
+  font-size: var(--text-xs);
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--stage-text) 50%, transparent);
+}
+
+/* ── The cents scale — ticks, center detent, sliding needle ──────────────── */
+.scale {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+}
+.track {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 22px;
+  /* the groove the needle rides in */
+  border-bottom: 1px solid color-mix(in srgb, var(--stage-text) 18%, transparent);
+}
+.root[data-size='sm'] .track {
+  height: 16px;
+}
+.tick {
+  width: 1px;
+  height: 8px;
+  background: color-mix(in srgb, var(--stage-text) 28%, transparent);
+}
+.tick[data-detent] {
+  height: 14px;
+  width: 2px;
+  background: color-mix(in srgb, var(--stage-text) 45%, transparent);
+}
+.root[data-size='sm'] .tick {
+  height: 6px;
+}
+.root[data-size='sm'] .tick[data-detent] {
+  height: 10px;
+}
+
+/* the needle — a lit tick riding the groove; --dur-slow zeroes under
+   prefers-reduced-motion so the slide snaps while position/colour remain */
+.needle {
+  position: absolute;
+  bottom: -1px;
+  width: 3px;
+  height: 18px;
+  border-radius: 1px;
+  transform: translateX(-50%);
+  background: var(--led-orange);
+  box-shadow:
+    0 0 6px 1px color-mix(in srgb, var(--led-orange) 55%, transparent),
+    0 0 1px color-mix(in srgb, var(--led-orange) 80%, transparent);
+  transition:
+    left var(--dur-slow) var(--ease-out),
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow var(--dur-led-off) var(--ease-out);
+}
+.root[data-size='sm'] .needle {
+  height: 13px;
+  width: 2px;
+}
+.root[data-in-tune] .needle {
+  background: var(--led-green);
+  box-shadow:
+    0 0 8px 2px color-mix(in srgb, var(--led-green) 60%, transparent),
+    0 0 1px color-mix(in srgb, var(--led-green) 85%, transparent);
+  transition:
+    left var(--dur-slow) var(--ease-out),
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow var(--dur-led-on) var(--ease-out);
+}
+.root[data-idle] .needle {
+  background: color-mix(in srgb, var(--stage-text) 22%, transparent);
+  box-shadow: none;
+}
+
+.scaleLabels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--stage-text) 45%, transparent);
+}
+
+/* dim the whole glass when there is nothing to read */
+.root[data-idle] .scale {
+  opacity: 0.6;
+}
+
+/* ── Reference caption ───────────────────────────────────────────────────── */
+.reference {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--stage-text) 40%, transparent);
+}
+
+/* ── Control row — physical controls on the panel below the screen ──────── */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
