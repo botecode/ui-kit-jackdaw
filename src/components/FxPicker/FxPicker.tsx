@@ -304,11 +304,17 @@ export function FxPicker({
       <header className={styles.header}>
         <h2 className={styles.title}>Add Plugin</h2>
         <div className={styles.search}>
+          {/* tone="surface": kit inputs default to tone="stage" — the dark
+              recessed Studio-device well. The picker header is a paper surface
+              (--surface-2), where the stage well renders the query as dark ink
+              on near-black. Paper context → tone="surface"; Studio device
+              face → tone="stage" (default). */}
           <TextField
             value={query}
             onChange={handleSearch}
             type="search"
             size="sm"
+            tone="surface"
             placeholder="Search plugins…"
             aria-label="Search plugins"
             leading={<MagnifyingGlass size={14} />}

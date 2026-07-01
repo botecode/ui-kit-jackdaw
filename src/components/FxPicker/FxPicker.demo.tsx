@@ -32,6 +32,11 @@ const PLUGINS: PluginInfo[] = [
 
 const noop = () => {}
 
+// The header search field renders tone="surface" (paper), not the default
+// stage well — check any state below in a light theme (Chroma): the typed
+// query + placeholder must read as ink on a light recessed field, never
+// dark-on-dark in a black box.
+
 // Fixed-size frame so the browser reads as a floating instrument surface,
 // not a full-bleed page. The picker fills its host (height: 100%).
 function Frame({ children, height = 460 }: { children: React.ReactNode; height?: number }) {

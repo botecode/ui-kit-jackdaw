@@ -103,6 +103,14 @@ describe('FxPicker — favorites', () => {
 // ── Search ────────────────────────────────────────────────────────────────────
 
 describe('FxPicker — search', () => {
+  it('renders the search field on the surface (paper) tone, not the stage well', () => {
+    // The picker is a paper surface — the TextField default tone="stage" would
+    // render the query as dark ink on the near-black well on light themes.
+    render(<FxPicker {...makeProps()} />)
+    const field = screen.getByRole('searchbox', { name: 'Search plugins' })
+    expect(field.closest('[data-tone]')).toHaveAttribute('data-tone', 'surface')
+  })
+
   it('filters by name and reports the query', () => {
     const onSearchChange = vi.fn()
     render(<FxPicker {...makeProps({ onSearchChange })} />)
