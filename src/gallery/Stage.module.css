@@ -42,6 +42,19 @@
 .content {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The demo wrapper is the single flex child of the scroll viewport. Grow it to
+   fill the viewport when a demo is short, and let it grow past (scrolling) when
+   a demo is tall. Without this the wrapper collapses to its content height, so
+   DemoShell's `min-height: 100%` resolves against this auto-height ancestor
+   instead of the viewport — a short demo then leaves a phantom empty scroll
+   region below its content. (Same height-continuity fix the ThemeProvider
+   wrapper already applies for full-height consumers.) */
+.viewportInner {
+  flex: 1 0 auto;
 }
 
 .compareGrid {
