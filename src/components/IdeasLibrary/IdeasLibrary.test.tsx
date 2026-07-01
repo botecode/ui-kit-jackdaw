@@ -795,6 +795,44 @@ describe('IdeasLibrary — multi-clip group card', () => {
   })
 })
 
+// ─── Grid layout ──────────────────────────────────────────────────────────────
+
+describe('IdeasLibrary — grid layout', () => {
+  it('lays the ideas out in a responsive auto-fill grid, not one-per-row', () => {
+    expect(LIB_CSS).toMatch(/\.list\s*{[^}]*display:\s*grid/)
+    expect(LIB_CSS).toMatch(/grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(/)
+  })
+
+  it('renders clip ideas as grid tiles', () => {
+    renderLibrary()
+    const tile = screen.getByText('Dusty Rhodes Intro').closest('[role="listitem"]')!
+    expect(tile).toHaveAttribute('data-layout', 'tile')
+  })
+
+  it('renders voice ideas as grid tiles', () => {
+    renderLibrary(MIXED_IDEAS)
+    const tile = screen.getByText('Morning Idea').closest('[role="listitem"]')!
+    expect(tile).toHaveAttribute('data-layout', 'tile')
+  })
+
+  it('gives a multi-clip stack a full-width band (its clip rack needs room)', () => {
+    renderLibrary([GROUP_IDEA])
+    const band = screen.getByTestId('group-card').closest('[role="listitem"]')!
+    expect(band).toHaveAttribute('data-layout', 'wide')
+  })
+
+  it('gives a lyric idea a full-width band (its text needs width)', () => {
+    renderLibrary(MIXED_IDEAS)
+    const band = screen.getByText('Bridge Verse').closest('[role="listitem"]')!
+    expect(band).toHaveAttribute('data-layout', 'wide')
+  })
+
+  it('spans the empty + QR states across the whole grid', () => {
+    expect(LIB_CSS).toMatch(/\.empty\s*{[^}]*grid-column:\s*1\s*\/\s*-1/)
+    expect(LIB_CSS).toMatch(/\.qrPanel\s*{[^}]*grid-column:\s*1\s*\/\s*-1/)
+  })
+})
+
 // ─── Calm-paper guarantees (Home paper face, not the dark Studio stage) ────────
 
 describe('IdeasLibrary — calm-paper guarantees', () => {

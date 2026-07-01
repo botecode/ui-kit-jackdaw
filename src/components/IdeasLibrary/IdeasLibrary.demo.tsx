@@ -221,6 +221,16 @@ function ManyIdeasCard() {
   )
 }
 
+function GridWideCard() {
+  return (
+    <State label="grid — several clips across, wrapping to rows">
+      <div style={{ ...PANEL, width: 660 }}>
+        <IdeasLibrary ideas={MANY_IDEAS} {...NOOP} appSyncUrl={APP_SYNC_URL} />
+      </div>
+    </State>
+  )
+}
+
 function ClipsOnlyCard() {
   return (
     <State label="clips only — select Clips in the kind bar">
@@ -431,6 +441,7 @@ function StatesDemo() {
       <FewIdeasCard />
       <ClipsOnlyCard />
       <ManyIdeasCard />
+      <GridWideCard />
       <SearchingCard />
       <PreviewingCard />
       <DraggingCard />

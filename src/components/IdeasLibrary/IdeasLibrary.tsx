@@ -1,11 +1,13 @@
 // src/components/IdeasLibrary/IdeasLibrary.tsx
 //
-// Why this isn't a webpage: ideas live in a recessed --stage trough, each card a warm --surface
-// tile that lights with a green LED bloom (incandescent timing) when it previews — not a hover
-// highlight. A multi-clip idea reads as a little clip RACK: a recessed groove holding tactile
-// clip tiles, each with its own grip and its own LED-lit play. Drag is a physical grip, not a
-// "drag me" affordance; "Play all" is a recessed pill that lights, not a CTA button. The whole
-// thing reskins through every theme via tokens — it's an instrument shelf, not a media list.
+// Why this isn't a webpage: ideas live in a recessed warm-paper well, each clip a compact --surface
+// tile — waveform on top, its grip and delete tucked in the corners — that lights with a green LED
+// bloom (incandescent timing) when it previews, not a hover highlight. The clips pack side by side in
+// a responsive grid (auto-fill / minmax) and wrap like tiles on a shelf, not one-per-row list rows.
+// A multi-clip idea reads as a little clip RACK and a lyric as a written page, so both take a
+// full-width band rather than a squeezed tile. Drag is a physical grip, not a "drag me" affordance;
+// "Play all" is a recessed pill that lights, not a CTA. It reskins through every theme via tokens —
+// an instrument shelf, not a media list.
 import { useState } from 'react'
 import { MagnifyingGlass, DotsSixVertical, Play, Stop, Trash, Lightbulb } from '@phosphor-icons/react'
 import { encode } from 'uqr'
@@ -719,7 +721,7 @@ function LyricCard({
 
   return (
     <article
-      className={styles.card}
+      className={styles.lyricCard}
       data-dragging={dragging || undefined}
     >
       {/* ── Drag handle ──────────────────────────────────────────────────── */}
@@ -954,11 +956,20 @@ export function IdeasLibrary({
           })()
         )}
 
-        {filtered.map(idea => (
-          <div key={idea.id} role="listitem">
-            {(() => {
-              const kind = idea.kind ?? 'clip'
-              if (isGroupIdea(idea)) return (
+        {filtered.map(idea => {
+          const kind  = idea.kind ?? 'clip'
+          const group = isGroupIdea(idea)
+          // Multi-clip stacks (their clip rack) and lyrics (their multi-line text) get a
+          // full-width band; single clips + voice memos tile into the grid.
+          const wide  = group || kind === 'lyric'
+          return (
+            <div
+              key={idea.id}
+              role="listitem"
+              className={wide ? styles.cellWide : styles.cell}
+              data-layout={wide ? 'wide' : 'tile'}
+            >
+              {group ? (
                 <GroupCard
                   idea={idea}
                   playing={playing}
@@ -972,8 +983,7 @@ export function IdeasLibrary({
                   onDragClipEnd={handleDragEnd}
                   onDelete={() => onDelete(idea.id)}
                 />
-              )
-              if (kind === 'voice') return (
+              ) : kind === 'voice' ? (
                 <VoiceCard
                   idea={idea}
                   playing={isTarget(playing, idea.id, null)}
@@ -984,8 +994,7 @@ export function IdeasLibrary({
                   onDragEnd={handleDragEnd}
                   onDelete={() => onDelete(idea.id)}
                 />
-              )
-              if (kind === 'lyric') return (
+              ) : kind === 'lyric' ? (
                 <LyricCard
                   idea={idea}
                   dragging={isTarget(dragging, idea.id, null)}
@@ -993,8 +1002,7 @@ export function IdeasLibrary({
                   onDragEnd={handleDragEnd}
                   onDelete={() => onDelete(idea.id)}
                 />
-              )
-              return (
+              ) : (
                 <IdeaCard
                   idea={idea}
                   playing={isTarget(playing, idea.id, null)}
@@ -1005,10 +1013,10 @@ export function IdeasLibrary({
                   onDragEnd={handleDragEnd}
                   onDelete={() => onDelete(idea.id)}
                 />
-              )
-            })()}
-          </div>
-        ))}
+              )}
+            </div>
+          )
+        })}
       </div>
     </section>
   )
