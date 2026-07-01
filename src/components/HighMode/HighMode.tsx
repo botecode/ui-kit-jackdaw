@@ -18,6 +18,13 @@
 // (src/lib/highSession) — swap generateMockTakes for the engine later; the shapes
 // are the contract.
 //
+// FX note: the soundcheck FX is host-owned, not faked here (golden rule #1 — no audio).
+// Each selected instrument's real chain arrives via `fx` and every FX affordance fires an
+// intent keyed by instrument (onFxAdd opens the host's real plugin picker; the resulting
+// chain feeds back through props). A fresh instrument starts with an empty chain — High
+// mode never seeds a default chain or appends a placeholder plugin. Same affordance as the
+// studio card: the LivingInstrumentCard's FxChip, driven by props instead of local state.
+//
 // Selection note: the card spec said "LivingInstrumentCard selection state", but
 // that component is the heavy studio fader/meter/pan card (drag-to-set-level) —
 // wrong for a calm "what are you playing?" pick. Per the approved mockup, the
@@ -51,6 +58,14 @@ import styles from './HighMode.module.css'
 
 export type { HighInstrumentOption, HighPhase, HighSavedIdea } from '../../lib/highSession'
 
+/** One instrument's real FX insert chain + master state (host-owned). */
+export interface HighInstrumentFx {
+  /** The instrument's plugins, in order. Empty on a fresh instrument. */
+  plugins: FxPlugin[]
+  /** Whether the whole chain is engaged (the master bypass). */
+  chainEnabled: boolean
+}
+
 export interface HighModeProps {
   /** The project tracks the writer can arm for the session. */
   instruments: HighInstrumentOption[]
@@ -62,6 +77,19 @@ export interface HighModeProps {
   /** Live spectrum (normalized 0–1 magnitudes, low→high) driving the capture track.
    *  Wire the engine's Web Audio AnalyserNode here; omitted → a synthesised signal. */
   getSpectrum?: () => number[]
+  /** Each selected instrument's real FX insert chain, keyed by instrument id. Host-owned:
+   *  High mode is presentational and never fabricates plugins. A fresh instrument is simply
+   *  absent here → an empty chain. Wire the project track's real insert chain in. */
+  fx?: Record<string, HighInstrumentFx>
+  /** Open the host's real plugin picker for this instrument. High mode never appends a
+   *  placeholder — the host opens the picker and feeds the resulting chain back via `fx`. */
+  onFxAdd?: (instrumentId: string) => void
+  /** Remove a plugin from an instrument's chain. */
+  onFxRemove?: (instrumentId: string, fxId: string) => void
+  /** Bypass / enable a single plugin in an instrument's chain. */
+  onFxTogglePlugin?: (instrumentId: string, fxId: string, next: boolean) => void
+  /** Engage / bypass an instrument's whole chain (the master bypass). */
+  onFxToggleChain?: (instrumentId: string, next: boolean) => void
   /** Leave High mode (after the close confirm in review, or straight out earlier). */
   onExit?: () => void
   /** A take was saved to the Ideas Library. */
@@ -85,32 +113,24 @@ export interface HighModeProps {
 
 const SELECT_TITLE = 'What are you playing?'
 
-// ── Input / FX setup (the soundcheck screen) ──────────────────────────────────
-// Mock inputs + a default insert chain so the LivingInstrumentCard setup is
-// functional ui/-only. The engine swaps these for the real device list + chain.
+// ── Input / level setup (the soundcheck screen) ───────────────────────────────
+// Mock inputs + level/pan so the LivingInstrumentCard setup is functional ui/-only.
+// The engine swaps these for the real device list. FX are NOT mocked here: the chain
+// is host-owned (see HighModeProps.fx) — the studio card's FX affordance, intent-driven.
 const INPUT_OPTIONS: InputSelectOption[] = [
   { id: 'in-1', label: 'Input 1', inputName: 'XLR 1 · Mono' },
   { id: 'in-2', label: 'Input 2', inputName: 'XLR 2 · Mono' },
   { id: 'in-3', label: 'Input 3', inputName: 'DI 1 · Mono' },
   { id: 'in-4', label: 'Input 4', inputName: 'USB · Mono' },
 ]
-const DEFAULT_FX = (): FxPlugin[] => [
-  { id: 'eq', name: 'EQ', enabled: true },
-  { id: 'comp', name: 'Comp', enabled: true },
-  { id: 'reverb', name: 'Reverb', enabled: false },
-]
 interface SetupCfg {
   input: string | null
-  fx: FxPlugin[]
-  fxChainEnabled: boolean
   volumeDb: number
   pan: number
 }
 function defaultSetup(idx: number): SetupCfg {
   return {
     input: INPUT_OPTIONS[idx % INPUT_OPTIONS.length].id,
-    fx: DEFAULT_FX(),
-    fxChainEnabled: true,
     volumeDb: 0,
     // Spread two instruments a touch left/right so the stage opens up.
     pan: idx === 0 ? -0.15 : idx === 1 ? 0.15 : 0,
@@ -124,6 +144,11 @@ export function HighMode({
   denominator = 4,
   maxSelect = 2,
   getSpectrum,
+  fx,
+  onFxAdd,
+  onFxRemove,
+  onFxTogglePlugin,
+  onFxToggleChain,
   onExit,
   onSaveIdea,
   onKeepSession,
@@ -497,6 +522,9 @@ export function HighMode({
           <div className={styles.setupRow} role="group" aria-label="Set up your instruments">
             {chosen.map((inst, idx) => {
               const cfg = setupConfig[inst.id] ?? defaultSetup(idx)
+              // FX is host-owned: render the instrument's real chain from props (absent → empty),
+              // and every FX affordance fires an intent keyed by instrument — no local FX state.
+              const insFx = fx?.[inst.id]
               return (
                 <LivingInstrumentCard
                   key={inst.id}
@@ -508,18 +536,12 @@ export function HighMode({
                   soloed={false}
                   input={{ value: cfg.input, options: INPUT_OPTIONS }}
                   onInputChange={id => patchSetup(inst.id, idx, { input: id })}
-                  fx={cfg.fx}
-                  fxChainEnabled={cfg.fxChainEnabled}
-                  onFxToggleChain={next => patchSetup(inst.id, idx, { fxChainEnabled: next })}
-                  onFxTogglePlugin={(id, next) =>
-                    patchSetup(inst.id, idx, { fx: cfg.fx.map(p => (p.id === id ? { ...p, enabled: next } : p)) })
-                  }
-                  onFxRemove={id => patchSetup(inst.id, idx, { fx: cfg.fx.filter(p => p.id !== id) })}
-                  onFxAdd={() =>
-                    patchSetup(inst.id, idx, {
-                      fx: [...cfg.fx, { id: `fx-${cfg.fx.length + 1}`, name: 'New FX', enabled: true }],
-                    })
-                  }
+                  fx={insFx?.plugins ?? []}
+                  fxChainEnabled={insFx?.chainEnabled ?? true}
+                  onFxToggleChain={next => onFxToggleChain?.(inst.id, next)}
+                  onFxTogglePlugin={(id, next) => onFxTogglePlugin?.(inst.id, id, next)}
+                  onFxRemove={id => onFxRemove?.(inst.id, id)}
+                  onFxAdd={() => onFxAdd?.(inst.id)}
                   volumeDb={cfg.volumeDb}
                   onVolumeChange={db => patchSetup(inst.id, idx, { volumeDb: db })}
                   pan={cfg.pan}

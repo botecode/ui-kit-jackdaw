@@ -96,6 +96,60 @@ describe('HighMode — setup (soundcheck)', () => {
   })
 })
 
+describe('HighMode — setup FX (host-driven, presentational)', () => {
+  it('renders an instrument\'s FX chain straight from props', () => {
+    setup({
+      initialPhase: 'setup',
+      initialSelectedIds: ['gtr'],
+      fx: { gtr: { plugins: [{ id: 'eq', name: 'EQ', enabled: true }, { id: 'comp', name: 'Comp', enabled: false }], chainEnabled: true } },
+    })
+    // Open the Guitar FX chain panel (the studio card's real FxChip affordance).
+    fireEvent.click(screen.getByRole('button', { name: 'Guitar FX' }))
+    // Plugins come from props, not a fabricated default chain.
+    expect(screen.getByRole('checkbox', { name: 'EQ' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Comp' })).toBeInTheDocument()
+  })
+
+  it('an instrument with no FX shows an empty chain (no seeded default)', () => {
+    setup({ initialPhase: 'setup', initialSelectedIds: ['gtr'] }) // no fx prop → fresh instrument
+    const chip = screen.getByRole('button', { name: 'Guitar FX' })
+    expect(chip).toHaveTextContent('+ FX')
+    fireEvent.click(chip)
+    // No plugins seeded — the old DEFAULT_FX() (EQ/Comp/Reverb) is gone.
+    expect(screen.queryByRole('checkbox', { name: 'EQ' })).not.toBeInTheDocument()
+  })
+
+  it('“+ Add plugin…” fires onFxAdd(instrumentId) and appends no placeholder', () => {
+    const onFxAdd = vi.fn()
+    setup({
+      initialPhase: 'setup',
+      initialSelectedIds: ['gtr'],
+      fx: { gtr: { plugins: [], chainEnabled: true } },
+      onFxAdd,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guitar FX' }))
+    fireEvent.click(screen.getByRole('button', { name: /add plugin/i }))
+    // Fires the intent — the host opens the real picker.
+    expect(onFxAdd).toHaveBeenCalledTimes(1)
+    expect(onFxAdd).toHaveBeenCalledWith('gtr')
+    // …and nothing is fabricated locally (no "New FX" placeholder).
+    expect(screen.queryByRole('checkbox', { name: /new fx/i })).not.toBeInTheDocument()
+  })
+
+  it('toggling a plugin fires onFxTogglePlugin(instrumentId, fxId, next)', () => {
+    const onFxTogglePlugin = vi.fn()
+    setup({
+      initialPhase: 'setup',
+      initialSelectedIds: ['gtr'],
+      fx: { gtr: { plugins: [{ id: 'eq', name: 'EQ', enabled: true }], chainEnabled: true } },
+      onFxTogglePlugin,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guitar FX' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'EQ' }))
+    expect(onFxTogglePlugin).toHaveBeenCalledWith('gtr', 'eq', false)
+  })
+})
+
 describe('HighMode — record', () => {
   it('moves inputs to topbar arm pills (selected armed, others off) + metronome', () => {
     setup({ initialPhase: 'recording', initialSelectedIds: ['gtr', 'voc'] })

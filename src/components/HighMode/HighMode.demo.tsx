@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
-import { HighMode, type HighInstrumentOption, type HighSavedIdea } from './HighMode'
+import { HighMode, type HighInstrumentFx, type HighInstrumentOption, type HighSavedIdea } from './HighMode'
+import type { FxPlugin } from '../FxChip'
 
 export const meta: DemoMeta = {
   name: 'High Mode',
@@ -17,6 +18,47 @@ const INSTRUMENTS: HighInstrumentOption[] = [
   { id: 'keys', name: 'Keys', color: 'var(--track-color-4)', input: 'In 3 · Mono' },
   { id: 'bass', name: 'Bass', color: 'var(--track-color-2)', input: 'In 4 · Mono' },
 ]
+
+// The host owns each instrument's FX chain (High mode is presentational). Guitar opens
+// with a real chain wired from props; Vocals opens empty — the fresh-instrument case.
+const INITIAL_FX: Record<string, HighInstrumentFx> = {
+  gtr: {
+    plugins: [
+      { id: 'gtr-eq', name: 'EQ', enabled: true },
+      { id: 'gtr-comp', name: 'Comp', enabled: true },
+      { id: 'gtr-verb', name: 'Reverb', enabled: false },
+    ],
+    chainEnabled: true,
+  },
+  voc: { plugins: [], chainEnabled: true },
+}
+
+// What the host's real plugin picker hands back on "+ Add plugin…". High mode never
+// fabricates this — the intent opens the picker; the result feeds back through props.
+const PICKER_RESULTS = ['Saturator', 'Tape Delay', 'Chorus', 'Plate Reverb', 'Bus Comp']
+
+// A tiny stand-in for the host: holds the chains, applies the FX intents, and simulates
+// the picker feeding a real plugin back through props (never a "New FX" placeholder).
+function useFxHost(initial: Record<string, HighInstrumentFx>) {
+  const [fx, setFx] = useState<Record<string, HighInstrumentFx>>(initial)
+  function patch(id: string, fn: (cur: HighInstrumentFx) => HighInstrumentFx) {
+    setFx(prev => ({ ...prev, [id]: fn(prev[id] ?? { plugins: [], chainEnabled: true }) }))
+  }
+  return {
+    fx,
+    onFxAdd: (id: string) =>
+      patch(id, cur => {
+        const name = PICKER_RESULTS[cur.plugins.length % PICKER_RESULTS.length]
+        const picked: FxPlugin = { id: `${id}-${cur.plugins.length + 1}`, name, enabled: true }
+        return { ...cur, plugins: [...cur.plugins, picked] }
+      }),
+    onFxRemove: (id: string, fxId: string) =>
+      patch(id, cur => ({ ...cur, plugins: cur.plugins.filter(p => p.id !== fxId) })),
+    onFxTogglePlugin: (id: string, fxId: string, next: boolean) =>
+      patch(id, cur => ({ ...cur, plugins: cur.plugins.map(p => (p.id === fxId ? { ...p, enabled: next } : p)) })),
+    onFxToggleChain: (id: string, next: boolean) => patch(id, cur => ({ ...cur, chainEnabled: next })),
+  }
+}
 
 // A device frame so the full-screen flow reads as a room inside the gallery.
 function Frame({ height = 720, children }: { height?: number; children: React.ReactNode }) {
@@ -103,6 +145,7 @@ export default function HighModeDemo() {
   const [exited, setExited] = useState<string | null>(null)
   const [runKey, setRunKey] = useState(0) // remount to replay the flow
   const mic = useMicSpectrum()
+  const fxHost = useFxHost(INITIAL_FX)
 
   return (
     <DemoShell meta={meta}>
@@ -117,6 +160,7 @@ export default function HighModeDemo() {
             bpm={120}
             processingMs={1100}
             getSpectrum={mic.getSpectrum ?? undefined}
+            {...fxHost}
             onSaveIdea={idea => setIdeas(prev => [...prev, idea])}
             onKeepSession={() => setExited('Session kept — the audio is tucked into the nest.')}
             onDiscardSession={() => setExited('Session discarded — travelled light.')}
@@ -169,7 +213,7 @@ export default function HighModeDemo() {
 
       <Section
         title="Input setup (soundcheck)"
-        hint="Between the pick and the tape: a LivingInstrumentCard per chosen instrument (max two) to set the input, shape it with FX, and dial the level/pan before you roll."
+        hint="Between the pick and the tape: a LivingInstrumentCard per chosen instrument (max two) to set the input, shape it with the host's real FX chain, and dial the level/pan before you roll. FX is host-owned — Guitar opens with a real chain from props; Vocals opens empty. Open a chip and hit “+ Add plugin…” to fire the picker intent (the host feeds the picked plugin back through props)."
       >
         <Frame height={640}>
           <HighMode
@@ -177,6 +221,7 @@ export default function HighModeDemo() {
             bpm={120}
             initialPhase="setup"
             initialSelectedIds={['gtr', 'voc']}
+            {...fxHost}
           />
         </Frame>
       </Section>
