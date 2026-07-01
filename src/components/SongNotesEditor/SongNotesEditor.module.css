@@ -48,8 +48,10 @@
   max-height: 480px;
   padding: var(--space-4) var(--space-5);
   font-family: var(--font-ui);
-  font-size: var(--text-base);
-  line-height: var(--leading-base);
+  /* Prose reading surface — larger, airier than the studio UI body. Paragraphs
+     and list items inherit this; headings/embeds keep their own scale. */
+  font-size: var(--text-reading);
+  line-height: var(--leading-reading);
   color: var(--text);
   outline: none;
   overflow-y: auto;
@@ -67,8 +69,9 @@
   inset: 0;
   padding: var(--space-4) var(--space-5);
   font-family: var(--font-ui);
-  font-size: var(--text-base);
-  line-height: var(--leading-base);
+  /* Match the editor's reading rhythm so the placeholder sits on the same line. */
+  font-size: var(--text-reading);
+  line-height: var(--leading-reading);
   color: var(--text-dim);
   font-style: italic;
   pointer-events: none;
@@ -159,7 +162,8 @@
   position: relative;
   padding-left: var(--space-4);
   margin-bottom: var(--space-1);
-  line-height: var(--leading-base);
+  /* Match the prose reading rhythm (paragraphs inherit it from .editor). */
+  line-height: var(--leading-reading);
 }
 
 .editor li:last-child {
@@ -173,7 +177,8 @@
   left: 0;
   color: var(--text-muted);
   font-weight: var(--weight-medium);
-  line-height: var(--leading-base);
+  /* Keep the dash on the same baseline as the taller reading line. */
+  line-height: var(--leading-reading);
   pointer-events: none;
 }
 
