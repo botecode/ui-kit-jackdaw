@@ -75,6 +75,7 @@ export function Stage() {
       ) : (
         <div className={styles.content}>
           <div
+            className={styles.viewportInner}
             style={zoom !== 1 ? {
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
