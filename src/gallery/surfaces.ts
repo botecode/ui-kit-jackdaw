@@ -159,6 +159,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   Mixer: ['daw'],
   PhaseInvert: ['daw'],
   PianoRoll: ['daw'],
+  PluginGraph: ['daw'], // plugin UI graph/analyzer surface — EQ curve + spectrum + LFO scope
   Playhead: ['daw'],
   RecordMode: ['daw'],
   RepeatToggle: ['daw'],
