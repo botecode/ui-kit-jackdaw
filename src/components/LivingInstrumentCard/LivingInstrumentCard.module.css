@@ -98,6 +98,43 @@
 
 .root[data-size="sm"] .name { font-size: var(--text-xs); }
 
+/* Inline rename — wears the label's type, reads as text until you touch it. Hover
+   hints a recessed well; focus seats it into the plate with the accent ring. */
+.nameEdit {
+  flex: 1;
+  min-width: 0;
+  padding: 2px var(--space-2);
+  margin: -2px calc(-1 * var(--space-2));
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: text;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.nameEdit::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+.nameEdit:hover {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 10%, transparent);
+}
+.nameEdit:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.root[data-size="sm"] .nameEdit { font-size: var(--text-xs); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nameEdit { transition: none; }
+}
+
 .root[data-master] .name {
   color: var(--accent);
   letter-spacing: 0.06em;

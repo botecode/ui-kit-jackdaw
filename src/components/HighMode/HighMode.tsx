@@ -90,6 +90,9 @@ export interface HighModeProps {
   onFxTogglePlugin?: (instrumentId: string, fxId: string, next: boolean) => void
   /** Engage / bypass an instrument's whole chain (the master bypass). */
   onFxToggleChain?: (instrumentId: string, next: boolean) => void
+  /** Rename an instrument/track from the dial-in card (controlled: High mode holds the
+   *  live edit for the session; the host persists the new name). */
+  onInstrumentRename?: (instrumentId: string, name: string) => void
   /** Leave High mode (after the close confirm in review, or straight out earlier). */
   onExit?: () => void
   /** A take was saved to the Ideas Library. */
@@ -149,6 +152,7 @@ export function HighMode({
   onFxRemove,
   onFxTogglePlugin,
   onFxToggleChain,
+  onInstrumentRename,
   onExit,
   onSaveIdea,
   onKeepSession,
@@ -166,6 +170,8 @@ export function HighMode({
   const [demoCaption, setDemoCaption] = useState('You keep playing.')
   const [liveCaught, setLiveCaught] = useState(0)
   const [setupConfig, setSetupConfig] = useState<Record<string, SetupCfg>>({})
+  // Dial-in renames — the live session value; the picker keeps the source label.
+  const [nameOverrides, setNameOverrides] = useState<Record<string, string>>({})
   const [takes, setTakes] = useState<HighTakeData[]>(
     initialPhase === 'reviewing'
       ? generateMockTakes({ count: takesCount, seed: takesSeed })
@@ -264,6 +270,12 @@ export function HighMode({
       const cur = prev[id] ?? defaultSetup(idx)
       return { ...prev, [id]: { ...cur, ...patch } }
     })
+  }
+
+  // Rename from the dial-in card: hold the live value and emit the intent.
+  function renameInstrument(id: string, name: string) {
+    setNameOverrides(prev => ({ ...prev, [id]: name }))
+    onInstrumentRename?.(id, name)
   }
 
   function finishTake() {
@@ -490,7 +502,7 @@ export function HighMode({
               disabled={selectedIds.length === 0}
               onClick={goToSetup}
             >
-              Set up inputs
+              Setup
             </Button>
           </div>
         </div>
@@ -529,7 +541,8 @@ export function HighMode({
                 <LivingInstrumentCard
                   key={inst.id}
                   trackId={inst.id}
-                  name={inst.name}
+                  name={nameOverrides[inst.id] ?? inst.name}
+                  onNameChange={next => renameInstrument(inst.id, next)}
                   color={inst.color}
                   armed
                   muted={false}

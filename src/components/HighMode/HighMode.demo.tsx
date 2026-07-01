@@ -143,6 +143,7 @@ function useMicSpectrum() {
 export default function HighModeDemo() {
   const [ideas, setIdeas] = useState<HighSavedIdea[]>([])
   const [exited, setExited] = useState<string | null>(null)
+  const [renamed, setRenamed] = useState<Record<string, string>>({})
   const [runKey, setRunKey] = useState(0) // remount to replay the flow
   const mic = useMicSpectrum()
   const fxHost = useFxHost(INITIAL_FX)
@@ -213,7 +214,7 @@ export default function HighModeDemo() {
 
       <Section
         title="Input setup (soundcheck)"
-        hint="Between the pick and the tape: a LivingInstrumentCard per chosen instrument (max two) to set the input, shape it with the host's real FX chain, and dial the level/pan before you roll. FX is host-owned — Guitar opens with a real chain from props; Vocals opens empty. Open a chip and hit “+ Add plugin…” to fire the picker intent (the host feeds the picked plugin back through props)."
+        hint="Between the pick and the tape: a LivingInstrumentCard per chosen instrument (max two) to set the input, shape it with the host's real FX chain, and dial the level/pan before you roll. The card name is inline-editable — rename the track before it rolls; the edit fires onInstrumentRename for the host to persist. FX is host-owned — Guitar opens with a real chain from props; Vocals opens empty. Open a chip and hit “+ Add plugin…” to fire the picker intent (the host feeds the picked plugin back through props)."
       >
         <Frame height={640}>
           <HighMode
@@ -221,9 +222,15 @@ export default function HighModeDemo() {
             bpm={120}
             initialPhase="setup"
             initialSelectedIds={['gtr', 'voc']}
+            onInstrumentRename={(id, name) => setRenamed(prev => ({ ...prev, [id]: name }))}
             {...fxHost}
           />
         </Frame>
+        <div style={{ font: '400 var(--text-sm)/1.6 var(--font-mono)', color: 'var(--text-muted)', marginTop: 'var(--space-3)' }}>
+          renamed → {Object.keys(renamed).length === 0
+            ? 'nothing yet — click a card name to rename'
+            : Object.entries(renamed).map(([id, name]) => `${id}: ${name}`).join(' · ')}
+        </div>
       </Section>
 
       <Section

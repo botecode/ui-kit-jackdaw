@@ -46,6 +46,25 @@ describe('LivingInstrumentCard — rendering', () => {
     expect(screen.getByTitle('Guitar')).toBeInTheDocument()
   })
 
+  it('keeps the name static (no textbox) when onNameChange is absent', () => {
+    render(<LivingInstrumentCard {...BASE} />)
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+
+  it('renders an inline rename field and emits every edit when onNameChange is given', () => {
+    const onNameChange = vi.fn()
+    render(<LivingInstrumentCard {...BASE} onNameChange={onNameChange} />)
+    const field = screen.getByRole('textbox', { name: /rename guitar/i })
+    expect(field).toHaveValue('Guitar')
+    fireEvent.change(field, { target: { value: 'Lead Guitar' } })
+    expect(onNameChange).toHaveBeenCalledWith('Lead Guitar')
+  })
+
+  it('never offers rename on the master bus', () => {
+    render(<LivingInstrumentCard {...BASE} isMaster name="Master" onNameChange={vi.fn()} />)
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+
   it('exposes the volume line as a vertical slider over volumeDb', () => {
     render(<LivingInstrumentCard {...BASE} volumeDb={-6} />)
     const line = screen.getByRole('slider', { name: /guitar level/i })

@@ -55,14 +55,14 @@ describe('HighMode — select', () => {
 
   it('cannot proceed with nothing picked', () => {
     setup({ initialPhase: 'selecting' })
-    expect(screen.getByRole('button', { name: /set up inputs/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^setup$/i })).toBeDisabled()
   })
 
   it('selects a card on click', () => {
     setup({ initialPhase: 'selecting' })
     fireEvent.click(screen.getByRole('button', { name: 'Guitar' }))
     expect(screen.getByRole('button', { name: 'Guitar' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: /set up inputs/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /^setup$/i })).toBeEnabled()
   })
 
   it('enforces the max selection (1–2)', () => {
@@ -80,7 +80,7 @@ describe('HighMode — select', () => {
 describe('HighMode — setup (soundcheck)', () => {
   it('selection lands on the input/FX setup screen with a card per chosen instrument', () => {
     setup({ initialPhase: 'selecting', initialSelectedIds: ['gtr', 'voc'] })
-    fireEvent.click(screen.getByRole('button', { name: /set up inputs/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^setup$/i }))
     expect(screen.getByText('Dial in your inputs')).toBeInTheDocument()
     // A LivingInstrumentCard per chosen instrument (role=group, "<name> instrument").
     expect(screen.getByRole('group', { name: 'Guitar instrument' })).toBeInTheDocument()
@@ -93,6 +93,23 @@ describe('HighMode — setup (soundcheck)', () => {
     setup({ initialPhase: 'setup', initialSelectedIds: ['gtr'] })
     fireEvent.click(screen.getByRole('button', { name: /start the tape/i }))
     expect(screen.getByText(/listening for your idea/i)).toBeInTheDocument()
+  })
+
+  it('renames a dial-in track inline and emits onInstrumentRename', () => {
+    const onInstrumentRename = vi.fn()
+    setup({ initialPhase: 'setup', initialSelectedIds: ['gtr'], onInstrumentRename })
+    const field = screen.getByRole('textbox', { name: /rename guitar/i })
+    fireEvent.change(field, { target: { value: 'Slide' } })
+    expect(onInstrumentRename).toHaveBeenLastCalledWith('gtr', 'Slide')
+    // The live edit is held in the session — the card reflects the new name.
+    expect(screen.getByRole('textbox', { name: /rename slide/i })).toHaveValue('Slide')
+  })
+
+  it('keeps the picker labels static — only the dial-in card is editable', () => {
+    setup({ initialPhase: 'selecting', initialSelectedIds: ['gtr'] })
+    // The pick card is a plain button, never a rename field.
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guitar' })).toBeInTheDocument()
   })
 })
 

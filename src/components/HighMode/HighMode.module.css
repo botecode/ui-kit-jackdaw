@@ -90,7 +90,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: safe center;
-  gap: var(--space-7);
+  gap: var(--space-8);
   padding: var(--space-8) var(--space-10);
   overflow-y: auto;
   text-align: center;
@@ -241,7 +241,9 @@
   align-items: stretch;
 }
 
-.startRow { display: flex; align-items: center; gap: var(--space-6); }
+/* The CTA reads as the deliberate next step, not a caption pinned under the card
+   grid — extra breathing room on top of the column's rhythm sets it apart. */
+.startRow { display: flex; align-items: center; gap: var(--space-6); margin-top: var(--space-4); }
 .selCount {
   font-family: var(--font-mono);
   font-size: var(--text-sm);

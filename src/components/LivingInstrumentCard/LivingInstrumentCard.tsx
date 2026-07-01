@@ -70,6 +70,10 @@ function breathe(cur: number, sig: number, phase: number): number {
 export interface LivingInstrumentCardProps {
   trackId: string
   name: string
+  /** Rename the track. Present → the name becomes an inline-editable field (controlled:
+   *  the kit emits every edit, the host owns the value). Absent → static label as before.
+   *  Not offered on the master variant. */
+  onNameChange?: (name: string) => void
   /** Track colour — the tape-lane tie (a small colour tick on the card). */
   color: string
 
@@ -149,6 +153,7 @@ function usePrefersReducedMotion(): boolean {
 export function LivingInstrumentCard({
   trackId,
   name,
+  onNameChange,
   color,
   input,
   onInputChange,
@@ -191,6 +196,8 @@ export function LivingInstrumentCard({
   const reduced = usePrefersReducedMotion()
 
   const displayName = isMaster ? name || 'MASTER' : name
+  // Inline rename is opt-in (onNameChange) and never on the master bus / when disabled.
+  const nameEditable = !!onNameChange && !isMaster && !disabled
   const interactive = !!onVolumeChange && !disabled
   const panInteractive = !!onPanChange && !disabled && !isMaster
   const isLive = meterL !== undefined || meterR !== undefined
@@ -442,7 +449,21 @@ export function LivingInstrumentCard({
       {/* ── Header: colour tick + name + input ── */}
       <div className={styles.header}>
         <span className={styles.tick} aria-hidden />
-        <span className={styles.name} title={displayName}>{displayName}</span>
+        {nameEditable ? (
+          <input
+            className={styles.nameEdit}
+            value={name}
+            title={displayName}
+            aria-label={`Rename ${displayName}`}
+            spellCheck={false}
+            autoComplete="off"
+            onClick={e => e.stopPropagation()}
+            onChange={e => onNameChange!(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+          />
+        ) : (
+          <span className={styles.name} title={displayName}>{displayName}</span>
+        )}
         {!isMaster && input && (
           <div
             className={styles.input}
