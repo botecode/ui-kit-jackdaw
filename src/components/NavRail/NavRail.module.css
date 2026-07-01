@@ -56,10 +56,14 @@
 /* ─── Item button ────────────────────────────────────────────────────────────── */
 
 /*
-  Recessed-off / LED-lit-on — the kit's signature pattern.
-  Off: --stage dark well with inset shadow.
+  Recessed-off / LED-lit-on — the kit's signature pattern, on the LIGHT chassis.
+  Off: a light recessed tile (--surface-2) sitting in the cream rail — NOT a
+       --stage black well. Nav is a positional selector (KIT-LEAD §6: "generic
+       toggles → the accent"), so it reskins with the chassis like the kit's
+       other nav sidebars (WorkspaceSidebar/MobileTabBar); it is not one of the
+       intentional black-matrix control/LCD wells. On dark themes --surface-2
+       is itself dark, so the recessed read holds.
   On:  --accent (orange) LED bloom with incandescent timing.
-  Per KIT-LEAD §6: "Generic toggles → the accent." Nav is a positional selector.
 */
 
 .item {
@@ -78,12 +82,12 @@
   -webkit-user-select: none;
   flex-shrink: 0;
 
-  /* Off state — recessed dark well */
-  background-color: var(--stage);
+  /* Off state — light recessed tile on the chassis */
+  background-color: var(--surface-2);
   color: var(--text-dim);
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05),
     0 0 0 1px var(--border);
 
   /* Slow decay — incandescent off */
@@ -104,17 +108,17 @@
 .item:active:not(:disabled) {
   transform: translateY(1px);
   box-shadow:
-    inset 0 3px 5px rgba(0, 0, 0, 0.65),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    inset 0 2px 3px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06),
     0 0 0 1px var(--border);
 }
 
 /* Preserve LED bloom on active press */
 .item[data-active]:active:not(:disabled) {
-  background-color: color-mix(in srgb, var(--accent) 18%, var(--stage));
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
   box-shadow:
-    inset 0 3px 5px rgba(0, 0, 0, 0.65),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    inset 0 2px 3px rgba(0, 0, 0, 0.14),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05),
     0 0 0 1px var(--accent),
     0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
   color: var(--accent);
@@ -128,11 +132,11 @@
 */
 
 .item[data-active] {
-  background-color: color-mix(in srgb, var(--accent) 18%, var(--stage));
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
   color: var(--accent);
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    inset 0 1px 2px rgba(0, 0, 0, 0.10),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04),
     0 0 0 1px var(--accent),
     0 0 8px 2px color-mix(in srgb, var(--accent) 35%, transparent);
   /* Fast attack */
