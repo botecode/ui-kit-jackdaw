@@ -113,12 +113,19 @@ export function DangerConfirm({
               <p className={styles.instruction} aria-hidden="true">
                 Type <b className={styles.phrase}>{confirmPhrase}</b> to confirm
               </p>
+              {/* tone="surface": kit inputs default to tone="stage" — the dark
+                  recessed Studio-device well. That's correct ON the Studio device
+                  face, but this dialog is a paper surface, where the stage well
+                  renders as an unreadable black box on cream. Rule of thumb:
+                  paper context → tone="surface"; Studio device face → tone="stage"
+                  (default). */}
               <TextField
                 value={typed}
                 onChange={setTyped}
                 aria-label={`Type ${confirmPhrase} to confirm`}
                 autoFocus
                 size="sm"
+                tone="surface"
                 onKeyDown={handleFieldKeyDown}
               />
             </div>

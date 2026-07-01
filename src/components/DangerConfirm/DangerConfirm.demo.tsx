@@ -18,6 +18,9 @@ export const meta: DemoMeta = {
 
 // A single opened-from-a-trigger example. The trigger is a kit Button (dogfood);
 // the DangerConfirm portals over the whole gallery like it would in the app.
+// The type-to-confirm field renders tone="surface" (paper), not the default
+// stage well — check the gated cards in a light theme (Chroma): the input must
+// read as a light recessed field with ink text, never a black box on cream.
 function ConfirmCard({
   label,
   title,

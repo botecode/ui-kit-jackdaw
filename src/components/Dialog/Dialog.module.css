@@ -97,8 +97,11 @@
     color var(--dur-base) var(--ease-out);
 }
 
+/* Paper-surface hover: a translucent ink wash (the FxPicker/DetailPanel idiom),
+   NOT var(--stage) — the dark well behind ink text reads dark-on-dark on light
+   themes. */
 .closeBtn:hover {
-  background: var(--stage);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   color: var(--text);
 }
 

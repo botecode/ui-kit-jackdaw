@@ -76,6 +76,14 @@ describe('DangerConfirm — type-to-confirm', () => {
     expect(field).toHaveAccessibleName(`Type ${PHRASE} to confirm`)
   })
 
+  it('renders the confirm field on the surface (paper) tone, not the stage well', () => {
+    // The dialog is a paper surface — the default tone="stage" would render the
+    // field as a near-black well with unreadable text on light themes.
+    render(<DangerConfirm {...BASE} confirmPhrase={PHRASE} />)
+    const field = screen.getByRole('textbox')
+    expect(field.closest('[data-tone]')).toHaveAttribute('data-tone', 'surface')
+  })
+
   it('shows the phrase in the visible instruction', () => {
     render(<DangerConfirm {...BASE} confirmPhrase={PHRASE} />)
     // The phrase renders inside a <b> in the instruction line.
