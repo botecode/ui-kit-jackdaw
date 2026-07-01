@@ -2,12 +2,16 @@
 
 /* ─── Color aliases ──────────────────────────────────────────────────────────
    Internal aliases over existing tokens — no new ThemeTokens entries.
-   --ec-line is intentionally dimmer than --ec-handle so the line reads
-   "quiet reference" and the handle reads "grabbable" (not disabled).         */
+   Both map to --accent (Chroma orange) so the cursor stays clearly findable
+   over colored clip bodies in the drilldown. It never gets confused with the
+   Playhead because the OTHER distinctions hold: dashed (not solid), 1px (not
+   1.5px), no glow, z-index 49 (below the playhead's 50) — and both hosts hide
+   the edit cursor while playing. Token only, so it reskins through every
+   theme; verified on paper (cream) + dark.                                   */
 
 .root {
-  --ec-line:   var(--text-dim);
-  --ec-handle: var(--text-muted);
+  --ec-line:   var(--accent);
+  --ec-handle: var(--accent);
 
   position: absolute;
   top: 0;
@@ -22,13 +26,10 @@
 }
 
 /* ─── Line ───────────────────────────────────────────────────────────────────
-   1px (vs. Playhead's 1.5px) + dashed (vs. solid) + no glow = matte, calm.
+   Orange (--accent) + 1px (vs. Playhead's 1.5px) + dashed (vs. solid) + no
+   glow = findable but matte and calm, never mistaken for the play line.
    Gradient-dash technique: dashes stay locked to the line under translateX,
-   unlike border-style:dashed which re-anchors on every paint.
-
-   DAY-ONE CHECK: verify line is findable over clip bodies (colored clip
-   backgrounds) across light and dark themes in Compare. If it disappears,
-   add a hairline contrast edge here using --ec-line.                         */
+   unlike border-style:dashed which re-anchors on every paint.                */
 
 .line {
   position: absolute;
@@ -50,14 +51,15 @@
    box-shadow — an a11y failure. role="slider"/tabIndex/aria-* live here;
    the .handle child carries the clip-path triangle.
 
-   top:20px — just below the Playhead cap (top:0, height:20px) so the caret
-   clears the cap entirely at co-location, point dipping into the first lane
-   — reads "pointing into content." Distinct vertical position = clean
-   separation at the stopped/co-located state that matters most.             */
+   top = --ec-cap-offset (capOffset prop, default 20px) — anchors the caret
+   head to the host's ruler line. On the tape (default 20) it clears the
+   Playhead's 20px cap, its point dipping into the first lane. The drilldown,
+   with a shorter ruler, passes a smaller offset so the ▽ sits at its ruler
+   as the head of the line instead of floating down onto a clip body.         */
 
 .handleWrap {
   position: absolute;
-  top: 20px;
+  top: var(--ec-cap-offset, 20px);
   left: 0;
   width: 20px;
   height: 9px;

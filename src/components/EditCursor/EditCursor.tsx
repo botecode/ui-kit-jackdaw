@@ -10,6 +10,14 @@ export interface EditCursorProps {
   'aria-label'?: string
   step?: number
   largeStep?: number
+  /**
+   * Vertical offset (px) of the caret head from the top of the cursor.
+   * Anchors the ▽ to the host's ruler line so it reads as the head of the
+   * line, not a triangle floating over the clip. Default 20 matches the tape,
+   * where the Playhead's 20px cap sits above; the drilldown passes its own
+   * (smaller) ruler height so the caret aligns to its ruler.
+   */
+  capOffset?: number
 }
 
 function formatTime(s: number): string {
@@ -28,6 +36,7 @@ export function EditCursor({
   'aria-label': ariaLabel = 'Edit cursor',
   step      = 1.0,
   largeStep = 10.0,
+  capOffset = 20,
 }: EditCursorProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{
@@ -91,6 +100,7 @@ export function EditCursor({
       className={styles.root}
       data-testid="edit-cursor-root"
       data-disabled={disabled || undefined}
+      style={{ ['--ec-cap-offset']: `${capOffset}px` } as React.CSSProperties}
     >
       <div className={styles.line} data-testid="edit-cursor-line" />
       <div

@@ -187,6 +187,16 @@ function StatesDemo() {
         </>)}
       </State>
 
+      {/* 7. Drilldown — caret head anchored to the ruler line, not floating
+             over the clip. capOffset = RULER_H − handle height parks the ▽
+             point at the ruler baseline over a colored clip body. */}
+      <State label="drilldown — caret head at the ruler (capOffset), over a clip">
+        {cell(<>
+          <TimelineBackdrop width={W} pxPerSecond={pxPerSecond} />
+          <EditCursor seconds={10} secondsToX={secondsToX} onSeek={() => {}} capOffset={RULER_H - 9} />
+        </>)}
+      </State>
+
       {/* 6. Playing — play line sweeps, edit cursor stationary */}
       <State label="playing — play line sweeps from edit cursor (10s)">
         {cell(<>
@@ -229,6 +239,7 @@ function PlaygroundDemo() {
   const [seconds,      setSeconds]      = useState(5)
   const [playing,      setPlaying]      = useState(false)
   const [pxPerSecond,  setPxPerSecond]  = useState(12)
+  const [capOffset,    setCapOffset]    = useState(RULER_H)
 
   const secondsToX = useCallback((s: number) => s * pxPerSecond, [pxPerSecond])
   const { getSeconds, seedClock } = useFixtureClock(playing)
@@ -279,6 +290,7 @@ function PlaygroundDemo() {
             secondsToX={secondsToX}
             durationSeconds={DURATION}
             onSeek={handleSeek}
+            capOffset={capOffset}
           />
         </div>
 
@@ -319,9 +331,28 @@ function PlaygroundDemo() {
           </div>
         </label>
 
+        {/* Caret head offset — align the ▽ to the host ruler line */}
+        <label style={labelStyle}>
+          caret head offset: {capOffset}px
+          <div style={{ marginTop: 'var(--space-1)' }}>
+            <Fader
+              value={capOffset}
+              onChange={setCapOffset}
+              min={0}
+              max={40}
+              orientation="horizontal"
+              aria-label="Caret head offset px"
+            />
+          </div>
+        </label>
+
         <p style={{ margin: 0, fontFamily: 'var(--font-ui)', fontSize: 'var(--text-xs)', color: 'var(--text-dim)' }}>
           Click the ruler or drag the caret to place the edit cursor.
-          Play sweeps the orange line <em>from</em> the caret; Stop returns it.
+          The cursor is orange (dashed, thin, no glow) so it stays findable over
+          colored clips without clashing with the solid glowing play line.
+          "Caret head offset" anchors the ▽ to the ruler line — set it to your
+          host's ruler height so the head never floats down onto a clip.
+          Play sweeps the play line <em>from</em> the caret; Stop returns it.
           "edit" readout stays frozen during play — "play" shows the live sweep.
           Arrow/Page keys nudge the caret while focused.
         </p>

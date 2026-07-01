@@ -55,6 +55,24 @@ describe('EditCursor structural focus-ring guard', () => {
   })
 })
 
+// ─── Caret head offset ─────────────────────────────────────────────────────────
+// capOffset drives the --ec-cap-offset var on the root so the host can anchor
+// the ▽ to its ruler line (default 20 matches the tape).
+
+describe('EditCursor caret head offset', () => {
+  it('defaults --ec-cap-offset to 20px', () => {
+    render(<EditCursor seconds={0} secondsToX={identity} onSeek={noop} />)
+    const root = screen.getByTestId('edit-cursor-root') as HTMLElement
+    expect(root.style.getPropertyValue('--ec-cap-offset')).toBe('20px')
+  })
+
+  it('sets --ec-cap-offset from the capOffset prop', () => {
+    render(<EditCursor seconds={0} secondsToX={identity} onSeek={noop} capOffset={4} />)
+    const root = screen.getByTestId('edit-cursor-root') as HTMLElement
+    expect(root.style.getPropertyValue('--ec-cap-offset')).toBe('4px')
+  })
+})
+
 // ─── ARIA ─────────────────────────────────────────────────────────────────────
 
 describe('EditCursor ARIA', () => {
