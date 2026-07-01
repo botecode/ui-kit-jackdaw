@@ -176,6 +176,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   TrackLane: ['daw'],
   TransportBar: ['daw'],
   TransportButton: ['daw'],
+  Tuner: ['app', 'daw'], // instrument-room tool — tune on the phone before capturing an idea
 }
 
 /**
