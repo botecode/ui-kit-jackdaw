@@ -1,0 +1,156 @@
+/* src/components/WorkspaceSetup/WorkspaceSetup.module.css */
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Warm greeting header ──────────────────────────────────────────────────────
+   Centred welcome: the BrandMark, a display headline, a spoken subhead. Sits on
+   a hair-warmer band so it reads as the "mat" you step onto, keylined off the
+   fields below. */
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  border-bottom: 1px solid var(--border);
+  background: var(--rail-bg);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.01em;
+  line-height: var(--leading-display);
+  color: var(--text);
+}
+
+.subhead {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  line-height: var(--leading-base);
+}
+
+/* ── Fields ─────────────────────────────────────────────────────────────────── */
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.typeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.typeLabel {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+/* ── Host error banner ─────────────────────────────────────────────────────────
+   A recessed red-tinted well, not a floating toast — it belongs to the form. */
+
+.error {
+  margin: 0 var(--space-5);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 40%, transparent);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--danger);
+  line-height: var(--leading-base);
+}
+
+/* ── Footer actions ────────────────────────────────────────────────────────────
+   Kit-standard button recipe (mirrors ExportDialog) so the footer reads
+   first-party without pulling in the generic Button. first-run is a single
+   full-width CTA; new-workspace is Cancel + Create. */
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.actions[data-single] {
+  justify-content: stretch;
+}
+
+.actions[data-single] .btnPrimary {
+  flex: 1;
+  padding-block: var(--space-3);
+}
+
+.btnBase {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  padding: var(--space-2) var(--space-5);
+  line-height: 1;
+  outline: none;
+  transition: filter var(--dur-base) var(--ease-out);
+}
+
+.btnSecondary {
+  composes: btnBase;
+  background: var(--stage);
+  color: var(--stage-text);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+}
+
+.btnSecondary:hover { filter: brightness(1.1); }
+
+.btnSecondary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Primary CTA — lit with the accent (KIT-LEAD §6: generic lit → accent), with a
+   soft LED bloom so "Get started" reads as warm, not a flat web button. */
+.btnPrimary {
+  composes: btnBase;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 12px 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.btnPrimary:hover:not(:disabled) { filter: brightness(1.08); }
+
+.btnPrimary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Disabled CTA — recessed + unlit, the "not ready yet" state. */
+.btnPrimary:disabled {
+  cursor: not-allowed;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  box-shadow: inset 0 0 0 1px var(--border);
+}

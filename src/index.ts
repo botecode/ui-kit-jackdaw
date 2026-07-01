@@ -135,7 +135,9 @@ export * from './components/TransportBar'
 export * from './components/TransportButton'
 export * from './components/Versions'
 export * from './components/WorkspaceCard'
+export * from './components/WorkspaceSetup'
 export * from './components/WorkspaceSidebar'
+export * from './components/WorkspaceSwitcher'
 
 // Shared annotation domain types are exported by BOTH AnnotationEditor and AnnotationLane;
 // re-export explicitly to disambiguate the wildcard exports above (resolves TS2308).

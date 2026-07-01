@@ -1,0 +1,213 @@
+/* src/components/WorkspaceSwitcher/WorkspaceSwitcher.module.css */
+
+.root {
+  width: 100%;
+}
+
+/* ── Trigger — the calm paper identity plate ───────────────────────────────────
+   Same rail vocabulary as WorkspaceSidebar: flat ink on the warm rail surface,
+   a hairline keyline, one accent for focus/open. No bevel, no dark well. */
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  outline: none;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.trigger:hover {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.trigger[data-open],
+.trigger[data-open]:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 1px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+
+.workspaceName {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  line-height: var(--leading-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userName {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: var(--leading-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.caret {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--text-dim);
+}
+
+.trigger[data-open] .caret { color: var(--accent); }
+
+/* sm — a denser plate for a narrower rail. */
+.root[data-size='sm'] .workspaceName { font-size: var(--text-sm); }
+.root[data-size='sm'] .userName      { font-size: var(--text-xs); }
+
+/* ── Dropdown menu — CALM PAPER, not the dark stage well ───────────────────────
+   The switcher belongs to the paper rail, so the menu reskins with --menu-bg +
+   ink text + the accent spine, never the studio's --stage. */
+
+.pop { min-width: 220px; }
+
+.menu {
+  padding: var(--space-1);
+  min-width: 220px;
+  background: var(--menu-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-ui);
+  outline: none;
+}
+
+.sectionLabel {
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+}
+
+.separator {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-1) 0;
+}
+
+/* Workspace row (menuitemradio) + command rows share the row skeleton. */
+.item,
+.command {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  outline: none;
+  position: relative;
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+.item:hover,
+.command:hover,
+.item:focus-visible,
+.command:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.item:focus-visible,
+.command:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: -2px;
+}
+
+/* Active workspace — the accent spine the sidebar uses for the current row. */
+.item[data-active]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+
+.itemText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+
+.itemName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.itemType {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item[data-active] .itemName { font-weight: var(--weight-medium); }
+
+.check {
+  flex-shrink: 0;
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.commandLead {
+  flex-shrink: 0;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}

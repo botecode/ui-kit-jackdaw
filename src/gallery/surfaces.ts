@@ -127,7 +127,9 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   StudioSessionCard: ['app', 'daw'], // song page's gateway into the studio — the hero door, in-product chrome
   Versions: ['app', 'daw'],
   WorkspaceCard: ['app', 'daw'], // Home gallery card for a song / collection — in-product chrome
+  WorkspaceSetup: ['app', 'daw'], // first-run + new-workspace setup dialog — in-product chrome
   WorkspaceSidebar: ['app', 'daw'],
+  WorkspaceSwitcher: ['app', 'daw'], // top-of-sidebar identity + workspace switch menu
 
   // ── Mobile companion app surfaces (app only) ───────────────────────────────
   MobileRecordButton: ['app'],
