@@ -66,6 +66,7 @@ export const goldenHourTheme: ThemeTokens = {
   // ── Semantic ───────────────────────────────────────────────────────────────
   "--done":   "#46A147",
   "--danger": "#E74B37",
+  "--danger-contrast": "#FFF6F3",   // on-red LED label (fixed lens property, not theme hue)
 
   // ── Texture ────────────────────────────────────────────────────────────────
   "--texture-paper": "none",

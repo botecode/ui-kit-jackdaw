@@ -130,8 +130,42 @@
     color            var(--dur-led-on) var(--ease-out);
 }
 
+/* ─── Variant: danger (red-lit destructive) ───────────────────────────────────── */
+/*
+  The destructive twin of `primary`: identical LED-bloom grammar, swapped onto
+  the red family so a "Delete" reads as a hot, armed control — the same red the
+  arm/record LEDs use (semantic red = destructive here). Label rides the fixed
+  on-red lens color (--danger-contrast), not a theme hue.
+*/
+.root[data-variant="danger"] {
+  background-color: var(--danger);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--led-red-deep) 70%, var(--border)),
+    0 0 10px 1px color-mix(in srgb, var(--led-red) 34%, transparent);
+  color: var(--danger-contrast);
+}
+
+.root[data-variant="danger"]:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px color-mix(in srgb, var(--led-red-deep) 70%, var(--border)),
+    0 0 10px 1px color-mix(in srgb, var(--led-red) 34%, transparent);
+  /* Fast attack on the bloom shift — incandescent on. */
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    color            var(--dur-led-on) var(--ease-out);
+}
+
+/* Danger's focus ring is red, not accent — the interactive identity says "hot". */
+.root[data-variant="danger"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--danger) 75%, transparent);
+}
+
 /* ─── Hover (shared — TransportButton treatment) ──────────────────────────────── */
-/* Ghost overrides this above; default + primary use the brightness lift. */
+/* Ghost overrides this above; default + primary + danger use the brightness lift. */
 
 .root:hover:not(:disabled) {
   filter: brightness(1.08);

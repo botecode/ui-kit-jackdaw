@@ -11,6 +11,8 @@
 // buttons reads as one instrument, and reskins through every theme on tokens
 // alone. `primary` lights with the accent (KIT-LEAD §6: generic lit → accent);
 // `ghost` is the quiet, well-less variant for dense bars (icon undo/redo).
+// `danger` is the destructive twin of `primary` — the same LED bloom on the
+// red family (`--danger` / `--led-red`) so "Delete" reads as hot, not just red.
 import styles from './Button.module.css'
 
 export interface ButtonProps {
@@ -20,8 +22,8 @@ export interface ButtonProps {
   children?: React.ReactNode
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
   disabled?: boolean
-  /** default = recessed well · ghost = well-less/quiet · primary = accent-lit CTA. */
-  variant?: 'default' | 'ghost' | 'primary'
+  /** default = recessed well · ghost = well-less/quiet · primary = accent-lit CTA · danger = red-lit destructive. */
+  variant?: 'default' | 'ghost' | 'primary' | 'danger'
   size?: 'sm' | 'md'
   'aria-label'?: string
 }

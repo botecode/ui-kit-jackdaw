@@ -52,6 +52,11 @@ describe('Button variant', () => {
     const { getByRole } = render(<Button variant="primary" onClick={noop}>Save</Button>)
     expect(getByRole('button').getAttribute('data-variant')).toBe('primary')
   })
+
+  it('data-variant reflects the danger prop', () => {
+    const { getByRole } = render(<Button variant="danger" onClick={noop}>Delete</Button>)
+    expect(getByRole('button').getAttribute('data-variant')).toBe('danger')
+  })
 })
 
 // ─── Size ────────────────────────────────────────────────────────────────────

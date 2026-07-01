@@ -100,6 +100,7 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   CollectionView: ['app', 'daw'],
   CommentsPanel: ['app', 'daw'],
   CoverPicker: ['app', 'daw'], // dress an album/song sleeve — in-product, not the marketing site
+  DangerConfirm: ['app', 'daw'], // destructive confirm gate — in-product, not the marketing site
   ExportDialog: ['app', 'daw'],
   FlyHighButton: ['app', 'daw'], // Home's catch-ideas (High mode) hero — in-product, not the marketing site
   'High Mode': ['app', 'daw'], // the full catch-ideas flow (Focus mode) — pick → record → review → save

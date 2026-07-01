@@ -21,6 +21,8 @@ export interface TextFieldProps {
   trailing?: React.ReactNode
   autoFocus?: boolean
   id?: string
+  /** Key handler on the underlying input — e.g. Enter-to-submit in a confirm field. */
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
 export function TextField({
@@ -38,6 +40,7 @@ export function TextField({
   trailing,
   autoFocus,
   id: idProp,
+  onKeyDown,
 }: TextFieldProps) {
   const generatedId = useId()
   const inputId = idProp ?? generatedId
@@ -70,6 +73,7 @@ export function TextField({
           type={type}
           value={value}
           onChange={handleChange}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           disabled={disabled}
           aria-label={label ? undefined : ariaLabel}

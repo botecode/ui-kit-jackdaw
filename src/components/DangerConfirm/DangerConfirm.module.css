@@ -1,0 +1,70 @@
+/* src/components/DangerConfirm/DangerConfirm.module.css */
+
+/* ─── Body layout ─────────────────────────────────────────────────────────────── */
+/*
+  Warning glyph in the left gutter, copy in the right column — the classic
+  "something's about to happen" callout, but quiet: no red panel, no shout.
+  The tone is carried by the one lit-red glyph and the destructive button; the
+  prose stays in the calm dialog ink so the warning reads as considered, not loud.
+*/
+.body {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+/* The warning lamp — a red LED glyph, on tokens so it reskins every theme. */
+.warnIcon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px; /* optical align to the message cap-height */
+  color: var(--danger);
+  /* A faint incandescent bloom so the glyph feels lit, not printed. */
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--led-red) 40%, transparent));
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.message {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* ─── Type-to-confirm block ───────────────────────────────────────────────────── */
+
+.confirmBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.instruction {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/*
+  The phrase to type, set in mono — it's a literal string to reproduce, so it
+  reads as data (the digital-readout face), not prose, and every character is
+  unambiguous. Ink stays --text so it's the emphasised token in the line.
+*/
+.phrase {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  /* Hair of breathing room so the mono glyphs don't crowd the surrounding prose. */
+  padding: 0 1px;
+}

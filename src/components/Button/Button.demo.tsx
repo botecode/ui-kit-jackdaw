@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, ShareNetwork } from '@phosphor-icons/react'
+import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, ShareNetwork, Trash } from '@phosphor-icons/react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
@@ -29,6 +29,9 @@ function StatesDemo() {
       <State label="Primary (accent-lit)">
         <Button variant="primary" icon={<ShareNetwork size={20} />} onClick={noop}>Share</Button>
       </State>
+      <State label="Danger (red-lit)">
+        <Button variant="danger" icon={<Trash size={20} />} onClick={noop}>Delete</Button>
+      </State>
       <State label="Label only">
         <Button onClick={noop}>Lyrics</Button>
       </State>
@@ -47,6 +50,9 @@ function StatesDemo() {
       <State label="Disabled (primary)">
         <Button variant="primary" disabled onClick={noop}>Share</Button>
       </State>
+      <State label="Disabled (danger)">
+        <Button variant="danger" icon={<Trash size={20} />} disabled onClick={noop}>Delete</Button>
+      </State>
       <State label="sm — default">
         <Button size="sm" icon={<FloppyDisk size={16} />} onClick={noop}>Save</Button>
       </State>
@@ -62,7 +68,7 @@ function StatesDemo() {
 
 // ── Playground ─────────────────────────────────────────────────────────────────
 
-type Variant = 'default' | 'ghost' | 'primary'
+type Variant = 'default' | 'ghost' | 'primary' | 'danger'
 
 function PlaygroundDemo() {
   const [variant, setVariant] = useState<Variant>('default')
@@ -114,6 +120,7 @@ function PlaygroundDemo() {
               <option value="default">default</option>
               <option value="ghost">ghost</option>
               <option value="primary">primary</option>
+              <option value="danger">danger</option>
             </select>
           </label>
           <label style={labelStyle}>

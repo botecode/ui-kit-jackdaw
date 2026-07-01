@@ -94,6 +94,7 @@ export const chromaTheme: ThemeTokens = {
   // ── Semantic ─────────────────────────────────────────────────────────────────
   "--done":   "#46A147",   // chroma-green
   "--danger": "#E74B37",   // chroma-red
+  "--danger-contrast": "#FFF6F3",   // on-red LED label (fixed lens property, not theme hue)
 
   // ── Texture ──────────────────────────────────────────────────────────────────
   "--texture-paper": TEXTURE_PAPER,

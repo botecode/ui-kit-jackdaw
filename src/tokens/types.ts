@@ -68,6 +68,7 @@ export interface ThemeTokens {
   // ── Semantic ──
   "--done": string;
   "--danger": string;
+  "--danger-contrast": string;
 
   // ── Texture (background-image value; set to `none` to disable) ──
   "--texture-paper": string;
