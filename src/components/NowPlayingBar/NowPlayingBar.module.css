@@ -1,0 +1,213 @@
+/* src/components/NowPlayingBar/NowPlayingBar.module.css */
+
+/* ─── Root — the deck's bottom edge: a dark recessed --stage rail, every theme ── */
+
+.root {
+  --npb-cover: 44px;
+  --npb-accent: var(--accent);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(200px, 1.2fr);
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-4);
+
+  background-color: var(--stage);
+  background-image: var(--texture-stage);
+  color: var(--stage-text);
+  font-family: var(--font-ui);
+  /* Hairline top-highlight + a lift-off shadow above — it reads as a real edge the
+     content sits above, not a flat web footer. Host pins it to the bottom. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 -8px 20px rgba(0, 0, 0, 0.22);
+  isolation: isolate;
+}
+
+.root[data-size="sm"] {
+  --npb-cover: 34px;
+  gap: var(--space-4);
+  padding: var(--space-1) var(--space-3);
+}
+
+/* ─── Left: cover + meta ─────────────────────────────────────────────────────── */
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.cover {
+  position: relative;
+  flex: none;
+  width: var(--npb-cover);
+  height: var(--npb-cover);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: var(--stage-2);
+  /* Sunk into the deck — the art sits IN the rail, not on it. */
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    inset 0 1px 3px rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  transition: box-shadow var(--dur-led-off) var(--ease-out);
+}
+
+/* Rolling — the cover picks up the one accent as a soft spine glow (state-carrying,
+   kept under reduced-motion; only the transition duration is decorative). */
+.root[data-playing] .cover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--npb-accent) 55%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--npb-accent) 40%, transparent),
+    0 0 10px color-mix(in srgb, var(--npb-accent) 30%, transparent);
+  transition: box-shadow var(--dur-led-on) var(--ease-out);
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.coverColor {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.coverPlaceholder {
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--stage-text) 45%, transparent);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-sm);
+  color: var(--stage-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.root[data-size="md"] .title { font-size: var(--text-base); }
+
+.title[data-untitled] {
+  color: color-mix(in srgb, var(--stage-text) 55%, transparent);
+  font-style: italic;
+  font-weight: var(--weight-medium);
+}
+
+.subtitle {
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, var(--stage-text) 62%, transparent);
+  line-height: var(--leading-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Center: transport ──────────────────────────────────────────────────────── */
+
+.transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* Prev / next — quiet ghost skips (the recessed hero is the TransportButton). */
+.skip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--stage-text) 62%, transparent);
+  cursor: pointer;
+  outline: none;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.root[data-size="sm"] .skip { width: 28px; height: 28px; }
+
+.skip:hover {
+  color: var(--stage-text);
+  background-color: color-mix(in srgb, var(--stage-text) 10%, transparent);
+}
+
+.skip:active { transform: translateY(0.5px); }
+
+.skip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--npb-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Shuffle — a small lit toggle; a generic toggle lights the accent (KIT-LEAD §6). */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--stage-text) 55%, transparent);
+  cursor: pointer;
+  outline: none;
+  transition:
+    color var(--dur-led-off) var(--ease-out),
+    background-color var(--dur-led-off) var(--ease-out);
+}
+
+.root[data-size="sm"] .toggle { width: 28px; height: 28px; }
+
+.toggle:hover { color: var(--stage-text); }
+
+.toggle[data-active] {
+  color: var(--npb-accent);
+  background-color: color-mix(in srgb, var(--npb-accent) 14%, transparent);
+  transition:
+    color var(--dur-led-on) var(--ease-out),
+    background-color var(--dur-led-on) var(--ease-out);
+}
+
+.toggle:active { transform: translateY(0.5px); }
+
+.toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--npb-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ─── Right: scrub — the shared Seeker (styling lives in Seeker.module.css) ───── */
+
+.seek {
+  min-width: 0;
+  /* The pale groove reads on the black deck; the fill is the one warm accent. */
+  --seek-fill: var(--npb-accent);
+}
