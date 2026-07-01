@@ -76,14 +76,40 @@ describe('WorkspaceCard cover', () => {
     expect(withBg).toBeInTheDocument()
   })
 
-  it('falls back to a flat colour block when only coverColor is set', () => {
+  it('falls back to a flat colour block (background-color) when only coverColor is set', () => {
     const { container } = render(
-      <WorkspaceCard kind="song" title="Hairline" coverColor="var(--chroma-teal)" onOpen={() => {}} />,
+      <WorkspaceCard kind="song" title="Hairline" coverColor="#7ec8a4" onOpen={() => {}} />,
     )
-    // A colour set is not "empty" (no glyph), but carries the --cover-color var.
+    // A colour set is not "empty" (no glyph); it paints as a flat background-color.
     expect(container.querySelector('[data-empty]')).toBeNull()
-    const styled = container.querySelector('[style*="--cover-color"]')
-    expect(styled).toBeInTheDocument()
+    const cover = container.querySelector('[style*="background-color"]') as HTMLElement
+    expect(cover.style.backgroundColor).toBe('rgb(126, 200, 164)')
+  })
+
+  it('paints a coverValue gradient via background-image (verbatim, never url-wrapped)', () => {
+    const grad = 'linear-gradient(135deg, #e4c84a, #e47a7a)'
+    const { container } = render(
+      <WorkspaceCard kind="collection" title="LP" coverValue={{ kind: 'gradient', value: grad }} onOpen={() => {}} />,
+    )
+    expect(container.querySelector('[data-empty]')).toBeNull()
+    const cover = container.querySelector('[style*="background-image"]') as HTMLElement
+    expect(cover.style.backgroundImage).toContain('linear-gradient')
+    expect(cover.style.backgroundImage).not.toContain('url(')
+  })
+
+  it('paints a coverValue image via background-image: url(…) and wins over legacy props', () => {
+    const { container } = render(
+      <WorkspaceCard
+        kind="song"
+        title="Hairline"
+        cover="https://x/legacy.jpg"
+        coverColor="#000"
+        coverValue={{ kind: 'image', value: 'https://x/new.jpg' }}
+        onOpen={() => {}}
+      />,
+    )
+    const cover = container.querySelector('[style*="background-image"]') as HTMLElement
+    expect(cover.style.backgroundImage).toBe('url("https://x/new.jpg")')
   })
 
   it('marks the cover empty with a glyph when neither art nor colour is set', () => {

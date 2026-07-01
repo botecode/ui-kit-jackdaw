@@ -1,0 +1,157 @@
+/* src/components/CoverPicker/CoverPicker.demo.module.css — gallery demo only */
+
+.lead {
+  max-width: 60ch;
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+}
+.lead code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--text);
+}
+
+/* ── Live hero ─────────────────────────────────────────────────────────────── */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.heroPlate {
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+}
+.heroMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.plate {
+  width: 132px;
+  height: 132px;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  background-color: var(--stage);
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.08),
+    inset 0 0 0 1px hsl(0 0% 0% / 0.25);
+  display: grid;
+  place-items: center;
+  color: var(--stage-text);
+}
+.plate[data-size='sm'] {
+  width: 96px;
+  height: 96px;
+}
+.plateEmpty {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  opacity: 0.5;
+}
+
+.changeBtn {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+.clearBtn {
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  background: var(--stage);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.emitted {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+.emitted code,
+.attrib {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.attrib {
+  margin: 0;
+}
+
+.wireRow,
+.pgRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+.wireRow code,
+.pgRow code {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* ── Unsplash-outcomes section ─────────────────────────────────────────────── */
+
+.usplashStates {
+  margin: var(--space-8) 0;
+}
+.sectionH {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+.threeUp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-5);
+}
+.tag {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* ── Playground ────────────────────────────────────────────────────────────── */
+
+.pgControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.pgStage {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}

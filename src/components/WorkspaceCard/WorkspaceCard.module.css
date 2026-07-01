@@ -62,7 +62,8 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 8 / 5;
-  background-color: var(--cover-color, var(--stage));
+  /* Empty/base fill; a picked color/gradient/image is applied inline via coverStyle(). */
+  background-color: var(--stage);
   background-size: cover;
   background-position: center;
   color: var(--stage-text);

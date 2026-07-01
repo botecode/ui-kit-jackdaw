@@ -96,11 +96,52 @@ describe('CollectionView render', () => {
     expect(getByText(/no tracks/i)).toBeTruthy()
   })
 
-  it('renders a cover color block when coverColor is set', () => {
-    const { container } = renderView({ coverColor: 'var(--chroma-teal)' })
+  it('renders a cover color block (background-color) when coverColor is set', () => {
+    const { container } = renderView({ coverColor: '#7ec8a4' })
     const cover = container.querySelector('[data-cover]') as HTMLElement
     expect(cover).toBeTruthy()
-    expect(cover.style.getPropertyValue('--cover-color')).toBe('var(--chroma-teal)')
+    expect(cover.style.backgroundColor).toBe('rgb(126, 200, 164)')
+    expect(cover.hasAttribute('data-empty')).toBe(false)
+  })
+
+  it('paints a coverValue color via background-color', () => {
+    const { container } = renderView({ coverValue: { kind: 'color', value: '#e8a87c' } })
+    const cover = container.querySelector('[data-cover]') as HTMLElement
+    expect(cover.style.backgroundColor).toBe('rgb(232, 168, 124)')
+  })
+
+  it('paints a coverValue gradient via background-image VERBATIM (not url-wrapped)', () => {
+    const grad = 'linear-gradient(135deg, #e4c84a, #e47a7a)'
+    const { container } = renderView({ coverValue: { kind: 'gradient', value: grad } })
+    const cover = container.querySelector('[data-cover]') as HTMLElement
+    expect(cover.style.backgroundImage).toContain('linear-gradient')
+    expect(cover.style.backgroundImage).not.toContain('url(')
+    // A gradient is its own art — the empty record glyph is not overprinted.
+    expect(cover.querySelector('svg')).toBeNull()
+  })
+
+  it('paints a coverValue image via background-image: url(…)', () => {
+    const { container } = renderView({ coverValue: { kind: 'image', value: 'https://x/art.jpg' } })
+    const cover = container.querySelector('[data-cover]') as HTMLElement
+    expect(cover.style.backgroundImage).toBe('url("https://x/art.jpg")')
+  })
+
+  it('coverValue takes precedence over the legacy cover/coverColor props', () => {
+    const { container } = renderView({
+      cover: 'https://x/legacy.jpg',
+      coverColor: '#000000',
+      coverValue: { kind: 'color', value: '#7eb8d4' },
+    })
+    const cover = container.querySelector('[data-cover]') as HTMLElement
+    expect(cover.style.backgroundColor).toBe('rgb(126, 184, 212)')
+    expect(cover.style.backgroundImage).toBe('')
+  })
+
+  it('marks the cover empty (no fill) when no cover of any kind is set', () => {
+    const { container } = renderView({})
+    const cover = container.querySelector('[data-cover]') as HTMLElement
+    expect(cover.hasAttribute('data-empty')).toBe(true)
+    expect(cover.style.backgroundImage).toBe('')
   })
 })
 

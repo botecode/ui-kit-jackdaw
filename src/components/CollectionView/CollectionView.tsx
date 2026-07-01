@@ -64,6 +64,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Play, Pause, CaretLeft, DotsSixVertical } from '@phosphor-icons/react'
 import { SongNotesEditor } from '../SongNotesEditor'
 import { Seeker } from '../Seeker'
+import { coverStyle, hasCover, type CoverChoice } from '../../lib/covers'
 import styles from './CollectionView.module.css'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -83,6 +84,13 @@ export interface CollectionViewProps {
   cover?: string
   /** A flat cover color (a token or CSS color) when there's no art. */
   coverColor?: string
+  /**
+   * The typed cover to paint — a color, a CSS gradient, OR an image (url/data-URL),
+   * from the shared CoverPicker contract. Takes precedence over `cover`/`coverColor`
+   * and renders through the ONE shared `coverStyle` helper, so a gradient preset
+   * actually shows (a gradient is a background-image, not a background-color).
+   */
+  coverValue?: CoverChoice | null
   /**
    * Optional control the HOST places ON the cover plate (e.g. a "Change cover"
    * button) — rendered as an overlay in the top corner, revealed on hover/focus.
@@ -147,6 +155,7 @@ export function CollectionView({
   title,
   cover,
   coverColor,
+  coverValue,
   coverAction,
   notes,
   onNotesChange,
@@ -194,6 +203,16 @@ export function CollectionView({
     else onPlayTrack(tracks[0].id)
   }
 
+  // Resolve the cover from the richest prop present: the typed `coverValue` wins,
+  // then a legacy image `cover`, then a legacy `coverColor`. One shared helper paints
+  // all three kinds so a color, gradient, and image render identically.
+  const resolvedCover: CoverChoice | null =
+    coverValue ??
+    (cover ? { kind: 'image', value: cover } : coverColor ? { kind: 'color', value: coverColor } : null)
+  // The record-groove mark shows only when the plate is a flat field (empty or a solid
+  // color) — a gradient or image is its own art and shouldn't be overprinted.
+  const showRecordGlyph = !resolvedCover || resolvedCover.kind === 'color'
+
   const total = totalDuration(tracks)
   const metaLabel = `ALBUM · ${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'} · ${formatDuration(total)}`
 
@@ -218,15 +237,10 @@ export function CollectionView({
         <div
           className={styles.cover}
           data-cover
-          data-empty={!cover && !coverColor ? '' : undefined}
-          style={
-            {
-              ...(coverColor ? { ['--cover-color']: coverColor } : null),
-              ...(cover ? { backgroundImage: `url("${cover}")` } : null),
-            } as React.CSSProperties
-          }
+          data-empty={hasCover(resolvedCover) ? undefined : ''}
+          style={coverStyle(resolvedCover)}
         >
-          {!cover && <RecordGlyph />}
+          {showRecordGlyph && <RecordGlyph />}
           {coverAction && (
             <div className={styles.coverAction} data-cover-action>
               {coverAction}

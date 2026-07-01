@@ -31,6 +31,7 @@
 //   sm gives a denser Home grid. Default md.
 import { Play } from '@phosphor-icons/react'
 import { Badge } from '../Badge'
+import { coverStyle, type CoverChoice } from '../../lib/covers'
 import styles from './WorkspaceCard.module.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────────
@@ -47,6 +48,12 @@ export interface WorkspaceCardProps {
   cover?: string
   /** A flat cover colour (a token or CSS colour) when there's no art. */
   coverColor?: string
+  /**
+   * The typed cover to paint — a color, a CSS gradient, OR an image (url/data-URL),
+   * from the shared CoverPicker contract. Wins over `cover`/`coverColor` and renders
+   * through the ONE shared `coverStyle` helper so every cover kind paints identically.
+   */
+  coverValue?: CoverChoice | null
   /** A short meta line, e.g. "Take 7 · today" (song) or "Album · 6 tracks" (collection). */
   subtitle?: string
   /** Track count for a collection — shown in the "ALBUM · N" tag. Ignored for songs. */
@@ -83,6 +90,7 @@ export function WorkspaceCard({
   title,
   cover,
   coverColor,
+  coverValue,
   subtitle,
   count,
   onOpen,
@@ -92,7 +100,12 @@ export function WorkspaceCard({
   className,
   'aria-label': ariaLabel,
 }: WorkspaceCardProps) {
-  const hasArt = Boolean(cover)
+  // Resolve the cover: typed `coverValue` wins, then a legacy image, then a color.
+  // One shared helper paints color / gradient / image identically (a gradient is a
+  // background-image, not a background-color — the exact bug the helper prevents).
+  const resolvedCover: CoverChoice | null =
+    coverValue ??
+    (cover ? { kind: 'image', value: cover } : coverColor ? { kind: 'color', value: coverColor } : null)
   const label = ariaLabel ?? `${title}, ${kindNoun(kind)}`
 
   return (
@@ -112,16 +125,11 @@ export function WorkspaceCard({
       >
         <span
           className={styles.cover}
-          data-empty={!hasArt && !coverColor ? '' : undefined}
-          style={
-            {
-              ...(coverColor ? { ['--cover-color']: coverColor } : null),
-              ...(hasArt ? { backgroundImage: `url("${cover}")` } : null),
-            } as React.CSSProperties
-          }
+          data-empty={resolvedCover ? undefined : ''}
+          style={coverStyle(resolvedCover)}
         >
           {/* Empty-cover mark — flat well + a faint kind glyph, never a broken image. */}
-          {!hasArt && !coverColor && (kind === 'collection' ? <StackGlyph /> : <WaveGlyph />)}
+          {!resolvedCover && (kind === 'collection' ? <StackGlyph /> : <WaveGlyph />)}
 
           {/* Corner tag — dogfooded Badge on a solid plate so it reads over any cover. */}
           <span className={styles.tag}>

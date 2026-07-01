@@ -74,7 +74,8 @@
   height: 104px;
   flex-shrink: 0;
   border-radius: var(--radius);
-  background-color: var(--cover-color, var(--stage));
+  /* Empty/base fill; a picked color/gradient/image is applied inline via coverStyle(). */
+  background-color: var(--stage);
   background-size: cover;
   background-position: center;
   /* hairline top-highlight + inset seat — recessed into the sleeve */
