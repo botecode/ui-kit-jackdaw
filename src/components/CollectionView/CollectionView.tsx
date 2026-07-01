@@ -36,12 +36,34 @@
 //   <Seeker> showing position vs. that track's duration, scrubbable when the host
 //   wires onSeek (display-only otherwise). It uses --accent (the now-playing spine
 //   color), one seeker shared with MasterPlayer — not a second inline copy. The
-//   per-row play studs stay for picking the track; the strip is the position scrub.
+//   per-row studs pick the track; the strip is the position scrub.
+//
+// Streaming-album revision (kit-collection-spotify-feel — reads like Spotify/Apple
+// Music, not a dim admin table). Resolved headless against KIT-LEAD.md:
+// - Tracklist readability was the main complaint. Track titles now set at reading
+//   size (--text-reading, falling back to 16px until kit-reading-typography lands
+//   its token — we CONSUME that token, never duplicate its work) in full --text at
+//   --weight-medium, on comfortable line-height. The mono index (01/02) reads at
+//   --text-sm/--text-muted, tabular — legible, not the old washed --text-dim.
+// - Number→play, the Spotify move: the index and the play stud share one cell (the
+//   "cue"). The mono number shows at rest; on row hover OR when the stud is focused
+//   it becomes a recessed play stud that lights green (rolling semantic) when live.
+//   The now-playing row keeps its green equaliser bars as the lit indicator and
+//   reveals the pause stud on hover — the bars ARE the "it's playing" LED. One cell,
+//   one action button per row (relabels Play/Pause, no aria-pressed), fully
+//   keyboard-reachable (the stud stays in tab order; focus reveals it).
+// - Header reads like a record header: the display title over a plain meta/artist
+//   line (ALBUM · N tracks · run-time) at --text-muted for clear contrast — a stamp,
+//   not a Badge pill (pills read "webpage tag"; a record header states its facts).
+// - Cover-action slot: coverAction?: React.ReactNode renders as an overlay in the
+//   top corner of the cover plate (revealed on hover/focus, keyboard-reachable via
+//   :focus-within) — mirrors the song page's on-cover "Add cover" overlay so the
+//   host places "Change cover" ON the plate, not floating above the sleeve. We only
+//   render the host's node; the picker is the host's. cover/coverColor unchanged.
 import { useEffect, useId, useRef, useState } from 'react'
 import { Play, Pause, CaretLeft, DotsSixVertical } from '@phosphor-icons/react'
 import { SongNotesEditor } from '../SongNotesEditor'
 import { Seeker } from '../Seeker'
-import { Badge } from '../Badge'
 import styles from './CollectionView.module.css'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -61,6 +83,12 @@ export interface CollectionViewProps {
   cover?: string
   /** A flat cover color (a token or CSS color) when there's no art. */
   coverColor?: string
+  /**
+   * Optional control the HOST places ON the cover plate (e.g. a "Change cover"
+   * button) — rendered as an overlay in the top corner, revealed on hover/focus.
+   * We only render the node; the file picker is the host's. Keyboard-reachable.
+   */
+  coverAction?: React.ReactNode
   /** Concept notes (markdown). Source of truth for the editor. */
   notes: string
   onNotesChange: (markdown: string) => void
@@ -119,6 +147,7 @@ export function CollectionView({
   title,
   cover,
   coverColor,
+  coverAction,
   notes,
   onNotesChange,
   tracks,
@@ -196,16 +225,18 @@ export function CollectionView({
               ...(cover ? { backgroundImage: `url("${cover}")` } : null),
             } as React.CSSProperties
           }
-          aria-hidden="true"
         >
           {!cover && <RecordGlyph />}
+          {coverAction && (
+            <div className={styles.coverAction} data-cover-action>
+              {coverAction}
+            </div>
+          )}
         </div>
 
         <div className={styles.headMeta}>
           <h1 className={styles.title} id={titleId}>{title}</h1>
-          <Badge variant="label" tone="default" size={size}>
-            {metaLabel}
-          </Badge>
+          <p className={styles.meta}>{metaLabel}</p>
         </div>
 
         <button
@@ -293,8 +324,22 @@ export function CollectionView({
                   <DotsSixVertical aria-hidden="true" />
                 </button>
 
-                <span className={styles.index} aria-hidden="true">
-                  {playing ? <PlayingBars /> : String(index + 1).padStart(2, '0')}
+                {/* The cue: the mono index at rest → a play/pause stud on
+                    hover/focus (Spotify's number→play swap). One action button
+                    per row; the number is a decorative overlay behind it. */}
+                <span className={styles.cue}>
+                  <span className={styles.index} aria-hidden="true">
+                    {playing ? <PlayingBars /> : String(index + 1).padStart(2, '0')}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.play}
+                    data-playing={playing || undefined}
+                    onClick={() => onPlayTrack(track.id)}
+                    aria-label={playing ? `Pause ${track.title}` : `Play ${track.title}`}
+                  >
+                    {playing ? <Pause weight="fill" aria-hidden="true" /> : <Play weight="fill" aria-hidden="true" />}
+                  </button>
                 </span>
 
                 <button
@@ -307,16 +352,6 @@ export function CollectionView({
                 </button>
 
                 <span className={styles.duration}>{formatDuration(track.durationSeconds)}</span>
-
-                <button
-                  type="button"
-                  className={styles.play}
-                  data-playing={playing || undefined}
-                  onClick={() => onPlayTrack(track.id)}
-                  aria-label={playing ? `Pause ${track.title}` : `Play ${track.title}`}
-                >
-                  {playing ? <Pause weight="fill" aria-hidden="true" /> : <Play weight="fill" aria-hidden="true" />}
-                </button>
               </li>
             )
           })}

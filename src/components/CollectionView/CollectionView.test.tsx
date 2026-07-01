@@ -104,6 +104,28 @@ describe('CollectionView render', () => {
   })
 })
 
+// ─── Cover-action slot ────────────────────────────────────────────────────────────
+
+describe('CollectionView cover action', () => {
+  it('renders the host cover-action node on the cover plate', () => {
+    const { container, getByRole } = renderView({
+      coverColor: 'var(--chroma-teal)',
+      coverAction: <button type="button">Change cover</button>,
+    })
+    const cover = container.querySelector('[data-cover]') as HTMLElement
+    const slot = cover.querySelector('[data-cover-action]') as HTMLElement
+    expect(slot).toBeTruthy()
+    // The host's control lives inside the slot, on the plate — and is reachable.
+    expect(within(slot).getByRole('button', { name: /change cover/i })).toBeTruthy()
+    expect(getByRole('button', { name: /change cover/i })).toBe(slot.firstElementChild)
+  })
+
+  it('omits the cover-action slot when no node is passed', () => {
+    const { container } = renderView({ coverColor: 'var(--chroma-teal)' })
+    expect(container.querySelector('[data-cover-action]')).toBeNull()
+  })
+})
+
 // ─── Play ───────────────────────────────────────────────────────────────────────
 
 describe('CollectionView play', () => {
@@ -158,6 +180,17 @@ describe('CollectionView now playing', () => {
   it('has no now-playing row when nowPlayingId is null', () => {
     const { container } = renderView({ nowPlayingId: null })
     expect(container.querySelectorAll('[data-now-playing]')).toHaveLength(0)
+  })
+
+  it('relabels the now-playing row stud to Pause (one ARIA model, no aria-pressed)', () => {
+    const onPlayTrack = vi.fn()
+    const { getByRole, queryByRole } = renderView({ nowPlayingId: 't2', onPlayTrack })
+    const stud = getByRole('button', { name: /pause second light/i })
+    expect(stud.getAttribute('aria-pressed')).toBeNull()
+    // The other rows still offer Play.
+    expect(queryByRole('button', { name: /play the long one/i })).toBeTruthy()
+    fireEvent.click(stud)
+    expect(onPlayTrack).toHaveBeenCalledWith('t2')
   })
 })
 

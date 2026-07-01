@@ -1,5 +1,6 @@
 // src/components/CollectionView/CollectionView.demo.tsx
 import { useEffect, useState } from 'react'
+import { Camera } from '@phosphor-icons/react'
 import type { DemoMeta } from '../../gallery/registry'
 import { DemoShell } from '../../gallery/ui/DemoShell'
 import { StatesGrid, State } from '../../gallery/ui/StatesGrid'
@@ -38,6 +39,36 @@ const TRACKS: CollectionTrack[] = [
 
 const noop = () => {}
 
+// A stand-in for the host's on-cover control. The kit only renders the node; the
+// real picker is the app's. Styled with tokens so it reads as a recessed chip on
+// the plate (mirrors the song page's "Add cover" overlay).
+function CoverActionButton({ onClick = noop }: { onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Change cover"
+      style={{
+        appearance: 'none',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 'var(--space-1)',
+        padding: 'var(--space-1) var(--space-2)',
+        border: '1px solid color-mix(in srgb, var(--stage-text) 30%, transparent)',
+        borderRadius: 'var(--radius)',
+        background: 'color-mix(in srgb, var(--stage) 78%, transparent)',
+        color: 'var(--stage-text)',
+        font: 'var(--weight-medium) var(--text-xs)/1 var(--font-ui)',
+        letterSpacing: '0.02em',
+        cursor: 'pointer',
+        backdropFilter: 'blur(2px)',
+      }}
+    >
+      <Camera weight="fill" aria-hidden="true" /> Cover
+    </button>
+  )
+}
+
 function move<T>(arr: T[], from: number, to: number): T[] {
   const next = arr.slice()
   const [m] = next.splice(from, 1)
@@ -51,9 +82,12 @@ function StatesDemo() {
   return (
     <StatesGrid>
       <State label="default">
+        {/* A "Change cover" control sits ON the plate (host-provided coverAction) —
+            revealed on hover/focus, keyboard-reachable, never floating above. */}
         <CollectionView
           title="Paper Houses"
           coverColor="var(--chroma-teal)"
+          coverAction={<CoverActionButton />}
           notes={NOTES}
           tracks={TRACKS}
           onNotesChange={noop}
@@ -65,7 +99,8 @@ function StatesDemo() {
       </State>
 
       <State label="hover">
-        {/* Hover a row → it warms to --surface; the title shifts toward the accent. */}
+        {/* Hover a row → it warms to --surface-2 and the mono index turns into a
+            recessed play stud (Spotify's number→play). Title shifts to the accent. */}
         <CollectionView
           title="Paper Houses"
           coverColor="var(--chroma-orange)"
@@ -79,10 +114,12 @@ function StatesDemo() {
       </State>
 
       <State label="focus">
-        {/* Tab to a grip / title / play stud → :focus-visible accent ring. */}
+        {/* Tab to a grip / play stud / title → :focus-visible accent ring; focusing
+            the stud reveals it even without hover (keyboard-reachable). */}
         <CollectionView
           title="Paper Houses"
           coverColor="var(--chroma-purple)"
+          coverAction={<CoverActionButton />}
           notes={NOTES}
           tracks={TRACKS.slice(0, 4)}
           onNotesChange={noop}
@@ -94,8 +131,9 @@ function StatesDemo() {
       </State>
 
       <State label="active">
-        {/* A live row — the green play LED lit, the accent spine + the now-playing
-            transport seeker, scrubbing the live track's position. */}
+        {/* A live row — the green now-playing bars pulse (the lit indicator),
+            the accent spine + the now-playing transport seeker scrubbing the live
+            track's position. Hovering the live row reveals its pause stud. */}
         <CollectionView
           title="Paper Houses"
           coverColor="var(--chroma-green)"
@@ -268,6 +306,7 @@ function PlaygroundDemo() {
           <CollectionView
             title="Paper Houses"
             coverColor={withCover ? 'var(--chroma-teal)' : undefined}
+            coverAction={<CoverActionButton onClick={() => setLastAction('changeCover')} />}
             notes={notes}
             onNotesChange={setNotes}
             tracks={tracks}

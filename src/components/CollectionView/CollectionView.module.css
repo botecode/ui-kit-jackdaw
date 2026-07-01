@@ -69,8 +69,9 @@
 
 /* The cover plate — a flat color field or art, never a floating card. */
 .cover {
-  width: 96px;
-  height: 96px;
+  position: relative;
+  width: 104px;
+  height: 104px;
   flex-shrink: 0;
   border-radius: var(--radius);
   background-color: var(--cover-color, var(--stage));
@@ -87,8 +88,8 @@
 }
 
 .root[data-size='sm'] .cover {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
 }
 
 .cover[data-empty] {
@@ -98,6 +99,27 @@
 .recordGlyph {
   width: 56%;
   height: 56%;
+}
+
+/* Cover-action slot — the host's "Change cover" control, ON the plate (mirrors the
+   song page's on-cover overlay). Recessed into the top corner; quiet until the
+   plate is hovered or the control takes focus (keyboard-reachable via focus-within),
+   never floating above the sleeve. */
+.coverAction {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--dur-base);
+}
+
+.cover:hover .coverAction,
+.coverAction:focus-within {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coverAction { transition: none; }
 }
 
 .headMeta {
@@ -114,16 +136,36 @@
 .title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-display);
+  /* A record header: the display face, pushed a touch past the base display step
+     so the title carries the sleeve. Caps at a sensible reading size on narrow
+     hosts via the min(). */
+  font-size: min(calc(var(--text-display) * 1.25), 30px);
   font-weight: var(--weight-bold);
   line-height: var(--leading-display);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--text);
   overflow-wrap: anywhere;
 }
 
 .root[data-size='sm'] .title {
   font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+}
+
+/* The meta stamp under the title — ALBUM · N tracks · run-time. A record header
+   states its facts in a plain line at clear contrast (--text-muted), not a pill. */
+.meta {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-sm);
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+}
+
+.root[data-size='sm'] .meta {
+  font-size: var(--text-sm);
 }
 
 /* "Play album" — the one accent action. Lit, warm, the head of the sleeve. */
@@ -260,10 +302,12 @@
 
 .row {
   display: grid;
-  grid-template-columns: 24px 30px 1fr auto auto;
+  grid-template-columns: 24px 34px 1fr auto;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  /* comfortable line-height: dense "setlist" rows, but the titles get room to
+     breathe so the list reads like a media-player tracklist, not an admin table */
+  padding: var(--space-3);
   border-top: 1px solid var(--border);
   /* a recessed spine well that the accent fills when the row is live */
   border-left: 2px solid transparent;
@@ -276,13 +320,14 @@
 }
 
 .root[data-size='sm'] .row {
-  grid-template-columns: 20px 26px 1fr auto auto;
+  grid-template-columns: 20px 30px 1fr auto;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
 
+/* subtle recessed fill on hover — the Spotify row warm-up */
 .row:hover {
-  background: var(--surface);
+  background: var(--surface-2);
 }
 
 .row[data-dragging] {
@@ -331,21 +376,49 @@
   outline-offset: 1px;
 }
 
-/* ─── Index / now-playing pulse ─────────────────────────────────────────────────── */
+/* ─── Cue: index number → play stud (the Spotify swap) ───────────────────────────── */
+/* Number and stud share one cell, stacked. The number shows at rest; the stud is
+   revealed on row hover or when it takes focus. The stud stays in the tab order the
+   whole time (opacity, not display) so it's keyboard-reachable; its opaque recessed
+   face covers the number when lit. */
+
+.cue {
+  position: relative;
+  width: 34px;
+  height: 30px;
+  justify-self: center;
+}
+
+.root[data-size='sm'] .cue {
+  width: 30px;
+  height: 26px;
+}
 
 .index {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--text-dim);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  transition: opacity var(--dur-base);
 }
 
 .row[data-now-playing] .index {
   color: var(--accent);
+}
+
+/* Reveal the stud → fade the number out from under it. */
+.row:hover .index,
+.cue:focus-within .index {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .index { transition: none; }
 }
 
 .playingBars {
@@ -381,8 +454,13 @@
   background: transparent;
   text-align: left;
   font-family: var(--font-ui);
-  font-size: var(--text-base);
+  /* Reading size — the main complaint was small, low-contrast titles. Consume the
+     shared --text-reading token (owned by kit-reading-typography); fall back to 16px
+     until that token lands so the shelf stays legible in isolation. Full --text ink,
+     medium weight, comfortable line-height — a media-player title, not table text. */
+  font-size: var(--text-reading, 16px);
   font-weight: var(--weight-medium);
+  line-height: var(--leading-md);
   color: var(--text);
   padding: var(--space-1) 0;
   cursor: pointer;
@@ -391,6 +469,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: color var(--dur-base);
+}
+
+.root[data-size='sm'] .trackTitle {
+  font-size: var(--text-base);
 }
 
 .trackTitle:hover {
@@ -417,27 +499,46 @@
 }
 
 /* ─── Row play stud — recessed off, green LED bloom on ───────────────────────────── */
+/* Sits over the index in the cue, hidden until the row is hovered or the stud takes
+   focus. opacity (not display) keeps it in the tab order — keyboard-reachable. */
 
 .play {
   appearance: none;
+  position: absolute;
+  inset: 0;
+  margin: auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--border);
   border-radius: 50%;
   background: var(--stage);
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
+  opacity: 0;
   /* recessed seat */
   box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06);
   transition:
+    opacity var(--dur-base),
     color var(--dur-led-off),
     border-color var(--dur-led-off),
     box-shadow var(--dur-led-off),
     background var(--dur-led-off);
+}
+
+.root[data-size='sm'] .play {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+
+/* Revealed on row hover or when the stud itself is focused. */
+.row:hover .play,
+.play:focus-visible {
+  opacity: 1;
 }
 
 .play:hover {
@@ -454,6 +555,7 @@
     inset 0 0 6px color-mix(in srgb, var(--led-green-core) 50%, transparent),
     0 0 8px color-mix(in srgb, var(--led-green) 55%, transparent);
   transition:
+    opacity var(--dur-base),
     color var(--dur-led-on),
     border-color var(--dur-led-on),
     box-shadow var(--dur-led-on),
@@ -463,6 +565,10 @@
 .play:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play { transition: none; }
 }
 
 /* ─── Reduced motion: decorative pulse snaps; functional state stays ─────────────── */
