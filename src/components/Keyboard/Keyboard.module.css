@@ -1,0 +1,200 @@
+/* src/components/Keyboard/Keyboard.module.css */
+
+/* ─── Root: recessed keybed well ──────────────────────────────────────────────
+   The whole instrument sits in a recessed --stage well with a hairline top
+   highlight and an inner shadow, so the keys read as tablets set INTO a surface
+   rather than buttons floating on a page. */
+
+.root {
+  display: inline-block;
+  max-width: 100%;
+  background-color: var(--stage);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* Recessed well: top inner shadow + hairline highlight along the top lip. */
+  box-shadow:
+    inset 0 2px 6px hsl(0 0% 0% / 0.35),
+    inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+
+  --_white-bg:    var(--surface);
+  --_white-bg-2:  color-mix(in srgb, var(--surface) 88%, black);
+  --_black-bg:    color-mix(in srgb, var(--stage) 70%, black);
+  --_black-bg-2:  color-mix(in srgb, var(--stage) 40%, black);
+  --_key-gap:     color-mix(in srgb, var(--stage) 60%, black);
+  --_lit:         var(--accent);
+}
+
+/* ─── Horizontal scroll for panels narrower than the keybed ─────────────────── */
+
+.scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: calc(var(--radius) * 0.6);
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.scroll::-webkit-scrollbar        { height: 6px; }
+.scroll::-webkit-scrollbar-track  { background: transparent; }
+.scroll::-webkit-scrollbar-thumb  { background: var(--border-strong); border-radius: 3px; }
+
+/* ─── Keybed: the positioning context for the tiled keys ────────────────────── */
+
+.keybed {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ─── Keys (shared) ─────────────────────────────────────────────────────────── */
+
+.key {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  border: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  /* State transitions on incandescent LED timing: fast attack, slow decay.
+     Non-color transitions (the key depress) use the base duration. */
+  transition:
+    background-color var(--dur-led-off) var(--ease-out),
+    box-shadow       var(--dur-led-off) var(--ease-out),
+    transform        var(--dur-fast)    var(--ease-out);
+}
+
+.key:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+  z-index: 4;
+}
+
+/* ─── White keys: matte ivory tablets ───────────────────────────────────────── */
+
+.key {
+  height: 100%;
+  z-index: 1;
+  border-radius: 0 0 calc(var(--radius) * 0.7) calc(var(--radius) * 0.7);
+  background: linear-gradient(
+    to bottom,
+    var(--_white-bg) 0%,
+    var(--_white-bg) 72%,
+    var(--_white-bg-2) 100%
+  );
+  /* Right-edge groove separates adjacent whites; hairline top highlight. */
+  box-shadow:
+    inset -1px 0 0 var(--_key-gap),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
+    inset 0 -3px 5px color-mix(in srgb, black 8%, transparent);
+}
+
+.keyLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  line-height: 1;
+  padding-bottom: var(--space-1);
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
+.key:hover:not([data-lit]):not([data-disabled]) {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--_white-bg) 94%, var(--accent)) 0%,
+    var(--_white-bg) 72%,
+    var(--_white-bg-2) 100%
+  );
+}
+
+/* ─── Black keys: shorter raised slabs ──────────────────────────────────────── */
+
+.key[data-black] {
+  z-index: 3;
+  border-radius: 0 0 calc(var(--radius) * 0.6) calc(var(--radius) * 0.6);
+  background: linear-gradient(
+    to bottom,
+    var(--_black-bg) 0%,
+    var(--_black-bg-2) 100%
+  );
+  /* Raised slab: crisp top highlight + a shadow cast down onto the whites. */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
+    inset 0 -2px 3px color-mix(in srgb, black 30%, transparent),
+    0 3px 5px hsl(0 0% 0% / 0.4);
+}
+
+.key[data-black] .keyLabel { color: color-mix(in srgb, white 55%, transparent); }
+
+.key[data-black]:hover:not([data-lit]):not([data-disabled]) {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--_black-bg) 80%, var(--accent)) 0%,
+    var(--_black-bg-2) 100%
+  );
+}
+
+/* ─── Lit: the Chroma LED bloom (host-active OR pressed) ─────────────────────── */
+
+.key[data-lit] {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--_lit) 78%, white 22%) 0%,
+    var(--_lit) 55%,
+    color-mix(in srgb, var(--_lit) 82%, black) 100%
+  );
+  /* LED bloom: bright core ring + soft outer glow. Fast attack on press. */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 40%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--_lit) 85%, transparent),
+    0 0 10px 1px color-mix(in srgb, var(--_lit) 45%, transparent);
+  transition:
+    background-color var(--dur-led-on) var(--ease-out),
+    box-shadow       var(--dur-led-on) var(--ease-out),
+    transform        var(--dur-fast)   var(--ease-out);
+}
+
+.key[data-lit] .keyLabel {
+  color: color-mix(in srgb, var(--accent-contrast, black) 80%, transparent);
+}
+
+.key[data-black][data-lit] {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--_lit) 70%, white 15%) 0%,
+    var(--_lit) 60%,
+    color-mix(in srgb, var(--_lit) 75%, black) 100%
+  );
+}
+
+/* Physical depress feedback on the pressed key (mouse/touch down). */
+.key:active:not([data-disabled]) {
+  transform: translateY(1px);
+}
+
+/* ─── Disabled ──────────────────────────────────────────────────────────────── */
+
+.root[data-disabled] {
+  opacity: 0.5;
+}
+.key[data-disabled] {
+  cursor: default;
+}
+
+/* ─── Reduced motion ────────────────────────────────────────────────────────────
+   The LED bloom is state-carrying (functional) → it stays, but the durations
+   are already zeroed globally under reduced-motion. The key-depress translate
+   is decorative → snap it off. */
+@media (prefers-reduced-motion: reduce) {
+  .key { transition: background-color 0ms, box-shadow 0ms; }
+  .key:active:not([data-disabled]) { transform: none; }
+}

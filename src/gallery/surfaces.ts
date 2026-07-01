@@ -71,6 +71,9 @@ export const SURFACE_TAGS: Record<string, Surface[]> = {
   Dialog: ALL,
   InputSelect: ALL,
   Kbd: ALL,
+  // On-screen instrument keyboard — plugin/host UIs (daw) + a mobile player
+  // could play notes too (app). Not a marketing-site element.
+  Keyboard: ['app', 'daw'],
   NumberField: ALL,
   Panel: ALL,
   Popover: ALL,
