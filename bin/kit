@@ -117,11 +117,13 @@ ship() {
     return 2
   fi
   if [ -n "$feedback" ]; then
-    git -C "$wt" diff --name-only "main..HEAD" -- src/components/ 2>/dev/null | grep -q . \
-      || { echo "✗ nothing changed under src/components/ on $br — the fix didn't land. See $wt/.agent.log." >&2; return 1; }
+    # Accept changes anywhere under src/ (components, gallery, tokens, theme) — not
+    # just src/components/, so gallery-only / tokens-only / theme-only cards count.
+    git -C "$wt" diff --name-only "main..HEAD" -- src/ 2>/dev/null | grep -q . \
+      || { echo "✗ nothing changed under src/ on $br — the fix didn't land. See $wt/.agent.log." >&2; return 1; }
   else
-    git -C "$wt" diff --name-only "main..HEAD" -- src/components/ 2>/dev/null | grep -q '\.test\.' \
-      || { echo "✗ no new component test under src/components/ on $br — the agent planned but didn't build. See $wt/.agent.log." >&2; return 1; }
+    git -C "$wt" diff --name-only "main..HEAD" -- src/ 2>/dev/null | grep -q '\.test\.' \
+      || { echo "✗ no test changed under src/ on $br — the agent planned but didn't build. See $wt/.agent.log." >&2; return 1; }
   fi
 
   # Objective gate (don't trust the agent's self-report).
